@@ -1,0 +1,17 @@
+{
+    "name": "phasync/phasync.github.io",
+    "description": "The phasync / Swerve documentation site: a static site generator and the content",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "league/commonmark": "^2.5",
+        "symfony/yaml": "^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "phasync/phasync": "^2.0.0-beta3",
+        "phasync/swerve": "*@alpha"
+    },
+    "minimum-stability": "alpha",
+    "prefer-stable": true
+}

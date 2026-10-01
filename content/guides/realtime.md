@@ -1,0 +1,115 @@
+---
+title: "Realtime: SSE and WebSockets"
+description: "Push to the browser with Server-Sent Events or WebSockets, across all workers."
+status: draft
+order: 2
+see_also:
+  - Swerve::publish
+  - Swerve::subscribe
+  - WebSocket
+---
+
+A request may stay open as long as it likes, and a message published in any worker reaches the subscribers in every worker. Both examples are complete chat rooms, taken from `examples/` in the Swerve repository, where the tests run them.
+
+## Server-Sent Events
+
+The browser's `EventSource` reads a `text/event-stream` response and reconnects by itself when it ends.
+
+```php
+<?php // swerve.php
+
+use phasync\Psr\Response;
+use phasync\Psr\UnbufferedStream;
+use phasync\TimeoutException;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Swerve\Swerve;
+
+return new class implements RequestHandlerInterface {
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        if ('POST' === $request->getMethod()) {
+            Swerve::publish('chat', (string) $request->getBody());
+
+            return new Response(204);
+        }
+
+        $subscription = Swerve::subscribe('chat', heartbeat: 15);
+        $out = new UnbufferedStream(1, 60);
+        phasync::go(static function () use ($subscription, $out) {
+            try {
+                foreach ($subscription as $message) {
+                    $out->append(null === $message ? ": keep-alive\n\n" : "data: $message\n\n");
+                }
+            } catch (TimeoutException) {
+                // the client left
+            } finally {
+                $out->end();
+            }
+        });
+
+        return new Response(200, ['Content-Type' => 'text/event-stream', 'Cache-Control' => 'no-cache'], $out);
+    }
+};
+```
+
+```js
+const events = new EventSource('/');
+events.onmessage = (e) => console.log(e.data);
+fetch('/', {method: 'POST', body: 'hello'});
+```
+
+- `subscribe()` is called before the response is returned: a message published after that is not missed.
+- `heartbeat: 15` yields `null` after 15 seconds without a message. The keep-alive comment keeps proxies from closing the connection, and is how the write notices a client that left.
+- An SSE event is `data: <one line>`: JSON-encode messages so that they stay on one line.
+- There is no history. A client that reconnects catches up from your storage.
+
+## WebSockets
+
+`WebSocket::from()` answers the upgrade and runs the callback once the connection is open. The callback returns when the browser leaves.
+
+```php
+use Swerve\Http\WebSocket;
+use Swerve\SubscriberLagException;
+
+return WebSocket::from($request, static function (WebSocket $ws) {
+    $subscription = Swerve::subscribe('chat');
+    $forward      = phasync::go(static function () use ($ws, $subscription) {
+        try {
+            foreach ($subscription as $message) {
+                $ws->send($message);
+            }
+        } catch (SubscriberLagException) {
+            $ws->close(1008);
+        } catch (phasync\CancelledException) {
+        }
+    });
+
+    foreach ($ws as $message) {                   // ends when the browser leaves
+        Swerve::publish('chat', $message);        // validate it first, see examples/websocket-chat
+    }
+
+    if (!$forward->isTerminated()) {
+        phasync::cancel($forward);
+    }
+});
+```
+
+Write the callback as a `static` function. A plain closure keeps `$this`, and with it the controller and often the whole application, in memory for as long as the socket is open.
+
+## How a message travels
+
+Workers share no memory. Say 1000 browsers are subscribed in worker 1 and a request in worker 2 calls `Swerve::publish('chat', $message)`:
+
+1. The master process keeps, for each topic, a bitmap of the workers that have a subscriber. Worker 2 asks for the bitmap of `chat` and remembers it until the master says to forget it.
+2. Worker 2 writes one datagram into the inbox of worker 1. Only workers that have a subscriber receive one. The master is not in the data path.
+3. Worker 1 decodes the message once and hands it to each of its 1000 subscriptions.
+
+Messages from one publisher arrive in the order it published them, for every subscriber, in every worker. There is no order between messages from different publishers: if you need one, put a version in the message and let the client ignore an older one, or see `OrderedChannel` in [Advanced](/advanced/ordered-channel/).
+
+## Limits
+
+- Delivery is at most once, to the subscriptions that exist when the message reaches their worker. Keep what must not be lost in storage, and use publish and subscribe to say that it changed.
+- A subscriber that falls more than `maxLag` seconds behind (30 by default) gets a `SubscriberLagException`: disconnect it, and let it reconnect.
+- Messages are at most 128 KiB. Swerve on several machines needs Redis, NATS or the like between them.

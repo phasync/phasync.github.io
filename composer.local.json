@@ -1,0 +1,21 @@
+{
+    "name": "phasync/phasync.github.io",
+    "description": "composer.json with the sibling checkouts as sources: the reference describes the code as it is now, not as last released. Use: COMPOSER=composer.local.json composer install",
+    "type": "project",
+    "license": "MIT",
+    "repositories": [
+        {"type": "path", "url": "../phasync", "options": {"symlink": true, "versions": {"phasync/phasync": "2.0.0-beta3"}}},
+        {"type": "path", "url": "../swerve", "options": {"symlink": true, "versions": {"phasync/swerve": "0.1.0-alpha27"}}}
+    ],
+    "require": {
+        "php": "^8.2",
+        "league/commonmark": "^2.5",
+        "symfony/yaml": "^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "phasync/phasync": "^2.0.0-beta3",
+        "phasync/swerve": "*@alpha"
+    },
+    "minimum-stability": "alpha",
+    "prefer-stable": true
+}
