@@ -8,6 +8,6 @@ see_also:
   - Swerve::claim
 ---
 
-This page will contain:
+This page will cover:
 
 - Run a job in one worker only: `Swerve::claim()`.

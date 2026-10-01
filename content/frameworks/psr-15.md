@@ -7,6 +7,6 @@ see_also:
   - Swerve::log
 ---
 
-This page will contain:
+This page will cover:
 
 - The contract `swerve.php` must fulfil, with a Slim example, and what a handler may keep between requests.

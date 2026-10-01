@@ -5,6 +5,6 @@ status: placeholder
 order: 4
 ---
 
-This page will contain:
+This page will cover:
 
 - `composer require phasync/swerve-cakephp`, with `--public=webroot`.

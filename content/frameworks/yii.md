@@ -5,6 +5,6 @@ status: placeholder
 order: 5
 ---
 
-This page will contain:
+This page will cover:
 
 - `composer require phasync/swerve-yii`, for the yiisoft/app skeleton. Yii 2 is not covered.

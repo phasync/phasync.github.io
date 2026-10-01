@@ -7,6 +7,6 @@ see_also:
   - WebSocket
 ---
 
-This page will contain:
+This page will cover:
 
 - What Tether is, the smallest component, and how it uses Swerve's WebSockets. Tether is in development.

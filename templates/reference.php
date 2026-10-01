@@ -75,7 +75,7 @@ $label   = ['class' => 'Class', 'interface' => 'Interface', 'exception' => 'Exce
 <?= $page['html'] ?>
 <?php if (!$hasExamples && 'topic' !== $s['kind']): ?>
 <h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; hand-written examples are still to come.</p>
+<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 <?php endif ?>
 <?= render('_see', ['page' => $page]) ?>
 </article>

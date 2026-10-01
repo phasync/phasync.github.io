@@ -5,6 +5,6 @@ status: placeholder
 order: 6
 ---
 
-This page will contain:
+This page will cover:
 
 - How many workers, how many connections per worker, memory recycling, the watchdog, and the cost of the access log.

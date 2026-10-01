@@ -5,6 +5,6 @@ status: placeholder
 order: 3
 ---
 
-This page will contain:
+This page will cover:
 
 - A service file, a Docker image, the reverse proxy configuration, reloads without dropping requests, and what to do about TLS. Taken from the production guide of the repository.

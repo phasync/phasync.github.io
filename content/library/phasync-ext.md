@@ -5,6 +5,6 @@ status: placeholder
 order: 2
 ---
 
-This page will contain:
+This page will cover:
 
 - What it changes, how to install and enable it, and why everything works without it.

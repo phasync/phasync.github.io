@@ -38,5 +38,3 @@ A worker never keeps a value older than the last write it has been told of.
 - The contents last as long as the master: a rolling reload keeps them, a restart empties them. Keep what must survive in a database.
 - It is a cache for one machine. Swerve on several machines has one cache per machine.
 - There is no increment. A counter read and written by concurrent requests loses updates; use a database or Redis for counters.
-
-<p class="callout placeholder"><strong>TODO-measure.</strong> How long a read takes, from the worker's own memory and from the master, is not measured yet. It will be stated on <a href="/performance/">Performance</a>, and not here.</p>

@@ -8,6 +8,6 @@ see_also:
   - phasync::cancel
 ---
 
-This page will contain:
+This page will cover:
 
 - Coroutines are PHP fibers scheduled by phasync. Contexts, cancellation, and what `throw()` is for.

@@ -8,6 +8,6 @@ see_also:
   - phasync::channel
 ---
 
-This page will contain:
+This page will cover:
 
 - Buffered and unbuffered channels, closing, and `select`-style waiting.

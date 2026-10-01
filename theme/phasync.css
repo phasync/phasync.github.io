@@ -199,3 +199,4 @@ main section > h2 { margin-top: 0; }
 /* No ligatures in code: === and -> read as typed. After the rules that use the font shorthand, which resets them. */
 code, pre, pre code, .type, .default { font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
 .code pre, .terminal pre { padding-right: 4.5rem; }
+pre code { letter-spacing: .001em; }

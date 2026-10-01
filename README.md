@@ -22,6 +22,6 @@ Open http://localhost:8000. To see what a missing path does on GitHub Pages (the
 | `theme/` | CSS (Pico v2 and our tokens), fonts, JS, `kitchen-sink.html` with every component. |
 | `build.php` | Writes `public/`. |
 
-The build fails on a broken internal link, a `see_also` that does not exist, two pages with one URL, and two classes with the same short name. It ends with the number of pages built, placeholder pages, reference pages without examples, and unresolved `TODO-verify` and `TODO-measure` markers.
+The build fails on a broken internal link, a `see_also` that does not exist, two pages with one URL, and two classes with the same short name. It ends with the number of pages built, placeholder pages, and reference pages without examples. `php build.php --todo` also lists the working notes (`TODO` comments) in the sources as `file:line`; they are removed from `public/`.
 
 Theme: add `?theme=dark` or `?theme=light` to any URL to force a theme. The logo is a text wordmark in `templates/layout.php`, in the block marked `LOGO SLOT`.

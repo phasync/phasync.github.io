@@ -5,6 +5,6 @@ status: placeholder
 order: 1
 ---
 
-This page will contain:
+This page will cover:
 
 - Machine, pinned processes, JIT, warm-up, run lengths, and how results are logged.

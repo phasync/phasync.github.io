@@ -5,6 +5,6 @@ status: placeholder
 order: 3
 ---
 
-This page will contain:
+This page will cover:
 
 - `composer require phasync/swerve-codeigniter`, built on CodeIgniter's own worker mode.

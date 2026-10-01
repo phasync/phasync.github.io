@@ -5,6 +5,6 @@ status: placeholder
 order: 4
 ---
 
-This page will contain:
+This page will cover:
 
 - `vendor/bin/swerve --watch`, what reloads and what does not, and how to read the log while you work.

@@ -178,7 +178,7 @@ function main(string $siteUrl): void
     $children = static fn (string $url) => \array_values(\array_filter($pages, static fn ($p) => !$p['symbol'] && $p['url'] !== $url
         && \str_starts_with($p['url'], $url) && 1 === \substr_count(\substr($p['url'], \strlen($url)), '/')));
 
-    $placeholders = $withoutExamples = $todo = $measure = 0;
+    $placeholders = $withoutExamples = 0;
     $built        = [];
     foreach ($pages as $page) {
         $isSymbol = null !== $page['symbol'];
@@ -195,9 +195,9 @@ function main(string $siteUrl): void
             $main = render('page', $vars);
         }
         $placeholders += 'placeholder' === $page['status'] ? 1 : 0;
-        $todo         += \substr_count($main, 'TODO-verify');
-        $measure      += \substr_count($main, 'TODO-measure');
-        $html          = render('layout', $vars + ['main' => $main]);
+        // Working notes (<!-- TODO-verify: ... -->) stay in the sources and never reach public/; `--todo` lists them
+        $main = \preg_replace('~[ \t]*<!--\s*TODO.*?-->\R?~s', '', $main);
+        $html = render('layout', $vars + ['main' => $main]);
         $write($page['url'] . 'index.html', $html);
         $built[$page['url']] = $main . $html;
     }
@@ -250,8 +250,16 @@ function main(string $siteUrl): void
     \printf("Built %d pages (%d reference symbols) in %.1f s -> public/\n", \count($pages), \count($symbols->all), \microtime(true) - $start);
     \printf("  placeholder pages:                    %d\n", $placeholders);
     \printf("  reference pages without examples:     %d\n", $withoutExamples);
-    \printf("  TODO-verify markers in page source:   %d\n", $todo);
-    \printf("  TODO-measure markers (unmeasured claims): %d\n", $measure);
+    if (\in_array('--todo', $GLOBALS['argv'], true)) {
+        $files = new RegexIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__, FilesystemIterator::SKIP_DOTS)), '~/(content|templates)/.*\.(md|php)$~');
+        foreach ($files as $file) {
+            foreach (\file($file->getPathname()) as $n => $line) {
+                if (\str_contains($line, 'TODO')) {
+                    \printf("TODO %s:%d\n", \substr($file->getPathname(), \strlen(__DIR__) + 1), $n + 1);
+                }
+            }
+        }
+    }
 }
 
 try {

@@ -5,6 +5,6 @@ status: placeholder
 order: 1
 ---
 
-This page will contain:
+This page will cover:
 
 - `composer require phasync/swerve-laravel`, a one-line `swerve.php`, WebSockets from a route, and what Octane users will recognise.

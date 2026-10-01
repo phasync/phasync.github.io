@@ -7,6 +7,6 @@ see_also:
   - ProcessRunner
 ---
 
-This page will contain:
+This page will cover:
 
 - ProcessRunner: start, stream output, time out, kill.

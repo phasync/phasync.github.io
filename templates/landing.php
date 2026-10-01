@@ -1,5 +1,5 @@
 <?php
-/** The front page: commands first, then short sections with real code. TODO-verify marks what is not confirmed. */
+/** The front page: commands first, then short sections with real code. */
 $frameworks = [
     'laravel'     => ['Laravel', 'phasync/swerve-laravel', 'return new Swerve\Laravel\Handler(__DIR__);', 'public'],
     'symfony'     => ['Symfony', 'phasync/swerve-symfony', 'return new Swerve\Symfony\Handler(__DIR__);', 'public'],
@@ -45,7 +45,6 @@ return new class implements RequestHandlerInterface {
 P, 'php') ?>
   <!-- TODO-verify: not run yet. Plain sleep() waits without blocking only with phasync-ext loaded (docs/how-it-runs.md, phasync-ext README); without it use phasync::sleep(10) -->
   <p>Plain <code>sleep()</code> waits without blocking the worker when <a href="/library/phasync-ext/">phasync-ext</a> is loaded; Swerve loads it by itself when it is installed (<code>composer require phasync/phasync-ext</code>). Without the extension, <code>sleep()</code> blocks every other request of that worker, and you call <code>phasync::sleep(10)</code> instead. Database queries, API calls and file reads wait the same way. <a href="/guides/sequential-php/">What waits and what blocks</a>.</p>
-  <p class="callout placeholder"><strong>TODO-measure.</strong> The owner's expectation, not a result: Swerve behaves like about 100,000 PHP-FPM workers on 8 CPU cores and 16 GB of memory, clearly ahead of Node.js and slightly ahead of Go. Nothing is measured yet; the pages on <a href="/performance/">Performance</a> list what will be, and this sentence stays marked until they hold the numbers.</p>
 </section>
 
 <section id="frameworks">

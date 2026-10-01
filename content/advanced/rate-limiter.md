@@ -7,6 +7,6 @@ see_also:
   - RateLimiter
 ---
 
-This page will contain:
+This page will cover:
 
 - Limit the rate of calls to an API from many coroutines.

@@ -5,6 +5,6 @@ status: placeholder
 order: 7
 ---
 
-This page will contain:
+This page will cover:
 
 - Processes, coroutines and why there are no threads. The rule: never block a worker.

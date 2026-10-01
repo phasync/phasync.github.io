@@ -5,6 +5,6 @@ status: placeholder
 order: 6
 ---
 
-This page will contain:
+This page will cover:
 
 - `composer require phasync/swerve-laminas`, and memory per open WebSocket.

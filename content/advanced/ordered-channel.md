@@ -7,6 +7,6 @@ see_also:
   - OrderedChannel
 ---
 
-This page will contain:
+This page will cover:
 
 - When plain publish and subscribe is not enough, and what it costs.

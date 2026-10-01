@@ -5,6 +5,6 @@ status: placeholder
 order: 8
 ---
 
-This page will contain:
+This page will cover:
 
 - How the loop picks the next coroutine, and the pollers behind it.

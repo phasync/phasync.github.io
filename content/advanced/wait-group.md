@@ -7,6 +7,6 @@ see_also:
   - WaitGroup
 ---
 
-This page will contain:
+This page will cover:
 
 - When `await()` in a loop is not enough.

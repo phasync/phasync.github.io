@@ -8,6 +8,6 @@ see_also:
   - phasync::go
 ---
 
-This page will contain:
+This page will cover:
 
 - `phasync/http-client`: ten requests in the time of the slowest, timeouts and failures.

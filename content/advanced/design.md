@@ -5,6 +5,6 @@ status: placeholder
 order: 9
 ---
 
-This page will contain:
+This page will cover:
 
 - The choices, in a page: what stays in the core and what does not.
