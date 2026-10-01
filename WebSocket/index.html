@@ -47,23 +47,32 @@
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">class </span>WebSocket <span class="hl-k">extends </span>ProtocolUpgrade <span class="hl-k">implements </span>\IteratorAggregate<span class="hl-k">, </span>\Traversable</code></pre></div>
 </div>
 <div class="code" data-lang="php"><pre><code><span class="hl-k">return </span>WebSocket<span class="hl-k">::</span>from<span class="hl-k">(</span>$request<span class="hl-k">, function (</span>WebSocket $ws<span class="hl-k">) {
-    foreach (</span>$ws <span class="hl-k">as </span>$message<span class="hl-k">) {           </span><span class="hl-c">// ends when the connection closes
-        </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span><span class="hl-s">"echo: </span>$message<span class="hl-s">"</span><span class="hl-k">);
+    </span>$ws<span class="hl-k">-&gt;</span>onMessage<span class="hl-k">-&gt;</span>listen<span class="hl-k">(function (</span>string $data<span class="hl-k">) {      </span><span class="hl-c">// inbound: events
+        </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>$data<span class="hl-k">);
+    });
+    foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">) as </span>$out<span class="hl-k">) {         </span><span class="hl-c">// outbound: plain sequential code
+        </span><span class="hl-k">if (</span><span class="hl-s">'end' </span><span class="hl-k">=== </span>$out<span class="hl-k">) {
+            return;                                       </span><span class="hl-c">// returning closes the socket (1000)
+        </span><span class="hl-k">}
+        </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$out<span class="hl-k">);
     }
 });</span></code></pre></div>
 
 <p>The callback runs in a coroutine of its own after the handshake; the connection closes when
-it returns (1000), or throws (1011, and swerve logs the exception). A request that is not a
-WebSocket handshake is answered 426 or 400.</p>
-<p>One coroutine receives; send() and close() may be called from any. The connection is read
-all the time, also when the callback only sends: pings from the client are answered, and when
-the client leaves the callback is cancelled, so a loop such as</p>
-<div class="code" data-lang="php"><pre><code><span class="hl-k">foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'news'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {
-    </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);
+it returns (1000), or throws (1011, and swerve logs the exception). end() closes it early. A
+request that is not a WebSocket handshake is answered 426 or 400.</p>
+<p>The connection is read all the time, also when the callback only sends: pings from the client
+are answered, and when the client leaves the callback is cancelled, so the loop above ends
+with its client. A message goes to the $onMessage listeners, one at a time, in the order they
+arrived: a slow listener holds back the reading. The server pings every connection every
+PING_INTERVAL seconds, from one coroutine for all of them, so proxies don't close a quiet one.</p>
+<p>The pull style is the alternative to $onMessage, and the two don't mix: receive() throws
+while $onMessage has listeners.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">foreach (</span>$ws <span class="hl-k">as </span>$message<span class="hl-k">) {               </span><span class="hl-c">// ends when the connection closes
+    </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span><span class="hl-s">"echo: </span>$message<span class="hl-s">"</span><span class="hl-k">);
 }</span></code></pre></div>
 
-<p>ends with its client. The server pings every connection every PING_INTERVAL seconds, from
-one coroutine for all of them, so proxies don't close a quiet connection.</p>
+<p>send() and end() may be called from any coroutine.</p>
 <p class="meta">Defined in <code>Swerve\Http\WebSocket</code>, package <code>phasync/swerve</code>.</p>
 
 
@@ -76,19 +85,26 @@ one coroutine for all of them, so proxies don't close a quiet connection.</p>
   <dt><code>INBOX</code> <span class="default">= <code>64</code></span></dt>
   <dd>Messages received and not yet taken by receive(); the reader waits while there are INBOX.</dd>
 </dl>
+<h2 id="properties">Properties</h2>
+<dl class="params">
+  <dt><code>$onMessage</code> <span class="type">readonly Event</span></dt>
+  <dd>Called with (string $data, bool $binary) for each text or binary message received.</dd>
+  <dt><code>$onClose</code> <span class="type">readonly Event</span></dt>
+  <dd>Called once with (int $code, string $reason) when the connection has ended, see end().</dd>
+</dl>
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/WebSocket/receive/"><code>WebSocket::receive</code></a> The next text or binary message, or null once the connection is closed: by the client, by close(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.</li>
+  <li><a href="/WebSocket/receive/"><code>WebSocket::receive</code></a> The next text or binary message, or null once the connection is closed: by the client, by end(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.</li>
   <li><a href="/WebSocket/getIterator/"><code>WebSocket::getIterator</code></a> The messages received, until the connection closes.</li>
   <li><a href="/WebSocket/isBinary/"><code>WebSocket::isBinary</code></a> Whether the message receive() returned last was binary, rather than text.</li>
   <li><a href="/WebSocket/send/"><code>WebSocket::send</code></a> Send a text message, which must be UTF-8; nothing once the connection is closed.</li>
   <li><a href="/WebSocket/sendBinary/"><code>WebSocket::sendBinary</code></a> Send a binary message; nothing once the connection is closed.</li>
-  <li><a href="/WebSocket/close/"><code>WebSocket::close</code></a> Say goodbye, once: receive() returns null from then on, and the connection closes after the client&#039;s own goodbye, or a moment without one.</li>
+  <li><a href="/WebSocket/end/"><code>WebSocket::end</code></a> Say goodbye, once: receive() returns null from then on, and the connection closes after the client&#039;s own goodbye, or a moment without one.</li>
   <li><a href="/WebSocket/isClosed/"><code>WebSocket::isClosed</code></a> </li>
 </ul>
 
 <h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; hand-written examples are still to come.</p>
+<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

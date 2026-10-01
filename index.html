@@ -64,15 +64,12 @@ return new class implements </span>RequestHandlerInterface <span class="hl-k">{
         return new </span>Response<span class="hl-k">(</span>200<span class="hl-k">, [</span><span class="hl-s">'Content-Type' </span><span class="hl-k">=&gt; </span><span class="hl-s">'text/plain'</span><span class="hl-k">], </span><span class="hl-s">"Ten seconds later.\n"</span><span class="hl-k">);
     }
 };</span></code></pre></div>
-  <!-- TODO-verify: not run yet. Plain sleep() waits without blocking only with phasync-ext loaded (docs/how-it-runs.md, phasync-ext README); without it use phasync::sleep(10) -->
   <p>Plain <code>sleep()</code> waits without blocking the worker when <a href="/library/phasync-ext/">phasync-ext</a> is loaded; Swerve loads it by itself when it is installed (<code>composer require phasync/phasync-ext</code>). Without the extension, <code>sleep()</code> blocks every other request of that worker, and you call <code>phasync::sleep(10)</code> instead. Database queries, API calls and file reads wait the same way. <a href="/guides/sequential-php/">What waits and what blocks</a>.</p>
-  <p class="callout placeholder"><strong>TODO-measure.</strong> The owner's expectation, not a result: Swerve behaves like about 100,000 PHP-FPM workers on 8 CPU cores and 16 GB of memory, clearly ahead of Node.js and slightly ahead of Go. Nothing is measured yet; the pages on <a href="/performance/">Performance</a> list what will be, and this sentence stays marked until they hold the numbers.</p>
 </section>
 
 <section id="frameworks">
   <h2>Your framework</h2>
   <p>One adapter per framework. <code>public/index.php</code> stays as it is, so the same application still runs under PHP-FPM.</p>
-  <!-- TODO-verify: the six swerve-* adapter packages answered 404 on repo.packagist.org on 2026-10-01; the snippets below are from their READMEs (tags 0.1.0-alpha*), not from a successful composer require -->
   <div class="tabs">
     <input type="radio" name="framework" id="fw-laravel" checked><label for="fw-laravel">Laravel</label>
     <div class="tab-panel">
@@ -201,7 +198,6 @@ fetch('/', {method: 'POST', body: 'hello'});</code></pre></div>
     </span><span class="hl-k">}
     </span>phasync<span class="hl-k">::</span>cancel<span class="hl-k">(</span>$forward<span class="hl-k">);                </span><span class="hl-c">// the browser left
 </span><span class="hl-k">});</span></code></pre></div>
-  <!-- TODO-verify: shortened from examples/websocket-chat/swerve.php (no lag or cancel handling); not run as written -->
   <p><a href="/guides/realtime/">Realtime guide</a>, <a href="/Swerve/publish/"><code>Swerve::publish</code></a>, <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>.</p>
 </section>
 
@@ -220,7 +216,6 @@ if (</span>null <span class="hl-k">=== </span>$sidebar<span class="hl-k">) {
 <section id="after-the-response">
   <h2>Keep working after the response <span class="badge placeholder">Placeholder</span></h2>
   <p>Work started in a request can continue after the response is sent, with what the request had: the user, the request, the open database connection. Send 10,000 e-mails without making the client wait.</p>
-  <!-- TODO-verify: sketch only. docs/how-it-runs.md says work after the response (phasync::finally(), a go()) costs the client nothing; the example below is not yet run -->
 <div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$recipients<span class="hl-k">) {   </span><span class="hl-c">// runs after the handler returned
     </span><span class="hl-k">foreach (</span>$recipients <span class="hl-k">as </span>$recipient<span class="hl-k">) {
         </span><span class="hl-c">// send one e-mail

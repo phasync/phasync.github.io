@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WebSocket::receive - phasync</title>
-<meta name="description" content="The next text or binary message, or null once the connection is closed: by the client, by close(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.">
+<meta name="description" content="The next text or binary message, or null once the connection is closed: by the client, by end(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.">
 <link rel="canonical" href="https://phasync.github.io/WebSocket/receive/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">receive</li>
 </ol></nav>
 <h1>WebSocket::receive <span class="badge kind">Method</span></h1>
-<p class="lead">The next text or binary message, or null once the connection is closed: by the client, by close(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.</p>
+<p class="lead">The next text or binary message, or null once the connection is closed: by the client, by end(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WebSocket<span class="hl-k">::</span>receive<span class="hl-k">(): ?</span>string</code></pre></div>
@@ -55,10 +55,15 @@
 <h2 id="return-values">Return values</h2>
 <p>Returns <code>?string</code>.</p>
 
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>LogicException</code></dt>
+  <dd>While $onMessage has listeners: they get the messages</dd>
+</dl>
 
 
 <h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; hand-written examples are still to come.</p>
+<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

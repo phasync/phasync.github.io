@@ -68,7 +68,6 @@ if (</span>null <span class="hl-k">=== </span>$sidebar<span class="hl-k">) {
 <li>It is a cache for one machine. Swerve on several machines has one cache per machine.</li>
 <li>There is no increment. A counter read and written by concurrent requests loses updates; use a database or Redis for counters.</li>
 </ul>
-<p class="callout placeholder"><strong>TODO-measure.</strong> How long a read takes, from the worker's own memory and from the master, is not measured yet. It will be stated on <a href="/performance/">Performance</a>, and not here.</p>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
   <li><a href="/Swerve/cache/"><code>Swerve::cache</code></a> The cache every worker shares, held by the master: see Cache.</li>
