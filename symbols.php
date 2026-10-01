@@ -1,23 +1,11 @@
 <?php
 
 /**
- * The classes that have reference pages. Each gets /<ShortName>/ and /<ShortName>/<method>/,
- * generated from its docblocks by reflection; a markdown file in content/reference/ adds the
- * hand-written parts. Two classes with one short name fail the build.
+ * The packages whose source is documented. Every public, non-@internal class, interface, trait,
+ * enum and function under their autoload paths gets a reference page (lib/Symbols.php), and every
+ * public method a page under it. Mark a symbol @internal in its docblock to leave it out.
  */
 return [
-    Swerve\Swerve::class,
-    Swerve\Subscription::class,
-    Swerve\Claim::class,
-    Swerve\OrderedChannel::class,
-    Swerve\SubscriberLagException::class,
-    Swerve\Http\WebSocket::class,
-    phasync::class,
-    phasync\ReadChannelInterface::class,
-    phasync\WriteChannelInterface::class,
-    phasync\TimeoutException::class,
-    phasync\CancelledException::class,
-    phasync\Util\WaitGroup::class,
-    phasync\Util\RateLimiter::class,
-    phasync\Util\ProcessRunner::class,
+    'phasync/phasync',
+    'phasync/swerve',
 ];

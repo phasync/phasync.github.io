@@ -28,7 +28,13 @@ Any comparison with Node.js, Go or PHP-FPM, and any capacity number (connections
 
 Notes about what is unconfirmed or still to do are written as `<!-- TODO-verify: why -->` in the source. The build removes every `<!-- TODO ... -->` comment from the output, so they never reach `public/`. `php build.php --todo` prints each one as `file:line`. Public text is for the reader: a placeholder page says "This page will cover ...", never what the author wants or intends.
 
-A page moves one step at a time. Pages for a symbol without a markdown file are generated from the docblock as `draft`, with a note that examples will be added.
+A page moves one step at a time.
+
+## The reference
+
+Reference pages are generated from the source docblocks of phasync and swerve, by reflection: every public class, interface, trait, enum and function that is not `@internal`. To change a reference page, change the docblock in the package; the format is in [DOCBLOCK-STANDARD.md](DOCBLOCK-STANDARD.md). `php build.php --lint` lists what is missing, and `--strict` fails the build on it.
+
+`content/reference/` is the legacy hand-written overlay, being migrated into the docblocks. A file there (`Class/index.md`, `Class/method.md`) fills what the docblock does not give: its body is used, and its `description` when the docblock has no summary. Where both give the same thing (examples, See also) the build prints `duplicate source` and the docblock wins. When a page has been moved into its docblock, delete the file. A file with `symbol:` in its front matter is a page about a symbol of a package that is not read from source (`HttpClient`).
 
 ## Checking an example
 

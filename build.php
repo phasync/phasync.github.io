@@ -4,7 +4,7 @@
  * The site generator: `php build.php` writes the site to public/.
  *
  * content/**.md (front matter + markdown)   the pages
- * symbols.php + the installed packages       the reference, by reflection (lib/Symbols.php)
+ * symbols.php + the installed packages       the reference: source docblocks and reflection (lib/Symbols.php)
  * templates/*.php                            plain PHP templates
  * theme/                                     copied as it is
  *
@@ -53,14 +53,32 @@ function code(string $code, string $lang = 'php', bool $run = false): string
 /** Inline markdown, for a docblock's sentence: no wrapping paragraph. */
 function inline(string $text): string
 {
-    return \preg_replace('~^<p>(.*)</p>\s*$~s', '$1', Markdown::html($text));
+    $html = Markdown::html($text);
+
+    return 1 === \substr_count($html, '<p>') ? \preg_replace('~^<p>(.*)</p>\s*$~s', '$1', $html) : $html;
 }
 
-function main(string $siteUrl): void
+/** A redirect page, for the aliases: GitHub Pages cannot redirect, so a directory with a meta refresh. */
+function stub(string $title, string $from, string $to, string $siteUrl): string
+{
+    return '<!doctype html><html lang="en"><meta charset="utf-8"><title>' . e($title) . '</title>'
+        . '<link rel="canonical" href="' . e($siteUrl . $to) . '"><meta http-equiv="refresh" content="0; url=' . e($to) . '">'
+        . '<script>location.replace(' . \json_encode($to) . ')</script><a href="' . e($to) . '">' . e($title) . '</a>';
+}
+
+function main(string $siteUrl, array $argv): void
 {
     $start   = \microtime(true);
-    $classes = require __DIR__ . '/symbols.php';
-    $symbols = new Symbols($classes);
+    $lint    = \in_array('--lint', $argv, true);
+    $strict  = \in_array('--strict', $argv, true);
+    $symbols = new Symbols(require __DIR__ . '/symbols.php');
+    $notices = []; // things the build did on its own, printed at the end
+
+    // An unresolved @see is an error; with --lint it is listed with the other gaps instead
+    $unresolved = \array_filter($symbols->problems, static fn ($p) => 'see' === $p[1]);
+    if ($unresolved && !$lint) {
+        throw new BuildFailure(\count($unresolved) . " @see tag(s) that name no symbol:\n  " . \implode("\n  ", \array_map(static fn ($p) => $p[3], $unresolved)) . "\n(php build.php --lint lists every docblock gap)");
+    }
 
     // 1. The markdown files
     $pages = [];   // url => page
@@ -80,7 +98,7 @@ function main(string $siteUrl): void
         $rel = \substr($file->getPathname(), \strlen(__DIR__ . '/content/'), -3);
         [$front, $html] = Markdown::file(\file_get_contents($file->getPathname()));
         $parsed[$rel]   = [$front, $html];
-        if (!empty($front['symbol'])) { // a page about something that is not a class we can reflect
+        if (!empty($front['symbol'])) { // a page about something that is not in the source of the packages
             $symbols->addTopic($front['symbol'], (string) ($front['description'] ?? throw new BuildFailure("content/$rel.md: a topic needs a description")));
         }
     }
@@ -95,12 +113,13 @@ function main(string $siteUrl): void
         $symbol   = null;
         $kind     = 'page';
 
+        // content/reference/ is the legacy overlay: hand-written parts for a symbol that the docblock does not cover
         if ('reference' === ($dir[0] ?? null)) {
             if (1 === \count($dir) && 'index' === $leaf) {
                 $kind = 'section';
             } elseif (2 === \count($dir) && 'index' === $leaf) {
-                $symbol = !empty($front['symbol']) ? $symbols->find($front['symbol']) : $symbols->find($dir[1]);
-                $symbol ?? throw new BuildFailure("$src is about $dir[1], which is not a documented class (see symbols.php)");
+                $symbol = $symbols->find($front['symbol'] ?? $dir[1]);
+                $symbol ?? throw new BuildFailure("$src is about $dir[1], which is not a documented class");
             } elseif (2 === \count($dir)) {
                 $symbol = $symbols->find("$dir[1]::$leaf");
                 $symbol ?? throw new BuildFailure("$src is about $dir[1]::$leaf, which is not a public method of $dir[1]");
@@ -108,6 +127,11 @@ function main(string $siteUrl): void
                 throw new BuildFailure("$src: the reference has only Class/ and Class/method pages");
             }
             if ($symbol) {
+                if ('' === $symbol['desc'] && isset($front['description'])) {
+                    $symbols->all[$symbol['full']]['desc']  = $front['description'];
+                    $symbols->all[$symbol['full']]['plain'] = Symbols::plain($front['description']);
+                    $symbol = $symbols->all[$symbol['full']];
+                }
                 $url  = $symbol['url'];
                 $kind = $symbol['kind'];
             }
@@ -120,7 +144,7 @@ function main(string $siteUrl): void
             'status' => $front['status'] ?? 'draft', 'see_also' => $front['see_also'] ?? [],
             'order' => (int) ($front['order'] ?? 50), 'template' => $front['template'] ?? null,
             'title' => $symbol['name'] ?? ($front['title'] ?? throw new BuildFailure("$src: front matter needs a title")),
-            'description' => $front['description'] ?? ($symbol['desc'] ?? throw new BuildFailure("$src: front matter needs a description")),
+            'description' => $symbol ? ($symbol['plain'] ?: \ucfirst($symbol['kind']) . ' ' . $symbol['name'] . '.') : ($front['description'] ?? throw new BuildFailure("$src: front matter needs a description")),
         ];
         if (!\in_array($page['status'], STATUSES, true)) {
             throw new BuildFailure("$src: status must be one of " . \implode(', ', STATUSES) . ", not '{$page['status']}'");
@@ -129,22 +153,58 @@ function main(string $siteUrl): void
         $pages[$url] = $page;
     }
 
-    // 2. Every public symbol gets a page, from its docblock alone when nobody wrote one
+    // 2. Every public symbol gets a page, from its docblock; a short name two symbols share gets a page that lists them
     foreach ($symbols->all as $symbol) {
-        if (!isset($pages[$symbol['url']])) {
-            $claim($symbol['url'], 'the reflected ' . $symbol['full']);
-            $pages[$symbol['url']] = [
-                'url' => $symbol['url'], 'source' => null, 'kind' => $symbol['kind'], 'symbol' => $symbol, 'html' => '',
-                'status' => 'draft', 'see_also' => [], 'order' => 50, 'template' => null,
-                'title' => $symbol['name'], 'description' => $symbol['desc'],
+        if (($pages[$symbol['url']]['symbol']['full'] ?? null) === $symbol['full']) {
+            continue;
+        }
+        $claim($symbol['url'], 'the reflected ' . $symbol['full']);
+        $pages[$symbol['url']] = [
+            'url' => $symbol['url'], 'source' => null, 'kind' => $symbol['kind'], 'symbol' => $symbol, 'html' => '',
+            'status' => 'stable', 'see_also' => [], 'order' => 50, 'template' => null,
+            'title' => $symbol['name'], 'description' => $symbol['plain'] ?: \ucfirst($symbol['kind']) . ' ' . $symbol['name'] . '.',
+        ];
+    }
+    foreach ($symbols->short as $short => $fulls) {
+        if (\count($fulls) > 1) {
+            $claim("/$short/", "the page that tells the $short symbols apart");
+            $list = '';
+            foreach ($fulls as $full) {
+                $s     = $symbols->all[$full];
+                $list .= '<li><a href="' . $s['url'] . '"><code>' . e($full) . '</code></a> ' . inline($s['desc']) . "</li>\n";
+            }
+            $pages["/$short/"] = [
+                'url' => "/$short/", 'source' => null, 'kind' => 'page', 'symbol' => null, 'status' => 'stable', 'see_also' => [], 'order' => 50, 'template' => null,
+                'html' => "<ul class=\"index\">\n$list</ul>\n", 'title' => $short, 'description' => "Several symbols are called $short.",
             ];
         }
     }
     \uasort($pages, static fn ($a, $b) => [$a['order'], $a['title']] <=> [$b['order'], $b['title']]);
 
-    // 3. See-also targets, and [[Symbol]] links in the text
+    // 3. A hand-written page and a docblock that both give examples, or See also: the docblock wins
     foreach ($pages as &$page) {
-        $page['see'] = [];
+        $s = $page['symbol'];
+        if (null === $s || !$page['source'] || 'topic' === $s['kind']) {
+            continue;
+        }
+        $dup = [];
+        if (($s['examples'] || \str_contains($s['rest'], '```php')) && \str_contains($page['html'], 'id="examples"')) {
+            $dup[]        = 'examples (the page body is ignored)';
+            $page['html'] = '';
+        }
+        if ($s['see'] && $page['see_also']) {
+            $dup[]            = 'See also (see_also is ignored)';
+            $page['see_also'] = [];
+        }
+        if ($dup) {
+            $notices[] = "duplicate source: {$page['source']} and the docblock of {$s['full']} both give " . \implode(' and ', $dup) . '; the docblock wins';
+        }
+    }
+    unset($page);
+
+    // 4. See-also targets (the docblock's @see first), and [[Symbol]] links in the text
+    foreach ($pages as &$page) {
+        $page['see'] = $page['symbol']['see'] ?? [];
         foreach ($page['see_also'] as $name) {
             $target = \str_starts_with($name, '/') ? ($pages[$name] ?? null) : $symbols->find($name);
             if (null === $target) {
@@ -163,7 +223,7 @@ function main(string $siteUrl): void
     }
     unset($page);
 
-    // 4. Write
+    // 5. Write
     $out = __DIR__ . '/public';
     if (\is_dir($out)) {
         \exec('rm -rf ' . \escapeshellarg($out));
@@ -186,8 +246,9 @@ function main(string $siteUrl): void
         if ('landing' === $page['kind']) {
             $main = render('landing', $vars);
         } elseif ($isSymbol) {
-            $examples = (bool) \preg_match('~id="examples"~', $page['html']);
-            $withoutExamples += $examples || 'topic' === $page['kind'] ? 0 : 1;
+            $s        = $page['symbol'];
+            $examples = !empty($s['examples']) || \str_contains($s['rest'] ?? '', '```php') || \str_contains($page['html'], 'id="examples"');
+            $withoutExamples += $examples || 'topic' === $s['kind'] ? 0 : 1;
             $main = render('reference', $vars + ['hasExamples' => $examples]);
         } elseif ('section' === $page['kind']) {
             $main = render('section', $vars + ['children' => '/reference/' === $page['url'] ? [] : $children($page['url'])]);
@@ -202,22 +263,27 @@ function main(string $siteUrl): void
         $built[$page['url']] = $main . $html;
     }
 
-    // Redirect stubs: /Swerve::publish -> /Swerve/publish/, a directory because GitHub Pages cannot redirect
+    // Redirects, as directories because GitHub Pages cannot redirect: /Swerve::publish and the namespace path of every symbol
     $index = [];
-    foreach ($symbols->all as $symbol) {
-        $index[] = ['n' => $symbol['name'], 'd' => $symbol['desc'], 'u' => $symbol['url'], 'k' => $symbol['kind']];
-        if ('method' === $symbol['kind']) {
-            $stub = "/{$symbol['name']}/";
-            $claim($stub, "the redirect for {$symbol['name']}");
-            $target = $siteUrl . $symbol['url'];
-            $write($stub . 'index.html', '<!doctype html><html lang="en"><meta charset="utf-8"><title>' . e($symbol['name']) . '</title>'
-                . '<link rel="canonical" href="' . e($target) . '"><meta http-equiv="refresh" content="0; url=' . e($symbol['url']) . '">'
-                . '<script>location.replace(' . \json_encode($symbol['url']) . ')</script><a href="' . e($symbol['url']) . '">' . e($symbol['name']) . '</a>');
+    foreach ($symbols->all as $s) {
+        $index[] = ['n' => $s['name'], 'f' => $s['full'], 'd' => $s['plain'], 'u' => $s['url'], 'k' => $s['kind']];
+        if ($s['alias']) {
+            if (isset($files[$s['alias']]) && 'function' === $s['kind']) {
+                $notices[] = "alias {$s['alias']} of the function {$s['full']} is not written: {$files[$s['alias']]} is there";
+            } else {
+                $claim($s['alias'], "the alias of {$s['full']}");
+                $write($s['alias'] . 'index.html', stub($s['full'], $s['alias'], $s['url'], $siteUrl));
+            }
+        }
+        if ('method' === $s['kind']) {
+            $colon = '/' . \str_replace('\\', '/', $s['name']) . '/';
+            $claim($colon, "the redirect for {$s['name']}");
+            $write($colon . 'index.html', stub($s['name'], $colon, $s['url'], $siteUrl));
         }
     }
     foreach ($pages as $page) {
         if (!$page['symbol'] && 'landing' !== $page['kind']) {
-            $index[] = ['n' => $page['title'], 'd' => $page['description'], 'u' => $page['url'], 'k' => 'page'];
+            $index[] = ['n' => $page['title'], 'f' => '', 'd' => $page['description'], 'u' => $page['url'], 'k' => 'page'];
         }
     }
     $write('/search.json', \json_encode($index, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
@@ -225,7 +291,7 @@ function main(string $siteUrl): void
     $write('/.nojekyll', '');
     \exec('cp -r ' . \escapeshellarg(__DIR__ . '/theme') . ' ' . \escapeshellarg($out . '/theme'));
 
-    // 5. Links: every root-relative link must land on a file we wrote; relative links are not allowed
+    // 6. Links: every root-relative link must land on a file we wrote; relative links are not allowed
     $broken = [];
     foreach ($built as $url => $html) {
         \preg_match_all('~\b(?:href|src)="([^"]*)"~', $html, $m);
@@ -250,7 +316,44 @@ function main(string $siteUrl): void
     \printf("Built %d pages (%d reference symbols) in %.1f s -> public/\n", \count($pages), \count($symbols->all), \microtime(true) - $start);
     \printf("  placeholder pages:                    %d\n", $placeholders);
     \printf("  reference pages without examples:     %d\n", $withoutExamples);
-    if (\in_array('--todo', $GLOBALS['argv'], true)) {
+    foreach ($notices as $notice) {
+        \printf("  note: %s\n", $notice);
+    }
+
+    // The reference, per package: what it holds, and the gaps in its docblocks
+    $gaps = 0;
+    foreach (\array_unique(\array_column($symbols->all, 'package')) as $package) {
+        $count = ['class' => 0, 'method' => 0, 'function' => 0];
+        foreach ($symbols->all as $s) {
+            if (($s['package'] ?? null) === $package) {
+                $count['method' === $s['kind'] ? 'method' : ('function' === $s['kind'] ? 'function' : 'class')]++;
+            }
+        }
+        $by = [];
+        foreach ($symbols->problems as $p) {
+            if ($p[0] === $package) {
+                $by[$p[1]][] = $p;
+            }
+        }
+        $gaps += \count($symbols->problems) ? \array_sum(\array_map('count', $by)) : 0;
+        \printf("  %s: %d classes, %d methods, %d functions; without summary %d, without example %d, @param mismatch %d, @see unresolved %d, @example file missing %d\n",
+            $package, $count['class'], $count['method'], $count['function'],
+            \count($by['summary'] ?? []), \count($by['example'] ?? []), \count($by['param'] ?? []), \count($by['see'] ?? []), \count($by['example-file'] ?? []));
+        if ($lint) {
+            foreach ($by as $kind => $list) {
+                if ('example' === $kind) {
+                    continue; // hundreds of them: the count above, and the symbols below
+                }
+                \printf("\n%s, %s (%d):\n", $package, $kind, \count($list));
+                foreach ($list as $p) {
+                    \printf("  %s\n", 'summary' === $kind ? $p[2] : $p[3]);
+                }
+            }
+            \printf("\n%s, no example (%d), classes and functions only:\n  %s\n", $package, \count($by['example'] ?? []),
+                \implode(' ', \array_map(static fn ($p) => $p[2], \array_filter($by['example'] ?? [], static fn ($p) => 'method' !== $symbols->all[$p[2]]['kind'])) ));
+        }
+    }
+    if (\in_array('--todo', $argv, true)) {
         $files = new RegexIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__, FilesystemIterator::SKIP_DOTS)), '~/(content|templates)/.*\.(md|php)$~');
         foreach ($files as $file) {
             foreach (\file($file->getPathname()) as $n => $line) {
@@ -260,10 +363,14 @@ function main(string $siteUrl): void
             }
         }
     }
+    if ($strict && $gaps) {
+        \fwrite(\STDERR, "--strict: $gaps docblock gap(s)\n");
+        exit(1);
+    }
 }
 
 try {
-    main($siteUrl);
+    main($siteUrl, $argv);
 } catch (BuildFailure $e) {
     \fwrite(\STDERR, "BUILD FAILED: " . $e->getMessage() . "\n");
     exit(1);

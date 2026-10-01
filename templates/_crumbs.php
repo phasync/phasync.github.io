@@ -4,8 +4,7 @@ $crumbs = [['Home', '/']];
 if ($s = $page['symbol'] ?? null) {
     $crumbs[] = ['Reference', '/reference/'];
     if ('method' === $s['kind']) {
-        $class    = \explode('::', $s['name'])[0];
-        $crumbs[] = [$class, "/$class/"];
+        $crumbs[] = [$s['classLabel'], $s['classUrl']];
     }
 } else {
     $parts = \explode('/', \trim($page['url'], '/'));

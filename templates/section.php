@@ -9,14 +9,14 @@
 <h2><?= e($label) ?> <small><code><?= e($package) ?></code></small></h2>
 <ul class="index">
 <?php foreach ($symbols->all as $s): if ('method' === $s['kind'] || 'topic' === $s['kind'] || ($s['package'] ?? '') !== $package) { continue; } ?>
-  <li><a href="<?= $s['url'] ?>"><code><?= e($s['name']) ?></code></a> <?= e($s['desc']) ?></li>
+  <li><a href="<?= $s['url'] ?>"><code><?= e($s['name']) ?></code></a> <?= inline($s['desc']) ?></li>
 <?php endforeach ?>
 </ul>
 <?php endforeach ?>
 <h2>Other packages</h2>
 <ul class="index">
 <?php foreach ($symbols->all as $s): if ('topic' !== $s['kind']) { continue; } ?>
-  <li><a href="<?= $s['url'] ?>"><code><?= e($s['name']) ?></code></a> <?= e($s['desc']) ?></li>
+  <li><a href="<?= $s['url'] ?>"><code><?= e($s['name']) ?></code></a> <?= inline($s['desc']) ?></li>
 <?php endforeach ?>
 </ul>
 <h2>Advanced</h2>

@@ -10,8 +10,9 @@
     const scored = [];
     for (const item of items) {
       const name = item.n.toLowerCase();
+      const full = item.f.toLowerCase();
       const member = name.includes('::') ? name.split('::')[1] : name;
-      const score = name === q ? 0 : name.startsWith(q) ? 1 : member.startsWith(q) ? 2 : name.includes(q) ? 3 : item.d.toLowerCase().includes(q) ? 4 : 9;
+      const score = name === q || full === q ? 0 : full.startsWith(q) ? 1 : name.startsWith(q) ? 1 : member.startsWith(q) ? 2 : name.includes(q) ? 3 : item.d.toLowerCase().includes(q) ? 4 : 9;
       if (score < 9) scored.push([score, item.n.length, item]);
     }
     return scored.sort((a, b) => a[0] - b[0] || a[1] - b[1]).slice(0, limit).map((s) => s[2]);
@@ -62,7 +63,8 @@
     document.getElementById('nf-path').textContent = location.pathname;
     load().then((items) => {
       if (asked === null) {
-        const hit = items.find((s) => s.u.replace(/^\/|\/$/g, '').toLowerCase() === path.toLowerCase());
+        const want = path.toLowerCase();
+        const hit = items.find((s) => s.u.replace(/^\/|\/$/g, '').toLowerCase() === want || s.f.replace(/\\|::/g, '/').toLowerCase() === want);
         if (hit) { location.replace(hit.u); return; }
       }
       const term = asked ?? path.split('/').filter(Boolean).join('::');
