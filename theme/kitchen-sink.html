@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kitchen sink - phasync</title>
+<!-- Every component of the theme on one page. Switch theme with the button in the header, or add ?theme=dark / ?theme=light to the URL. -->
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<script src="/theme/phasync.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT -->
+    <a class="wordmark" href="/theme/kitchen-sink.html"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="#">Get started</a><a href="#" aria-current="true">Frameworks</a><a href="#">Guides</a><a href="#">Library</a><a href="#">Performance</a><a href="#">Reference</a>
+    </nav>
+    <form class="search" role="search" onsubmit="return false"><input type="search" placeholder="Swerve::publish" aria-label="Search the reference"></form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark"></button>
+  </div>
+</header>
+<main class="container">
+  <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="#">Home</a></li><li><a href="#">Reference</a></li><li><a href="#">Swerve</a></li><li aria-current="page">publish</li></ol></nav>
+
+  <h1>Kitchen sink <span class="badge kind">Method</span> <span class="badge placeholder">Placeholder</span> <span class="badge">Draft</span></h1>
+  <p class="lead">Lead paragraph: one sentence under the title, in the muted colour.</p>
+
+  <h2 id="type">Type</h2>
+  <p>Body text with a <a href="#">link</a>, <code>inline code</code>, <strong>strong</strong> and <em>emphasis</em>. The body font is the system font; headings are Outfit; code is JetBrains Mono.</p>
+  <h3>Third-level heading</h3>
+  <ul><li>A list item</li><li>Another, with <code>Swerve::publish()</code></li></ul>
+  <table><thead><tr><th>Option</th><th>Default</th><th>Meaning</th></tr></thead><tbody>
+    <tr><td><code>--cache-size</code></td><td>64M</td><td>The most the cache holds.</td></tr>
+    <tr><td><code>--workers</code></td><td>CPU count</td><td>Worker processes.</td></tr>
+  </tbody></table>
+
+  <h2 id="code">Code block with copy button</h2>
+  <div class="code" data-lang="php"><pre><code><span class="hl-c">// A comment</span>
+<span class="hl-k">use</span> Swerve\Swerve;
+
+Swerve::publish(<span class="hl-s">'room:lobby'</span>, <span class="hl-s">'hi'</span>);</code></pre></div>
+
+  <h2 id="terminal">Terminal block</h2>
+  <div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve
+<span class="prompt">$ </span>vendor/bin/swerve --watch
+2026-09-26 17:00:30.12    swerve serving ./swerve.php on http://127.0.0.1:8080</code></pre></div>
+
+  <h2 id="tabs">Tabs (radio inputs, no script)</h2>
+  <div class="tabs">
+    <input type="radio" name="ks" id="ks-a" checked><label for="ks-a">Laravel</label>
+    <div class="tab-panel"><div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-laravel</code></pre></div></div>
+    <input type="radio" name="ks" id="ks-b"><label for="ks-b">Symfony</label>
+    <div class="tab-panel"><div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-symfony</code></pre></div></div>
+  </div>
+
+  <h2 id="callouts">Callouts</h2>
+  <p class="callout"><strong>Note.</strong> A plain callout, for something to know.</p>
+  <p class="callout warn"><strong>Warning.</strong> A warning, for something that goes wrong.</p>
+  <p class="callout placeholder"><strong>Placeholder.</strong> This page is not written yet.</p>
+  <p class="callout placeholder"><strong>TODO-measure.</strong> A claim that is not measured yet, with a link to <a href="#">Performance</a>.</p>
+
+  <h2 id="signature">Signature</h2>
+  <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static function</span> Swerve::publish(<span class="hl-k">string</span> $topic, <span class="hl-k">mixed</span> $message): <span class="hl-k">void</span></code></pre></div></div>
+
+  <h2 id="parameters">Parameter list</h2>
+  <dl class="params">
+    <dt><code>$topic</code> <span class="type">string</span></dt><dd>1 to 255 bytes.</dd>
+    <dt><code>$maxLag</code> <span class="type">float</span> <span class="default">default <code>30.0</code></span></dt><dd>Seconds a subscriber may be behind.</dd>
+  </dl>
+
+  <h2 id="grid">Link grid</h2>
+  <ul class="grid">
+    <li><a href="#"><strong>Swerve</strong><span>Publish, subscribe, log, cache and claims.</span></a></li>
+    <li><a href="#"><strong>WebSocket</strong><span>A WebSocket connection, server side.</span></a></li>
+    <li><a href="#"><strong>HttpClient</strong><span>An async PSR-18 client.</span></a></li>
+  </ul>
+
+  <h2 id="index">Index and see also</h2>
+  <ul class="index"><li><a href="#"><code>Swerve::publish</code></a> Send a message to every subscriber.</li><li><a href="#"><code>Swerve::subscribe</code></a> Receive what is published.</li></ul>
+  <h2 id="see-also">See also</h2>
+  <ul class="see-also"><li><a href="#"><code>Swerve::subscribe</code></a> Receive what is published to a topic.</li><li><a href="#">Realtime guide</a> SSE and WebSockets.</li></ul>
+
+  <h2 id="notfound">404</h2>
+  <div class="notfound">
+    <p>No page <code>/swerve/publsh</code>. Did you mean:</p>
+    <ul class="index"><li><a href="#"><code>Swerve::publish</code></a> Send a message to every subscriber.</li></ul>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p><a href="#">phasync/phasync</a> <a href="#">phasync/swerve</a> <a href="#">phasync/phasync-ext</a></p>
+    <p><a href="#">Advanced</a> <a href="#">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

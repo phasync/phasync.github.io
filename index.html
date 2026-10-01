@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>phasync and Swerve: run your PHP application on Swerve</title>
+<meta name="description" content="Run your PHP application on Swerve, a PHP application server built on phasync coroutines.">
+<link rel="canonical" href="https://phasync.github.io/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<section class="intro">
+  <h1>Run your PHP application on Swerve.</h1>
+  <p class="lead">A PHP application server for the code you already write: sequential, in the framework you already use. A request can wait for as long as it needs, and WebSockets and Server-Sent Events need no extra service.</p>
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer config minimum-stability alpha    # while swerve is alpha
+<span class="prompt">$ </span>composer config prefer-stable true
+<span class="prompt">$ </span>composer require phasync/swerve
+<span class="prompt">$ </span>vendor/bin/swerve --watch
+2026-09-26 17:00:30.12    swerve 0.1.0 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
+2026-09-26 17:00:31.25 3 GET / 200 1.2ms</code></pre></div>
+  <p><code>swerve.php</code>, next to <code>composer.json</code>, returns a PSR-15 request handler. <code>--watch</code> reloads the workers when a PHP file changes; the other options are in <a href="/get-started/dev-server/">the dev server</a> page and <code>vendor/bin/swerve --help</code>.</p>
+</section>
+
+<section id="sequential">
+  <h2>Write sequential PHP</h2>
+  <p>To delay a response, call <code>sleep()</code> and respond afterwards. The other requests are served while this one waits.</p>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php
+
+</span><span class="hl-k">use </span>phasync\Psr\Response<span class="hl-k">;
+use </span>Psr\Http\Message\ResponseInterface<span class="hl-k">;
+use </span>Psr\Http\Message\ServerRequestInterface<span class="hl-k">;
+use </span>Psr\Http\Server\RequestHandlerInterface<span class="hl-k">;
+
+return new class implements </span>RequestHandlerInterface <span class="hl-k">{
+    public function </span>handle<span class="hl-k">(</span>ServerRequestInterface $request<span class="hl-k">): </span>ResponseInterface
+    <span class="hl-k">{
+        </span>sleep<span class="hl-k">(</span>10<span class="hl-k">);
+
+        return new </span>Response<span class="hl-k">(</span>200<span class="hl-k">, [</span><span class="hl-s">'Content-Type' </span><span class="hl-k">=&gt; </span><span class="hl-s">'text/plain'</span><span class="hl-k">], </span><span class="hl-s">"Ten seconds later.\n"</span><span class="hl-k">);
+    }
+};</span></code></pre></div>
+  <!-- TODO-verify: not run yet. Plain sleep() waits without blocking only with phasync-ext loaded (docs/how-it-runs.md, phasync-ext README); without it use phasync::sleep(10) -->
+  <p>Plain <code>sleep()</code> waits without blocking the worker when <a href="/library/phasync-ext/">phasync-ext</a> is loaded; Swerve loads it by itself when it is installed (<code>composer require phasync/phasync-ext</code>). Without the extension, <code>sleep()</code> blocks every other request of that worker, and you call <code>phasync::sleep(10)</code> instead. Database queries, API calls and file reads wait the same way. <a href="/guides/sequential-php/">What waits and what blocks</a>.</p>
+  <p class="callout placeholder"><strong>TODO-measure.</strong> The owner's expectation, not a result: Swerve behaves like about 100,000 PHP-FPM workers on 8 CPU cores and 16 GB of memory, clearly ahead of Node.js and slightly ahead of Go. Nothing is measured yet; the pages on <a href="/performance/">Performance</a> list what will be, and this sentence stays marked until they hold the numbers.</p>
+</section>
+
+<section id="frameworks">
+  <h2>Your framework</h2>
+  <p>One adapter per framework. <code>public/index.php</code> stays as it is, so the same application still runs under PHP-FPM.</p>
+  <!-- TODO-verify: the six swerve-* adapter packages answered 404 on repo.packagist.org on 2026-10-01; the snippets below are from their READMEs (tags 0.1.0-alpha*), not from a successful composer require -->
+  <div class="tabs">
+    <input type="radio" name="framework" id="fw-laravel" checked><label for="fw-laravel">Laravel</label>
+    <div class="tab-panel">
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-laravel
+<span class="prompt">$ </span>vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php</code></pre></div>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php, next to composer.json
+
+</span><span class="hl-k">require </span>__DIR__ <span class="hl-k">. </span><span class="hl-s">'/vendor/autoload.php'</span><span class="hl-k">;
+
+return new </span>Swerve\Laravel\Handler<span class="hl-k">(</span>__DIR__<span class="hl-k">);</span></code></pre></div>
+      <p><a href="/frameworks/laravel/">Laravel on Swerve</a></p>
+    </div>
+    <input type="radio" name="framework" id="fw-symfony"><label for="fw-symfony">Symfony</label>
+    <div class="tab-panel">
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-symfony
+<span class="prompt">$ </span>vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php</code></pre></div>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php, next to composer.json
+
+</span><span class="hl-k">require </span>__DIR__ <span class="hl-k">. </span><span class="hl-s">'/vendor/autoload.php'</span><span class="hl-k">;
+
+return new </span>Swerve\Symfony\Handler<span class="hl-k">(</span>__DIR__<span class="hl-k">);</span></code></pre></div>
+      <p><a href="/frameworks/symfony/">Symfony on Swerve</a></p>
+    </div>
+    <input type="radio" name="framework" id="fw-codeigniter"><label for="fw-codeigniter">CodeIgniter</label>
+    <div class="tab-panel">
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-codeigniter
+<span class="prompt">$ </span>vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php</code></pre></div>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php, next to composer.json
+
+</span><span class="hl-k">require </span>__DIR__ <span class="hl-k">. </span><span class="hl-s">'/vendor/autoload.php'</span><span class="hl-k">;
+
+return new </span>Swerve\CodeIgniter\Handler<span class="hl-k">(</span>__DIR__<span class="hl-k">);</span></code></pre></div>
+      <p><a href="/frameworks/codeigniter/">CodeIgniter on Swerve</a></p>
+    </div>
+    <input type="radio" name="framework" id="fw-cakephp"><label for="fw-cakephp">CakePHP</label>
+    <div class="tab-panel">
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-cakephp
+<span class="prompt">$ </span>vendor/bin/swerve --http=0.0.0.0:8080 --public=webroot swerve.php</code></pre></div>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php, next to composer.json
+
+</span><span class="hl-k">require </span>__DIR__ <span class="hl-k">. </span><span class="hl-s">'/vendor/autoload.php'</span><span class="hl-k">;
+
+return new </span>Swerve\CakePHP\Handler<span class="hl-k">(</span>__DIR__<span class="hl-k">);</span></code></pre></div>
+      <p><a href="/frameworks/cakephp/">CakePHP on Swerve</a></p>
+    </div>
+    <input type="radio" name="framework" id="fw-yii"><label for="fw-yii">Yii 3</label>
+    <div class="tab-panel">
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-yii
+<span class="prompt">$ </span>vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php</code></pre></div>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php, next to composer.json
+
+</span><span class="hl-k">require </span>__DIR__ <span class="hl-k">. </span><span class="hl-s">'/vendor/autoload.php'</span><span class="hl-k">;
+
+require </span>__DIR__ <span class="hl-k">. </span><span class="hl-s">'/src/bootstrap.php'</span><span class="hl-k">; </span><span class="hl-c">// yiisoft/app's: the autoloader and .env
+
+</span><span class="hl-k">return new </span>Swerve\Yii\Handler<span class="hl-k">(</span>__DIR__<span class="hl-k">);</span></code></pre></div>
+      <p><a href="/frameworks/yii/">Yii 3 on Swerve</a></p>
+    </div>
+    <input type="radio" name="framework" id="fw-laminas"><label for="fw-laminas">Laminas</label>
+    <div class="tab-panel">
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer require phasync/swerve-laminas
+<span class="prompt">$ </span>vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php</code></pre></div>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php, next to composer.json
+
+</span><span class="hl-k">require </span>__DIR__ <span class="hl-k">. </span><span class="hl-s">'/vendor/autoload.php'</span><span class="hl-k">;
+
+return new </span>Swerve\Laminas\Handler<span class="hl-k">(</span>__DIR__<span class="hl-k">);</span></code></pre></div>
+      <p><a href="/frameworks/laminas/">Laminas on Swerve</a></p>
+    </div>
+  </div>
+  <p>Anything else that returns a <a href="/frameworks/psr-15/">PSR-15 request handler</a> works too: Slim, Mezzio, your own.</p>
+</section>
+
+<section id="realtime">
+  <h2>Realtime: publish, subscribe, SSE and WebSocket</h2>
+  <p>A message published in any worker reaches the subscribers in every worker. With one publisher, every subscriber gets its messages in the order it published them. This is a complete chat server over Server-Sent Events:</p>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php
+
+</span><span class="hl-k">use </span>phasync\Psr\Response<span class="hl-k">;
+use </span>phasync\Psr\UnbufferedStream<span class="hl-k">;
+use </span>phasync\TimeoutException<span class="hl-k">;
+use </span>Psr\Http\Message\ResponseInterface<span class="hl-k">;
+use </span>Psr\Http\Message\ServerRequestInterface<span class="hl-k">;
+use </span>Psr\Http\Server\RequestHandlerInterface<span class="hl-k">;
+use </span>Swerve\Swerve<span class="hl-k">;
+
+return new class implements </span>RequestHandlerInterface <span class="hl-k">{
+    public function </span>handle<span class="hl-k">(</span>ServerRequestInterface $request<span class="hl-k">): </span>ResponseInterface
+    <span class="hl-k">{
+        if (</span><span class="hl-s">'POST' </span><span class="hl-k">=== </span>$request<span class="hl-k">-&gt;</span>getMethod<span class="hl-k">()) {
+            </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, (string) </span>$request<span class="hl-k">-&gt;</span>getBody<span class="hl-k">());      </span><span class="hl-c">// to every subscriber, in every worker
+
+            </span><span class="hl-k">return new </span>Response<span class="hl-k">(</span>204<span class="hl-k">);
+        }
+
+        </span>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>heartbeat<span class="hl-k">: </span>15<span class="hl-k">);       </span><span class="hl-c">// subscribed before we answer
+        </span>$out <span class="hl-k">= new </span>UnbufferedStream<span class="hl-k">(</span>1<span class="hl-k">, </span>60<span class="hl-k">);
+        </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$subscription<span class="hl-k">, </span>$out<span class="hl-k">) {
+            try {
+                foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
+                    </span>$out<span class="hl-k">-&gt;</span>append<span class="hl-k">(</span>null <span class="hl-k">=== </span>$message <span class="hl-k">? </span><span class="hl-s">": keep-alive\n\n" </span><span class="hl-k">: </span><span class="hl-s">"data: </span>$message<span class="hl-s">\n\n"</span><span class="hl-k">);
+                }
+            } catch (</span>TimeoutException<span class="hl-k">) {                                </span><span class="hl-c">// the client left
+            </span><span class="hl-k">} finally {
+                </span>$out<span class="hl-k">-&gt;</span>end<span class="hl-k">();
+            }
+        });
+
+        return new </span>Response<span class="hl-k">(</span>200<span class="hl-k">, [</span><span class="hl-s">'Content-Type' </span><span class="hl-k">=&gt; </span><span class="hl-s">'text/event-stream'</span><span class="hl-k">, </span><span class="hl-s">'Cache-Control' </span><span class="hl-k">=&gt; </span><span class="hl-s">'no-cache'</span><span class="hl-k">], </span>$out<span class="hl-k">);
+    }
+};</span></code></pre></div>
+<div class="code" data-lang="js"><pre><code>const events = new EventSource('/');
+events.onmessage = (e) =&gt; console.log(e.data);
+fetch('/', {method: 'POST', body: 'hello'});</code></pre></div>
+  <p>The same room over a WebSocket, with <a href="/WebSocket/"><code>WebSocket</code></a> in place of the stream:</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">return </span>WebSocket<span class="hl-k">::</span>from<span class="hl-k">(</span>$request<span class="hl-k">, static function (</span>WebSocket $ws<span class="hl-k">) {
+    </span>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">);
+    </span>$forward      <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$ws<span class="hl-k">, </span>$subscription<span class="hl-k">) {
+        foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
+            </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);              </span><span class="hl-c">// to this browser
+        </span><span class="hl-k">}
+    });
+
+    foreach (</span>$ws <span class="hl-k">as </span>$message<span class="hl-k">) {               </span><span class="hl-c">// from this browser
+        </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>$message<span class="hl-k">);    </span><span class="hl-c">// to every subscriber, in every worker
+    </span><span class="hl-k">}
+    </span>phasync<span class="hl-k">::</span>cancel<span class="hl-k">(</span>$forward<span class="hl-k">);                </span><span class="hl-c">// the browser left
+</span><span class="hl-k">});</span></code></pre></div>
+  <!-- TODO-verify: shortened from examples/websocket-chat/swerve.php (no lag or cancel handling); not run as written -->
+  <p><a href="/guides/realtime/">Realtime guide</a>, <a href="/Swerve/publish/"><code>Swerve::publish</code></a>, <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>.</p>
+</section>
+
+<section id="cache">
+  <h2>Cache</h2>
+  <p><a href="/Swerve/cache/"><code>Swerve::cache()</code></a> is a PSR-16 cache that every worker shares. Each worker keeps what it has read in its own memory, and the master tells the workers to forget a key when it is written.</p>
+<div class="code" data-lang="php"><pre><code>$cache   <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>cache<span class="hl-k">();
+</span>$sidebar <span class="hl-k">= </span>$cache<span class="hl-k">-&gt;</span>get<span class="hl-k">(</span><span class="hl-s">'home:sidebar'</span><span class="hl-k">);
+if (</span>null <span class="hl-k">=== </span>$sidebar<span class="hl-k">) {
+    </span>$sidebar <span class="hl-k">= </span>render_sidebar<span class="hl-k">();
+    </span>$cache<span class="hl-k">-&gt;</span>set<span class="hl-k">(</span><span class="hl-s">'home:sidebar'</span><span class="hl-k">, </span>$sidebar<span class="hl-k">, </span>60<span class="hl-k">);   </span><span class="hl-c">// seconds
+</span><span class="hl-k">}</span></code></pre></div>
+  <p><a href="/guides/cache/">Cache guide</a>: how reads and writes travel, and what the cache does not do.</p>
+</section>
+
+<section id="after-the-response">
+  <h2>Keep working after the response <span class="badge placeholder">Placeholder</span></h2>
+  <p>Work started in a request can continue after the response is sent, with what the request had: the user, the request, the open database connection. Send 10,000 e-mails without making the client wait.</p>
+  <!-- TODO-verify: sketch only. docs/how-it-runs.md says work after the response (phasync::finally(), a go()) costs the client nothing; the example below is not yet run -->
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$recipients<span class="hl-k">) {   </span><span class="hl-c">// runs after the handler returned
+    </span><span class="hl-k">foreach (</span>$recipients <span class="hl-k">as </span>$recipient<span class="hl-k">) {
+        </span><span class="hl-c">// send one e-mail
+    </span><span class="hl-k">}
+});</span></code></pre></div>
+  <p><a href="/guides/after-the-response/">After the response</a> will have the whole story.</p>
+</section>
+
+<section id="reference">
+  <h2>Reference and guides</h2>
+  <ul class="grid">
+    <li><a href="/Swerve/"><strong>Swerve</strong><span>Publish, subscribe, log, cache and claims for the application.</span></a></li>
+    <li><a href="/WebSocket/"><strong>WebSocket</strong><span>A WebSocket connection, server side.</span></a></li>
+    <li><a href="/HttpClient/"><strong>HttpClient</strong><span>An async PSR-18 client, <code>phasync/http-client</code>.</span></a></li>
+    <li><a href="/ProcessRunner/"><strong>ProcessRunner</strong><span>Launch and manage child processes.</span></a></li>
+    <li><a href="/guides/tether/"><strong>Tether</strong><span>Interactive components over a WebSocket.</span></a></li>
+    <li><a href="/phasync/"><strong>phasync</strong><span>run(), go(), sleep(), await() and the rest of the facade.</span></a></li>
+    <li><a href="/performance/"><strong>Performance</strong><span>How we measure, and the results.</span></a></li>
+    <li><a href="/guides/"><strong>Guides</strong><span>Realtime, concurrent API calls, running processes, production.</span></a></li>
+  </ul>
+</section>
+
+<p class="more">Writing a library? <a href="/library/use-phasync-in-a-library/">Use phasync in a library</a>, so that it runs under Swerve, PHP-FPM and the CLI alike.</p>
+
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

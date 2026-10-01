@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realtime: SSE and WebSockets - phasync</title>
+<meta name="description" content="Push to the browser with Server-Sent Events or WebSockets, across all workers.">
+<link rel="canonical" href="https://phasync.github.io/guides/realtime/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/" aria-current="true">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/guides/">Guides</a></li>
+  <li aria-current="page">Realtime: SSE and WebSockets</li>
+</ol></nav>
+<h1>Realtime: SSE and WebSockets <span class="badge draft">Draft</span></h1>
+<p class="lead">Push to the browser with Server-Sent Events or WebSockets, across all workers.</p>
+<p>A request may stay open as long as it likes, and a message published in any worker reaches the subscribers in every worker. Both examples are complete chat rooms, taken from <code>examples/</code> in the Swerve repository, where the tests run them.</p>
+<h2>Server-Sent Events<a id="server-sent-events" href="#server-sent-events" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>The browser's <code>EventSource</code> reads a <code>text/event-stream</code> response and reconnects by itself when it ends.</p>
+<div class="code" data-lang="php"><pre><code>&lt;?php <span class="hl-c">// swerve.php
+
+</span><span class="hl-k">use </span>phasync\Psr\Response<span class="hl-k">;
+use </span>phasync\Psr\UnbufferedStream<span class="hl-k">;
+use </span>phasync\TimeoutException<span class="hl-k">;
+use </span>Psr\Http\Message\ResponseInterface<span class="hl-k">;
+use </span>Psr\Http\Message\ServerRequestInterface<span class="hl-k">;
+use </span>Psr\Http\Server\RequestHandlerInterface<span class="hl-k">;
+use </span>Swerve\Swerve<span class="hl-k">;
+
+return new class implements </span>RequestHandlerInterface <span class="hl-k">{
+    public function </span>handle<span class="hl-k">(</span>ServerRequestInterface $request<span class="hl-k">): </span>ResponseInterface
+    <span class="hl-k">{
+        if (</span><span class="hl-s">'POST' </span><span class="hl-k">=== </span>$request<span class="hl-k">-&gt;</span>getMethod<span class="hl-k">()) {
+            </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, (string) </span>$request<span class="hl-k">-&gt;</span>getBody<span class="hl-k">());
+
+            return new </span>Response<span class="hl-k">(</span>204<span class="hl-k">);
+        }
+
+        </span>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>heartbeat<span class="hl-k">: </span>15<span class="hl-k">);
+        </span>$out <span class="hl-k">= new </span>UnbufferedStream<span class="hl-k">(</span>1<span class="hl-k">, </span>60<span class="hl-k">);
+        </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$subscription<span class="hl-k">, </span>$out<span class="hl-k">) {
+            try {
+                foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
+                    </span>$out<span class="hl-k">-&gt;</span>append<span class="hl-k">(</span>null <span class="hl-k">=== </span>$message <span class="hl-k">? </span><span class="hl-s">": keep-alive\n\n" </span><span class="hl-k">: </span><span class="hl-s">"data: </span>$message<span class="hl-s">\n\n"</span><span class="hl-k">);
+                }
+            } catch (</span>TimeoutException<span class="hl-k">) {
+                </span><span class="hl-c">// the client left
+            </span><span class="hl-k">} finally {
+                </span>$out<span class="hl-k">-&gt;</span>end<span class="hl-k">();
+            }
+        });
+
+        return new </span>Response<span class="hl-k">(</span>200<span class="hl-k">, [</span><span class="hl-s">'Content-Type' </span><span class="hl-k">=&gt; </span><span class="hl-s">'text/event-stream'</span><span class="hl-k">, </span><span class="hl-s">'Cache-Control' </span><span class="hl-k">=&gt; </span><span class="hl-s">'no-cache'</span><span class="hl-k">], </span>$out<span class="hl-k">);
+    }
+};</span></code></pre></div>
+
+<div class="code" data-lang="js"><pre><code>const events = new EventSource('/');
+events.onmessage = (e) =&gt; console.log(e.data);
+fetch('/', {method: 'POST', body: 'hello'});</code></pre></div>
+
+<ul>
+<li><code>subscribe()</code> is called before the response is returned: a message published after that is not missed.</li>
+<li><code>heartbeat: 15</code> yields <code>null</code> after 15 seconds without a message. The keep-alive comment keeps proxies from closing the connection, and is how the write notices a client that left.</li>
+<li>An SSE event is <code>data: &lt;one line&gt;</code>: JSON-encode messages so that they stay on one line.</li>
+<li>There is no history. A client that reconnects catches up from your storage.</li>
+</ul>
+<h2>WebSockets<a id="websockets" href="#websockets" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p><code>WebSocket::from()</code> answers the upgrade and runs the callback once the connection is open. The callback returns when the browser leaves.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\Http\WebSocket<span class="hl-k">;
+use </span>Swerve\SubscriberLagException<span class="hl-k">;
+
+return </span>WebSocket<span class="hl-k">::</span>from<span class="hl-k">(</span>$request<span class="hl-k">, static function (</span>WebSocket $ws<span class="hl-k">) {
+    </span>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">);
+    </span>$forward      <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$ws<span class="hl-k">, </span>$subscription<span class="hl-k">) {
+        try {
+            foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
+                </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);
+            }
+        } catch (</span>SubscriberLagException<span class="hl-k">) {
+            </span>$ws<span class="hl-k">-&gt;</span>close<span class="hl-k">(</span>1008<span class="hl-k">);
+        } catch (</span>phasync\CancelledException<span class="hl-k">) {
+        }
+    });
+
+    foreach (</span>$ws <span class="hl-k">as </span>$message<span class="hl-k">) {                   </span><span class="hl-c">// ends when the browser leaves
+        </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>$message<span class="hl-k">);        </span><span class="hl-c">// validate it first, see examples/websocket-chat
+    </span><span class="hl-k">}
+
+    if (!</span>$forward<span class="hl-k">-&gt;</span>isTerminated<span class="hl-k">()) {
+        </span>phasync<span class="hl-k">::</span>cancel<span class="hl-k">(</span>$forward<span class="hl-k">);
+    }
+});</span></code></pre></div>
+
+<p>Write the callback as a <code>static</code> function. A plain closure keeps <code>$this</code>, and with it the controller and often the whole application, in memory for as long as the socket is open.</p>
+<h2>How a message travels<a id="how-a-message-travels" href="#how-a-message-travels" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>Workers share no memory. Say 1000 browsers are subscribed in worker 1 and a request in worker 2 calls <code>Swerve::publish('chat', $message)</code>:</p>
+<ol>
+<li>The master process keeps, for each topic, a bitmap of the workers that have a subscriber. Worker 2 asks for the bitmap of <code>chat</code> and remembers it until the master says to forget it.</li>
+<li>Worker 2 writes one datagram into the inbox of worker 1. Only workers that have a subscriber receive one. The master is not in the data path.</li>
+<li>Worker 1 decodes the message once and hands it to each of its 1000 subscriptions.</li>
+</ol>
+<p>Messages from one publisher arrive in the order it published them, for every subscriber, in every worker. There is no order between messages from different publishers: if you need one, put a version in the message and let the client ignore an older one, or see <code>OrderedChannel</code> in <a href="/advanced/ordered-channel/">Advanced</a>.</p>
+<h2>Limits<a id="limits" href="#limits" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ul>
+<li>Delivery is at most once, to the subscriptions that exist when the message reaches their worker. Keep what must not be lost in storage, and use publish and subscribe to say that it changed.</li>
+<li>A subscriber that falls more than <code>maxLag</code> seconds behind (30 by default) gets a <code>SubscriberLagException</code>: disconnect it, and let it reconnect.</li>
+<li>Messages are at most 128 KiB. Swerve on several machines needs Redis, NATS or the like between them.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</li>
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</li>
+  <li><a href="/WebSocket/"><code>WebSocket</code></a> A WebSocket connection (RFC 6455), server side.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

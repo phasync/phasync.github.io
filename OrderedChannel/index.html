@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OrderedChannel - phasync</title>
+<meta name="description" content="A topic where every subscriber, in every worker, receives the messages in one and the same order.">
+<link rel="canonical" href="https://phasync.github.io/OrderedChannel/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">OrderedChannel</li>
+</ol></nav>
+<h1>OrderedChannel <span class="badge kind">Class</span> <span class="badge draft">Draft</span></h1>
+<p class="lead">A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher&#039;s own messages keep theirs: $ledger = new OrderedChannel(&#039;ledger&#039;); $ledger-&gt;write([&#039;debit&#039;, 12]); foreach ($ledger as $entry) { ...</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>OrderedChannel <span class="hl-k">implements </span>\IteratorAggregate<span class="hl-k">, </span>\Traversable</code></pre></div>
+</div>
+<p>}</p>
+<p>Plain Swerve::publish() from one publisher is already ordered for its subscribers, which is
+enough for a stream between two coroutines or workers. This is for many publishers that need
+one common order.</p>
+<p>It is a broadcast, not a queue: nothing is written while nobody subscribes anywhere, and there
+are no writers to end it or close it. Retention is bounded (about 30 s): a subscriber lagging
+beyond it gets a SubscriberLagException. Each message costs one extra file append; a worker is
+woken by a datagram, best effort, and looks at the log at least every second. It is separate from
+the plain topic of the same name. See docs/publish-subscribe.md.</p>
+<p class="meta">Defined in <code>Swerve\OrderedChannel</code>, package <code>phasync/swerve</code>.</p>
+
+
+<h2 id="properties">Properties</h2>
+<dl class="params">
+  <dt><code>$name</code> <span class="type">readonly string</span></dt>
+  <dd></dd>
+</dl>
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/OrderedChannel/__construct/"><code>OrderedChannel::__construct</code></a> </li>
+  <li><a href="/OrderedChannel/write/"><code>OrderedChannel::write</code></a> Append $message, as Swerve::publish() sends one: nothing is written, and the message is dropped, while the channel has no subscriber anywhere.</li>
+  <li><a href="/OrderedChannel/subscribe/"><code>OrderedChannel::subscribe</code></a> Receive what is written from now on, as Swerve::subscribe() does: the subscription exists once this returns.</li>
+  <li><a href="/OrderedChannel/getIterator/"><code>OrderedChannel::getIterator</code></a> Subscribes with the defaults, so `foreach ($channel as $message)` subscribes at the foreach.</li>
+</ul>
+
+<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\OrderedChannel<span class="hl-k">;
+
+</span>$ledger <span class="hl-k">= new </span>OrderedChannel<span class="hl-k">(</span><span class="hl-s">'ledger'</span><span class="hl-k">);
+</span>$ledger<span class="hl-k">-&gt;</span>write<span class="hl-k">([</span><span class="hl-s">'debit'</span><span class="hl-k">, </span>12<span class="hl-k">]);
+
+foreach (</span>$ledger <span class="hl-k">as </span>$entry<span class="hl-k">) {
+    </span><span class="hl-c">// every subscriber, in every worker, sees the entries in the same order
+</span><span class="hl-k">}</span></code></pre></div>
+
+<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ul>
+<li>Plain <code>Swerve::publish()</code> from one publisher is already ordered for its subscribers. <code>OrderedChannel</code> is for many publishers that need one common order.</li>
+<li>It is a broadcast, not a queue: nothing is written while nobody subscribes, and a subscriber sees what is written after it subscribed.</li>
+<li>Retention is about 30 seconds. A subscriber lagging beyond that gets a <code>SubscriberLagException</code>.</li>
+<li>Each message costs one append to a file in the master's temporary directory.</li>
+<li>It is separate from the plain topic of the same name.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</li>
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</li>
+  <li><a href="/advanced/ordered-channel/">OrderedChannel</a> One order for every subscriber, from many publishers.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

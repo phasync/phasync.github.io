@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guides - phasync</title>
+<meta name="description" content="Learn by doing: realtime, caching, background work, API calls, processes, production.">
+<link rel="canonical" href="https://phasync.github.io/guides/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/" aria-current="true">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li aria-current="page">Guides</li>
+</ol></nav>
+<h1>Guides</h1>
+<p class="lead">Learn by doing: realtime, caching, background work, API calls, processes, production.</p>
+<p>Task-oriented pages that start with working code. A guide solves one problem and links to the reference for every function it uses.</p>
+<ul class="index">
+  <li><a href="/guides/sequential-php/">Write sequential PHP</a> <span class="badge placeholder">Placeholder</span> Your handler stays sequential: sleep(), and the other requests are served meanwhile.</li>
+  <li><a href="/guides/after-the-response/">After the response</a> <span class="badge placeholder">Placeholder</span> Keep working after the response is sent: send 10,000 e-mails without the client waiting.</li>
+  <li><a href="/guides/realtime/">Realtime: SSE and WebSockets</a> <span class="badge draft">Draft</span> Push to the browser with Server-Sent Events or WebSockets, across all workers.</li>
+  <li><a href="/guides/cache/">Cache</a> <span class="badge draft">Draft</span> Swerve::cache(): one PSR-16 cache for every worker, read from memory in the worker.</li>
+  <li><a href="/guides/concurrent-api-calls/">Concurrent API calls</a> <span class="badge placeholder">Placeholder</span> Call several APIs at once and wait for all of them.</li>
+  <li><a href="/guides/running-processes/">Running processes</a> <span class="badge placeholder">Placeholder</span> Run external programs without blocking a worker.</li>
+  <li><a href="/guides/tether/">Tether</a> <span class="badge placeholder">Placeholder</span> Interactive components over a WebSocket, written in PHP.</li>
+  <li><a href="/guides/production/">Production</a> <span class="badge placeholder">Placeholder</span> Sizing, reloads, logging, limits and phasync-ext.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

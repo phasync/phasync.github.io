@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>phasync - phasync</title>
+<meta name="description" content="The facade of phasync: run(), go(), sleep(), await(), cancel() and the rest.">
+<link rel="canonical" href="https://phasync.github.io/phasync/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">phasync</li>
+</ol></nav>
+<h1>phasync <span class="badge kind">Class</span> <span class="badge draft">Draft</span></h1>
+<p class="lead">This class defines the essential API for all coroutine based applications.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>phasync</code></pre></div>
+</div>
+<p>This basic API enables implementing all forms of asynchronous programming,
+including asynchronous CURL and database connections efficiently via the
+use of flag signals <code>phasync::raiseFlag()</code> and <code>phasync::awaitFlag()</code>.</p>
+<p>The essential functions are:</p>
+<ul>
+<li><code>phasync::sleep()</code> to pause the coroutine and avoid wasting CPU cycles
+if there is nothing to do.</li>
+<li><code>phasync::readable()</code> and <code>phasync::writable()</code> to pause the coroutine
+until a stream resource becomes readable or writable.</li>
+<li><code>phasync::raiseFlag()</code> and <code>phasync::awaitFlag()</code> to pause the coroutine
+until an trigger occurs.</li>
+</ul>
+<p>It is bad practice for any advanced functionality to check for external events
+on every tick, so it should use sleep(), readable(), writable() or raiseFlag()/awaitFlag() to
+block between each poll.</p>
+<p>For example, to monitor curl handles using multi_curl, a separate coroutine would be
+launched using <code>phasync::go()</code> which will invoke curl_multi_exec(). It should
+invoke <code>phasync::sleep(0.1)</code> or so, to avoid busy loops and ideally a single
+such service coroutine manages all the curl handles across the application. Fibers
+that need notification would invoke phasync::awaitFlag($curlHandle) and the manager
+coroutine would invoke phasync::raiseFlag($curlHandle) when the $curlHandle is done.</p>
+<p class="meta">Defined in <code>phasync</code>, package <code>phasync/phasync</code>.</p>
+
+
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/phasync/run/"><code>phasync::run</code></a> Register a coroutine/Fiber to run in the event loop and await the result.</li>
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> Creates a normal coroutine and starts running it.</li>
+  <li><a href="/phasync/service/"><code>phasync::service</code></a> Launches a service coroutine independently of the context scope.</li>
+  <li><a href="/phasync/await/"><code>phasync::await</code></a> Wait for a coroutine, a promise, or a SelectableInterface to complete and return the result.</li>
+  <li><a href="/phasync/finally/"><code>phasync::finally</code></a> Schedule a closure to run when the current coroutine completes, or, when called inside `phasync::withContext()`, as that call returns, whichever comes first.</li>
+  <li><a href="/phasync/cancel/"><code>phasync::cancel</code></a> Cancel a coroutine, or every coroutine of a context.</li>
+  <li><a href="/phasync/throw/"><code>phasync::throw</code></a> Interrupt the wait of a suspended coroutine with an exception, once.</li>
+  <li><a href="/phasync/sleep/"><code>phasync::sleep</code></a> Yield time so that other coroutines can continue processing.</li>
+  <li><a href="/phasync/yield/"><code>phasync::yield</code></a> Suspend the fiber until immediately after some other fibers has performed work.</li>
+  <li><a href="/phasync/readable/"><code>phasync::readable</code></a> Suspend the coroutine until the stream can be read without blocking: data arrived, the peer finished, or the stream failed.</li>
+  <li><a href="/phasync/writable/"><code>phasync::writable</code></a> Suspend the coroutine until the stream can be written without blocking, as `phasync::readable()` does for reading.</li>
+  <li><a href="/phasync/channel/"><code>phasync::channel</code></a> Creates a channel pair which can be used to communicate between multiple coroutines.</li>
+  <li><a href="/phasync/publisher/"><code>phasync::publisher</code></a> A publisher works like channels, but supports many subscribing coroutines concurrently.</li>
+  <li><a href="/phasync/raiseFlag/"><code>phasync::raiseFlag</code></a> Signal all coroutines that are waiting for an event represented by the object $signal to resume.</li>
+  <li><a href="/phasync/awaitFlag/"><code>phasync::awaitFlag</code></a> Pause execution of the current coroutine until an event is signalled represented by the object $signal.</li>
+  <li><a href="/phasync/awaitContext/"><code>phasync::awaitContext</code></a> Wait until every coroutine of $context, and of the contexts nested in it, has ended; a server that lets requests start coroutines of their own waits for them this way before it exits.</li>
+  <li><a href="/phasync/isRunning/"><code>phasync::isRunning</code></a> Returns true when called from within a coroutine context.</li>
+  <li><a href="/phasync/withContext/"><code>phasync::withContext</code></a> Run $fn in the current coroutine as if it were the main coroutine of a phasync::run() of $context, without starting a coroutine, which costs far more: it returns what $fn returns, once the coroutines $fn started in the context have ended too.</li>
+  <li><a href="/phasync/getLoop/"><code>phasync::getLoop</code></a> The event loop, for code that waits with its low-level API (`EventLoop::park()`).</li>
+  <li><a href="/phasync/getFiber/"><code>phasync::getFiber</code></a> Get the currently running coroutine.</li>
+  <li><a href="/phasync/getRootContext/"><code>phasync::getRootContext</code></a> The root context of the running coroutine: its request, so to say.</li>
+  <li><a href="/phasync/getContext/"><code>phasync::getContext</code></a> The context of the running coroutine: the object given to run(), go() or withContext(), or the one it inherited.</li>
+</ul>
+
+<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<div class="code" data-lang="php" data-run><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$a <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.2<span class="hl-k">); return </span><span class="hl-s">'a'</span><span class="hl-k">; });
+    </span>$b <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">); return </span><span class="hl-s">'b'</span><span class="hl-k">; });
+
+    echo </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$a<span class="hl-k">), </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$b<span class="hl-k">), </span><span class="hl-s">"\n"</span><span class="hl-k">;   </span><span class="hl-c">// ab, after 0.2 seconds
+</span><span class="hl-k">});</span></code></pre></div>
+
+<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<ul>
+<li><code>phasync</code> is a final class of static methods in the global namespace.</li>
+<li>The package is <code>phasync/phasync</code>. It behaves the same with and without the <code>phasync-ext</code> extension, which lets more code wait without blocking and makes waiting cheaper.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/run/"><code>phasync::run</code></a> Register a coroutine/Fiber to run in the event loop and await the result.</li>
+  <li><a href="/Channel/"><code>Channel</code></a> Pass values between coroutines with phasync::channel(): a read waits for a writer, a write into a full channel waits for a reader.</li>
+  <li><a href="/WaitGroup/"><code>WaitGroup</code></a> This class provides an efficient tool for waiting until multiple coroutines have completed their task.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

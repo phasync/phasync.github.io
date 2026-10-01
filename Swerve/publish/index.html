@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swerve::publish - phasync</title>
+<meta name="description" content="Send a message to every subscriber of a topic, in every worker process.">
+<link rel="canonical" href="https://phasync.github.io/Swerve/publish/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li><a href="/Swerve/">Swerve</a></li>
+  <li aria-current="page">publish</li>
+</ol></nav>
+<h1>Swerve::publish <span class="badge kind">Method</span> <span class="badge draft">Draft</span></h1>
+<p class="lead">Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span>string $topic<span class="hl-k">, </span>mixed $message<span class="hl-k">): </span>void</code></pre></div>
+</div>
+<p>Returns once the message is on its way, not once delivered.</p>
+<p>Delivery is at most once, to the subscriptions that exist when the message reaches their
+worker: there is no history, and a worker starting later (after a reload, a recycle, a
+crash) sees nothing sent before. The messages of one publishing worker arrive in the order
+it published them, with no order between workers. A worker that does not read its inbox
+loses the messages sent to it after 0.1 s. Swerve embedded without its master process
+delivers in this process only.</p>
+<p>Every message travels as JSON: encoded once here, decoded once in each worker, and every
+subscriber gets the value published, shared: a string stays a string ('{}' too), a list
+an array, and an object (an array with keys) a read-only SealedObject: <code>$message-&gt;end</code>.</p>
+<div class="code" data-lang="php"><pre><code>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'game'</span><span class="hl-k">, [</span><span class="hl-s">'kill'</span><span class="hl-k">, </span>$playerId<span class="hl-k">]);</span></code></pre></div>
+
+<p class="meta">Defined in <a href="/Swerve/"><code>Swerve\Swerve</code></a>.</p>
+
+<h2 id="parameters">Parameters</h2>
+<dl class="params">
+  <dt><code>$topic</code> <span class="type">string</span></dt>
+  <dd>1 to 255 bytes</dd>
+  <dt><code>$message</code> <span class="type">mixed</span></dt>
+  <dd>anything json_encode() takes except null; at most 128 KiB encoded</dd>
+</dl>
+
+<h2 id="return-values">Return values</h2>
+<p>No value is returned.</p>
+
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>InvalidArgumentException</code></dt>
+  <dd>For a topic or message outside those sizes, or a topic starting with &quot;\0&quot;</dd>
+  <dt><code>LogicException</code></dt>
+  <dd>While the application loads: the worker serves after that</dd>
+  <dt><code>JsonException</code></dt>
+  <dd>For a value JSON can't express</dd>
+  <dt><code>InvalidArgumentException</code></dt>
+  <dd>For null, which a heartbeat subscription yields for &quot;nothing came&quot;</dd>
+</dl>
+
+
+<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>A string is sent as it is. The subscriber gets the same string.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\Swerve<span class="hl-k">;
+
+</span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'room:lobby'</span><span class="hl-k">, </span>json_encode<span class="hl-k">([</span><span class="hl-s">'user' </span><span class="hl-k">=&gt; </span><span class="hl-s">'ann'</span><span class="hl-k">, </span><span class="hl-s">'text' </span><span class="hl-k">=&gt; </span><span class="hl-s">'hi'</span><span class="hl-k">]));</span></code></pre></div>
+
+<p>An array is sent as JSON, and arrives decoded. An array with keys arrives as a read-only <code>SealedObject</code>.</p>
+<div class="code" data-lang="php"><pre><code>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'game'</span><span class="hl-k">, [</span><span class="hl-s">'kill'</span><span class="hl-k">, </span>$playerId<span class="hl-k">]);       </span><span class="hl-c">// subscribers receive the array ['kill', 17]
+</span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'score'</span><span class="hl-k">, [</span><span class="hl-s">'player' </span><span class="hl-k">=&gt; </span>17<span class="hl-k">, </span><span class="hl-s">'points' </span><span class="hl-k">=&gt; </span>3<span class="hl-k">]);
+
+foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'score'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {
+    echo </span>$message<span class="hl-k">-&gt;</span>points<span class="hl-k">;                          </span><span class="hl-c">// a SealedObject: read, never changed
+</span><span class="hl-k">}</span></code></pre></div>
+
+<p>Publish the string that your browsers should get, when subscribers pass it on unchanged to Server-Sent Events or WebSockets: it is encoded once, by the publisher, and not by every subscriber.</p>
+<div class="code" data-lang="php"><pre><code>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>json_encode<span class="hl-k">([</span><span class="hl-s">'name' </span><span class="hl-k">=&gt; </span>$name<span class="hl-k">, </span><span class="hl-s">'text' </span><span class="hl-k">=&gt; </span>$text<span class="hl-k">]));</span></code></pre></div>
+
+<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<p>How the message travels:</p>
+<ul>
+<li>The master process keeps, for each topic, a bitmap of the workers that have a subscriber. The publishing worker asks for the bitmap and keeps it until the master says to forget it.</li>
+<li>The publishing worker writes a datagram into the inbox of each worker that has a subscriber. The master is not in the data path.</li>
+<li>Example: 1000 browsers are subscribed in worker 1, and a request in worker 2 publishes. One datagram goes from worker 2 to worker 1, and worker 1 hands the message to every one of the 1000 subscriptions.</li>
+<li>A worker without a subscriber to the topic receives nothing.</li>
+</ul>
+<p>What it promises:</p>
+<ul>
+<li>Messages from one publisher arrive in the order it published them, in every worker. There is no order between messages from different publishers; for one, use <a href="/OrderedChannel/"><code>OrderedChannel</code></a>.</li>
+<li>Delivery is at most once, to the subscriptions that exist when the message reaches their worker. There is no history.</li>
+<li>It returns once the message is on its way, not when it is delivered.</li>
+<li>A worker that does not read its inbox loses the messages sent to it after 0.1 seconds, and the publisher logs a warning.</li>
+<li>Swerve on several machines needs Redis, NATS or the like between them: messages stay on one machine.</li>
+<li>It works once the worker serves, not while <code>swerve.php</code> loads. Before that it throws <code>LogicException</code>.</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</li>
+  <li><a href="/OrderedChannel/"><code>OrderedChannel</code></a> A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher&#039;s own messages keep theirs: $ledger = new OrderedChannel(&#039;ledger&#039;); $ledger-&gt;write([&#039;debit&#039;, 12]); foreach ($ledger as $entry) { ...</li>
+  <li><a href="/Channel/"><code>Channel</code></a> Pass values between coroutines with phasync::channel(): a read waits for a writer, a write into a full channel waits for a reader.</li>
+  <li><a href="/guides/realtime/">Realtime: SSE and WebSockets</a> Push to the browser with Server-Sent Events or WebSockets, across all workers.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

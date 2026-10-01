@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebSocket - phasync</title>
+<meta name="description" content="A WebSocket connection (RFC 6455), server side.">
+<link rel="canonical" href="https://phasync.github.io/WebSocket/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">WebSocket</li>
+</ol></nav>
+<h1>WebSocket <span class="badge kind">Class</span></h1>
+<p class="lead">A WebSocket connection (RFC 6455), server side.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">class </span>WebSocket <span class="hl-k">extends </span>ProtocolUpgrade <span class="hl-k">implements </span>\IteratorAggregate<span class="hl-k">, </span>\Traversable</code></pre></div>
+</div>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">return </span>WebSocket<span class="hl-k">::</span>from<span class="hl-k">(</span>$request<span class="hl-k">, function (</span>WebSocket $ws<span class="hl-k">) {
+    foreach (</span>$ws <span class="hl-k">as </span>$message<span class="hl-k">) {           </span><span class="hl-c">// ends when the connection closes
+        </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span><span class="hl-s">"echo: </span>$message<span class="hl-s">"</span><span class="hl-k">);
+    }
+});</span></code></pre></div>
+
+<p>The callback runs in a coroutine of its own after the handshake; the connection closes when
+it returns (1000), or throws (1011, and swerve logs the exception). A request that is not a
+WebSocket handshake is answered 426 or 400.</p>
+<p>One coroutine receives; send() and close() may be called from any. The connection is read
+all the time, also when the callback only sends: pings from the client are answered, and when
+the client leaves the callback is cancelled, so a loop such as</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'news'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {
+    </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);
+}</span></code></pre></div>
+
+<p>ends with its client. The server pings every connection every PING_INTERVAL seconds, from
+one coroutine for all of them, so proxies don't close a quiet connection.</p>
+<p class="meta">Defined in <code>Swerve\Http\WebSocket</code>, package <code>phasync/swerve</code>.</p>
+
+
+<h2 id="constants">Constants</h2>
+<dl class="params">
+  <dt><code>MAX_MESSAGE</code> <span class="default">= <code>1048576</code></span></dt>
+  <dd>The largest message received; a larger one closes the connection with 1009.</dd>
+  <dt><code>PING_INTERVAL</code> <span class="default">= <code>15.0</code></span></dt>
+  <dd></dd>
+  <dt><code>INBOX</code> <span class="default">= <code>64</code></span></dt>
+  <dd>Messages received and not yet taken by receive(); the reader waits while there are INBOX.</dd>
+</dl>
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/WebSocket/receive/"><code>WebSocket::receive</code></a> The next text or binary message, or null once the connection is closed: by the client, by close(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.</li>
+  <li><a href="/WebSocket/getIterator/"><code>WebSocket::getIterator</code></a> The messages received, until the connection closes.</li>
+  <li><a href="/WebSocket/isBinary/"><code>WebSocket::isBinary</code></a> Whether the message receive() returned last was binary, rather than text.</li>
+  <li><a href="/WebSocket/send/"><code>WebSocket::send</code></a> Send a text message, which must be UTF-8; nothing once the connection is closed.</li>
+  <li><a href="/WebSocket/sendBinary/"><code>WebSocket::sendBinary</code></a> Send a binary message; nothing once the connection is closed.</li>
+  <li><a href="/WebSocket/close/"><code>WebSocket::close</code></a> Say goodbye, once: receive() returns null from then on, and the connection closes after the client&#039;s own goodbye, or a moment without one.</li>
+  <li><a href="/WebSocket/isClosed/"><code>WebSocket::isClosed</code></a> </li>
+</ul>
+
+<h2 id="examples">Examples</h2>
+<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; hand-written examples are still to come.</p>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>
