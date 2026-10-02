@@ -13,11 +13,11 @@ $frameworks = [
   <h1>Run your PHP application on Swerve.</h1>
   <p class="lead">A PHP application server for the code you already write: sequential, in the framework you already use. A request can wait for as long as it needs, and WebSockets and Server-Sent Events need no extra service.</p>
 <?= code(<<<'T'
-$ composer config minimum-stability alpha    # while swerve is alpha
+$ composer config minimum-stability beta    # while swerve is beta
 $ composer config prefer-stable true
 $ composer require phasync/swerve
 $ vendor/bin/swerve --watch
-2026-09-26 17:00:30.12    swerve 0.1.0 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
+2026-09-26 17:00:30.12    swerve 0.1.0-beta1 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
 2026-09-26 17:00:31.25 3 GET / 200 1.2ms
 T, 'terminal') ?>
   <p><code>swerve.php</code>, next to <code>composer.json</code>, returns a PSR-15 request handler. <code>--watch</code> reloads the workers when a PHP file changes; the other options are in <a href="/get-started/dev-server/">the dev server</a> page and <code>vendor/bin/swerve --help</code>.</p>
@@ -105,23 +105,19 @@ return new class implements RequestHandlerInterface {
 };
 P, 'php') ?>
 <?= code("const events = new EventSource('/');\nevents.onmessage = (e) => console.log(e.data);\nfetch('/', {method: 'POST', body: 'hello'});", 'js') ?>
-  <p>The same room over a WebSocket, with <a href="/WebSocket/"><code>WebSocket</code></a> in place of the stream:</p>
+  <p>The same room over a WebSocket, with <a href="/WebSocket/"><code>WebSocket</code></a> in place of the stream. Messages from the browser arrive as events; what goes back is a plain loop:</p>
 <?= code(<<<'P'
 return WebSocket::from($request, static function (WebSocket $ws) {
-    $subscription = Swerve::subscribe('chat');
-    $forward      = phasync::go(static function () use ($ws, $subscription) {
-        foreach ($subscription as $message) {
-            $ws->send($message);              // to this browser
-        }
+    $ws->onMessage->listen(static function (string $data, bool $binary) {
+        Swerve::publish('chat', $data);                   // to every subscriber, in every worker
     });
 
-    foreach ($ws as $message) {               // from this browser
-        Swerve::publish('chat', $message);    // to every subscriber, in every worker
+    foreach (Swerve::subscribe('chat') as $message) {     // ends when the browser leaves
+        $ws->send($message);                              // to this browser
     }
-    phasync::cancel($forward);                // the browser left
 });
 P, 'php') ?>
-  <!-- TODO-verify: shortened from examples/websocket-chat/swerve.php (no lag or cancel handling); not run as written -->
+  <!-- TODO-verify: shortened from swerve docs/realtime.md (no message validation); not run as written -->
   <p><a href="/guides/realtime/">Realtime guide</a>, <a href="/Swerve/publish/"><code>Swerve::publish</code></a>, <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>.</p>
 </section>
 

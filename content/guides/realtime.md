@@ -67,34 +67,28 @@ fetch('/', {method: 'POST', body: 'hello'});
 
 ## WebSockets
 
-`WebSocket::from()` answers the upgrade and runs the callback once the connection is open. The callback returns when the browser leaves.
+`WebSocket::from()` answers the upgrade and runs the callback once the connection is open. Messages from the browser are events; what goes back is plain sequential code in the callback. The connection closes when the callback returns (1000) or throws (1011, logged).
 
 ```php
 use Swerve\Http\WebSocket;
-use Swerve\SubscriberLagException;
 
 return WebSocket::from($request, static function (WebSocket $ws) {
-    $subscription = Swerve::subscribe('chat');
-    $forward      = phasync::go(static function () use ($ws, $subscription) {
-        try {
-            foreach ($subscription as $message) {
-                $ws->send($message);
-            }
-        } catch (SubscriberLagException) {
-            $ws->close(1008);
-        } catch (phasync\CancelledException) {
-        }
+    $ws->onMessage->listen(static function (string $data, bool $binary) {
+        Swerve::publish('chat', $data);                // validate it first, see examples/websocket-chat
     });
 
-    foreach ($ws as $message) {                   // ends when the browser leaves
-        Swerve::publish('chat', $message);        // validate it first, see examples/websocket-chat
-    }
-
-    if (!$forward->isTerminated()) {
-        phasync::cancel($forward);
+    foreach (Swerve::subscribe('chat') as $message) {  // ends when the browser leaves
+        $ws->send($message);
     }
 });
 ```
+
+- The connection is read all the time: pings are answered, and when the browser leaves the callback is cancelled, so the loop above ends with it.
+- `onMessage` listeners get `(string $data, bool $binary)` one at a time, in the order the messages arrived, so a slow listener holds back the reading.
+- `onClose` listeners get `(int $code, string $reason)` once, whichever side ended the connection: the browser's code (1005 when it sent none), the one given to `end()`, 1011 after an exception, or 1006 when no close frame came.
+- `$ws->end(int $code = 1000, string $reason = '')` closes the connection early; `send()` and `end()` may be called from any coroutine. `sendBinary()` sends a binary message.
+- A subscriber that falls too far behind makes the loop throw `SubscriberLagException`, which closes the socket with 1011. Catch it and call `$ws->end(1008)` to choose the code; the browser reconnects.
+- `$ws->receive()`, or `foreach ($ws as $message)`, is the pull alternative to `onMessage`. It throws a `LogicException` while `onMessage` has listeners.
 
 Write the callback as a `static` function. A plain closure keeps `$this`, and with it the controller and often the whole application, in memory for as long as the socket is open.
 
