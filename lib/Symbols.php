@@ -473,17 +473,6 @@ final class Symbols
                 $s['throws']     = \array_map(static fn ($t) => [$t[0], $text($t[1])], $s['throws']);
             }
 
-            $s['see'] = [];
-            foreach ($doc['see'] as [$ref, $text, $type]) {
-                if ('url' === $type) {
-                    $s['see'][] = ['name' => $ref, 'url' => $ref, 'desc' => $text, 'code' => false];
-                } elseif (null === ($t = $this->resolve($ref, $ctx, $ns))) {
-                    $this->problem($s, 'see', "@see $ref does not resolve ($at)");
-                } else {
-                    $s['see'][] = ['name' => $t['name'], 'url' => $t['url'] ?? null, 'desc' => '' !== $text ? $text : ($t['desc'] ?? ''), 'code' => true];
-                }
-            }
-
             $s['examples'] = [];
             foreach ($doc['examples'] as [$path, $caption]) {
                 $file = $s['root'] . '/' . $path;
@@ -503,6 +492,29 @@ final class Symbols
             $names = \array_column($s['params'] ?? [], 'name');
             if ($doc['paramOrder'] !== \array_values(\array_intersect($names, $doc['paramOrder']))) {
                 $this->problem($s, 'param', '@param ' . \implode(', ', $doc['paramOrder']) . ' does not match the signature (' . \implode(', ', $names) . ") ($at)");
+            }
+        }
+        unset($s);
+
+        // The See also lists, after every summary has its {@see} links resolved: a target's summary is copied
+        foreach ($this->all as &$s) {
+            if ('topic' === $s['kind']) {
+                continue;
+            }
+            $at  = $s['where'];
+            $ctx = 'function' === $s['kind'] ? null : ($s['class'] ?? $s['full']);
+            $own = $s['class'] ?? $s['full'];
+            $ns  = \str_contains($own, '\\') ? \substr($own, 0, \strrpos($own, '\\')) : '';
+
+            $s['see'] = [];
+            foreach ($s['doc']['see'] as [$ref, $text, $type]) {
+                if ('url' === $type) {
+                    $s['see'][] = ['name' => $ref, 'url' => $ref, 'desc' => $text, 'code' => false];
+                } elseif (null === ($t = $this->resolve($ref, $ctx, $ns))) {
+                    $this->problem($s, 'see', "@see $ref does not resolve ($at)");
+                } else {
+                    $s['see'][] = ['name' => $t['name'], 'url' => $t['url'] ?? null, 'desc' => '' !== $text ? $text : ($t['desc'] ?? ''), 'code' => true];
+                }
             }
         }
         unset($s);
