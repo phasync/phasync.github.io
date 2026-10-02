@@ -8,4 +8,5 @@
 return [
     'phasync/phasync',
     'phasync/swerve',
+    'phasync/http-client',
 ];

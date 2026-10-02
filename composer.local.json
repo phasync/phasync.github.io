@@ -5,7 +5,8 @@
     "license": "MIT",
     "repositories": [
         {"type": "path", "url": "../phasync", "options": {"symlink": true, "versions": {"phasync/phasync": "2.0.0-beta4"}}},
-        {"type": "path", "url": "../swerve", "options": {"symlink": true, "versions": {"phasync/swerve": "0.1.0-beta1"}}}
+        {"type": "path", "url": "../swerve", "options": {"symlink": true, "versions": {"phasync/swerve": "0.1.0-beta1"}}},
+        {"type": "path", "url": "../http-client", "options": {"symlink": true, "versions": {"phasync/http-client": "2.0.0-alpha1"}}}
     ],
     "require": {
         "php": "^8.2",
@@ -15,7 +16,8 @@
     },
     "require-dev": {
         "phasync/phasync": "^2.0.0-beta4",
-        "phasync/swerve": "^0.1.0-beta1"
+        "phasync/swerve": "^0.1.0-beta1",
+        "phasync/http-client": "^2.0.0-alpha1"
     },
     "minimum-stability": "beta",
     "prefer-stable": true
