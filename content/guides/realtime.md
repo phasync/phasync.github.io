@@ -61,6 +61,7 @@ fetch('/', {method: 'POST', body: 'hello'});
 ```
 
 - `subscribe()` is called before the response is returned: a message published after that is not missed.
+- Subscribe before you read the current state, so that no change falls between the two. A message may then be older than the state you read: give state a version and let the client ignore an older one.
 - `heartbeat: 15` yields `null` after 15 seconds without a message. The keep-alive comment keeps proxies from closing the connection, and is how the write notices a client that left.
 - An SSE event is `data: <one line>`: JSON-encode messages so that they stay on one line.
 - There is no history. A client that reconnects catches up from your storage.
