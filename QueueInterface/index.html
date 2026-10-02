@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QueueInterface - phasync</title>
+<meta name="description" content="A first-in first-out queue that coroutines may share.">
+<link rel="canonical" href="https://phasync.github.io/QueueInterface/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">QueueInterface</li>
+</ol></nav>
+<h1>QueueInterface <span class="badge kind">Interface</span></h1>
+<p class="lead">A first-in first-out queue that coroutines may share.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">interface </span>QueueInterface <span class="hl-k">extends </span>\Countable<span class="hl-k">, </span>LockInterface</code></pre></div>
+</div>
+<div class="code" data-lang="php"><pre><code>$queue <span class="hl-k">= new </span>phasync\Util\Queue<span class="hl-k">();
+</span>$queue<span class="hl-k">-&gt;</span>enqueue<span class="hl-k">(</span><span class="hl-s">'job'</span><span class="hl-k">);
+if (</span>$queue<span class="hl-k">-&gt;</span>tryDequeue<span class="hl-k">(</span>$job<span class="hl-k">)) {
+    echo </span>$job<span class="hl-k">;          </span><span class="hl-c">// job
+</span><span class="hl-k">}</span></code></pre></div>
+
+<p class="meta">Defined in <code>phasync\Util\QueueInterface</code>, package <code>phasync/phasync</code>.</p>
+
+
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/QueueInterface/isEmpty/"><code>QueueInterface::isEmpty</code></a> Returns true if the queue holds no values.</li>
+  <li><a href="/QueueInterface/enqueue/"><code>QueueInterface::enqueue</code></a> Adds <code>$value</code> at the end of the queue.</li>
+  <li><a href="/QueueInterface/tryDequeue/"><code>QueueInterface::tryDequeue</code></a> Takes the first value off the queue into <code>$value</code>, and returns whether there was one.</li>
+  <li><a href="/QueueInterface/tryPeek/"><code>QueueInterface::tryPeek</code></a> Copies the first value of the queue into <code>$value</code>, without removing it, and returns whether there was one.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Queue/"><code>Queue</code></a> A first-in first-out queue whose operations take a lock, so coroutines may share it.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

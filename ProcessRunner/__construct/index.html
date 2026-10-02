@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::__construct - phasync</title>
-<meta name="description" content="Launch a new process.">
+<meta name="description" content="Starts the process.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/__construct/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">__construct</li>
 </ol></nav>
 <h1>ProcessRunner::__construct <span class="badge kind">Method</span></h1>
-<p class="lead">Launch a new process.</p>
+<p class="lead">Starts the process.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>__construct<span class="hl-k">(array </span>$command<span class="hl-k">, ?</span>string $cwd <span class="hl-k">= </span>null<span class="hl-k">, ?array </span>$env <span class="hl-k">= </span>null<span class="hl-k">)</span></code></pre></div>
@@ -52,20 +52,25 @@
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$command</code> <span class="type">array</span></dt>
-  <dd>The command and arguments as array elements</dd>
+  <dd>the executable and its arguments, one element each</dd>
   <dt><code>$cwd</code> <span class="type">?string</span> <span class="default">default <code>null</code></span></dt>
-  <dd>The working directory of the process</dd>
+  <dd>the working directory of the child; null: the current one</dd>
   <dt><code>$env</code> <span class="type">?array</span> <span class="default">default <code>null</code></span></dt>
-  <dd>The environment for the process (or null to inherit env from the PHP process)</dd>
+  <dd>the environment of the child, replacing the current one; null: inherit it</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
 <p>No return type is declared.</p>
 
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>RuntimeException</code></dt>
+  <dd>If the command is not found or not executable, or cannot be started</dd>
+  <dt><code>LogicException</code></dt>
+  <dd>On Windows before PHP 8.3</dd>
+</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

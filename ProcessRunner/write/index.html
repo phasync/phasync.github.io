@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::write - phasync</title>
-<meta name="description" content="Perform a Fiber-blocking write to the given process pipe.">
+<meta name="description" content="Waits until the stream can take data, and writes as much as it takes; false if the process is not running.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/write/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">write</li>
 </ol></nav>
 <h1>ProcessRunner::write <span class="badge kind">Method</span></h1>
-<p class="lead">Perform a Fiber-blocking write to the given process pipe.</p>
+<p class="lead">Waits until the stream can take data, and writes as much as it takes; false if the process is not running.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>write<span class="hl-k">(
@@ -55,25 +55,21 @@
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$data</code> <span class="type">string</span></dt>
-  <dd></dd>
+  <dd>what to write</dd>
   <dt><code>$fd</code> <span class="type">int</span> <span class="default">default <code>phasync\Util\ProcessInterface::STDIN</code></span></dt>
-  <dd></dd>
+  <dd><code>ProcessInterface::STDIN</code></dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>int|false</code>.</p>
+<p>The number of bytes written, which may be less than all of <code>$data</code> <span class="type">int|false</span></p>
 
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
-  <dt><code>FiberError</code></dt>
-  <dd></dd>
-  <dt><code>Throwable</code></dt>
-  <dd></dd>
+  <dt><code><a href="/IOException/">phasync\IOException</a></code></dt>
+  <dd>If the stream is closed</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

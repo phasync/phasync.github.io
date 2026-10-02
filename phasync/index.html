@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync - phasync</title>
-<meta name="description" content="The facade of phasync: run(), go(), sleep(), await(), cancel() and the rest.">
+<meta name="description" content="The static API of phasync: start coroutines, wait for them, cancel them, and wait for streams, flags and contexts.">
 <link rel="canonical" href="https://phasync.github.io/phasync/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -40,80 +40,57 @@
   <li><a href="/reference/">Reference</a></li>
   <li aria-current="page">phasync</li>
 </ol></nav>
-<h1>phasync <span class="badge kind">Class</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">This class defines the essential API for all coroutine based applications.</p>
+<h1>phasync <span class="badge kind">Class</span></h1>
+<p class="lead">The static API of phasync: start coroutines, wait for them, cancel them, and wait for streams, flags and contexts.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>phasync</code></pre></div>
 </div>
-<p>This basic API enables implementing all forms of asynchronous programming,
-including asynchronous CURL and database connections efficiently via the
-use of flag signals <code>phasync::raiseFlag()</code> and <code>phasync::awaitFlag()</code>.</p>
-<p>The essential functions are:</p>
-<ul>
-<li><code>phasync::sleep()</code> to pause the coroutine and avoid wasting CPU cycles
-if there is nothing to do.</li>
-<li><code>phasync::readable()</code> and <code>phasync::writable()</code> to pause the coroutine
-until a stream resource becomes readable or writable.</li>
-<li><code>phasync::raiseFlag()</code> and <code>phasync::awaitFlag()</code> to pause the coroutine
-until an trigger occurs.</li>
-</ul>
-<p>It is bad practice for any advanced functionality to check for external events
-on every tick, so it should use sleep(), readable(), writable() or raiseFlag()/awaitFlag() to
-block between each poll.</p>
-<p>For example, to monitor curl handles using multi_curl, a separate coroutine would be
-launched using <code>phasync::go()</code> which will invoke curl_multi_exec(). It should
-invoke <code>phasync::sleep(0.1)</code> or so, to avoid busy loops and ideally a single
-such service coroutine manages all the curl handles across the application. Fibers
-that need notification would invoke phasync::awaitFlag($curlHandle) and the manager
-coroutine would invoke phasync::raiseFlag($curlHandle) when the $curlHandle is done.</p>
+<p>A coroutine is a closure that runs as a PHP Fiber in the event loop of the process. It runs until it waits (<code>sleep()</code>, <code>yield()</code>, <code>await()</code>, <code>readable()</code>, <code>writable()</code>, <code>awaitFlag()</code>, a channel operation), and then the loop runs another. Code that never waits holds up every other coroutine. A wait looks like a plain function call: it returns a value or throws, so a coroutine reads top to bottom. With the optional phasync-ext extension, blocking PHP functions wait in the same way; phasync behaves the same with and without it.</p>
+<p><code>run()</code> starts the loop and returns when every coroutine it started has ended; <code>go()</code> starts a coroutine inside it. Every coroutine belongs to a context (any object), and <code>run()</code> does not return before the coroutines of its context have ended. A coroutine that throws, with nobody awaiting it, fails its <code>run()</code>.</p>
+<p>A wait takes a timeout in seconds and throws a TimeoutException when it passes; without one it waits for as long as it takes. <code>cancel()</code> throws a CancelledException into a coroutine, so its <code>finally</code> blocks run. To build a wait of your own, park the coroutine with <code>awaitFlag()</code> and wake it with <code>raiseFlag()</code>.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$a <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.2<span class="hl-k">); return </span><span class="hl-s">'a'</span><span class="hl-k">; });
+    </span>$b <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">); return </span><span class="hl-s">'b'</span><span class="hl-k">; });
+
+    echo </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$a<span class="hl-k">), </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$b<span class="hl-k">), </span><span class="hl-s">"\n"</span><span class="hl-k">;   </span><span class="hl-c">// ab, after 0.2 seconds, not 0.3
+</span><span class="hl-k">});</span></code></pre></div>
+
 <p class="meta">Defined in <code>phasync</code>, package <code>phasync/phasync</code>.</p>
 
 
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/phasync/run/"><code>phasync::run</code></a> Register a coroutine/Fiber to run in the event loop and await the result.</li>
-  <li><a href="/phasync/go/"><code>phasync::go</code></a> Creates a normal coroutine and starts running it.</li>
-  <li><a href="/phasync/service/"><code>phasync::service</code></a> Launches a service coroutine independently of the context scope.</li>
-  <li><a href="/phasync/await/"><code>phasync::await</code></a> Wait for a coroutine, a promise, or a SelectableInterface to complete and return the result.</li>
-  <li><a href="/phasync/finally/"><code>phasync::finally</code></a> Schedule a closure to run when the current coroutine completes, or, when called inside `phasync::withContext()`, as that call returns, whichever comes first.</li>
-  <li><a href="/phasync/cancel/"><code>phasync::cancel</code></a> Cancel a coroutine, or every coroutine of a context.</li>
-  <li><a href="/phasync/throw/"><code>phasync::throw</code></a> Interrupt the wait of a suspended coroutine with an exception, once.</li>
-  <li><a href="/phasync/sleep/"><code>phasync::sleep</code></a> Yield time so that other coroutines can continue processing.</li>
-  <li><a href="/phasync/yield/"><code>phasync::yield</code></a> Suspend the fiber until immediately after some other fibers has performed work.</li>
-  <li><a href="/phasync/readable/"><code>phasync::readable</code></a> Suspend the coroutine until the stream can be read without blocking: data arrived, the peer finished, or the stream failed.</li>
-  <li><a href="/phasync/writable/"><code>phasync::writable</code></a> Suspend the coroutine until the stream can be written without blocking, as `phasync::readable()` does for reading.</li>
-  <li><a href="/phasync/channel/"><code>phasync::channel</code></a> Creates a channel pair which can be used to communicate between multiple coroutines.</li>
-  <li><a href="/phasync/publisher/"><code>phasync::publisher</code></a> A publisher works like channels, but supports many subscribing coroutines concurrently.</li>
-  <li><a href="/phasync/raiseFlag/"><code>phasync::raiseFlag</code></a> Signal all coroutines that are waiting for an event represented by the object $signal to resume.</li>
-  <li><a href="/phasync/awaitFlag/"><code>phasync::awaitFlag</code></a> Pause execution of the current coroutine until an event is signalled represented by the object $signal.</li>
-  <li><a href="/phasync/awaitContext/"><code>phasync::awaitContext</code></a> Wait until every coroutine of $context, and of the contexts nested in it, has ended; a server that lets requests start coroutines of their own waits for them this way before it exits.</li>
-  <li><a href="/phasync/isRunning/"><code>phasync::isRunning</code></a> Returns true when called from within a coroutine context.</li>
-  <li><a href="/phasync/withContext/"><code>phasync::withContext</code></a> Run $fn in the current coroutine as if it were the main coroutine of a phasync::run() of $context, without starting a coroutine, which costs far more: it returns what $fn returns, once the coroutines $fn started in the context have ended too.</li>
-  <li><a href="/phasync/getLoop/"><code>phasync::getLoop</code></a> The event loop, for code that waits with its low-level API (`EventLoop::park()`).</li>
-  <li><a href="/phasync/getFiber/"><code>phasync::getFiber</code></a> Get the currently running coroutine.</li>
-  <li><a href="/phasync/getRootContext/"><code>phasync::getRootContext</code></a> The root context of the running coroutine: its request, so to say.</li>
-  <li><a href="/phasync/getContext/"><code>phasync::getContext</code></a> The context of the running coroutine: the object given to run(), go() or withContext(), or the one it inherited.</li>
+  <li><a href="/phasync/run/"><code>phasync::run</code></a> Runs <code>$fn</code> as a coroutine and returns its result once it and every coroutine started inside it have ended.</li>
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> Starts <code>$fn</code> as a coroutine in the current context and returns it, without waiting for it.</li>
+  <li><a href="/phasync/service/"><code>phasync::service</code></a> Starts <code>$coroutine</code> as a service: a coroutine that belongs to no context, so that it outlives the scope that started it.</li>
+  <li><a href="/phasync/await/"><code>phasync::await</code></a> Waits for a coroutine or a promise, and returns its result or throws the exception it ended with.</li>
+  <li><a href="/phasync/finally/"><code>phasync::finally</code></a> Registers <code>$fn</code> to run when the current coroutine ends, or when the <code>withContext()</code> call it is in returns.</li>
+  <li><a href="/phasync/cancel/"><code>phasync::cancel</code></a> Cancels a coroutine, or every coroutine of a context, with a CancelledException.</li>
+  <li><a href="/phasync/throw/"><code>phasync::throw</code></a> Interrupts the wait of a suspended coroutine with <code>$exception</code>, once.</li>
+  <li><a href="/phasync/sleep/"><code>phasync::sleep</code></a> Pauses the current coroutine for <code>$seconds</code>, and lets the others run meanwhile.</li>
+  <li><a href="/phasync/yield/"><code>phasync::yield</code></a> Suspends the current coroutine until the loop has made its next round, after the coroutines that were ready have run.</li>
+  <li><a href="/phasync/readable/"><code>phasync::readable</code></a> Suspends the coroutine until the stream can be read without blocking, and returns the stream.</li>
+  <li><a href="/phasync/writable/"><code>phasync::writable</code></a> Suspends the coroutine until the stream can be written without blocking, and returns the stream.</li>
+  <li><a href="/phasync/channel/"><code>phasync::channel</code></a> Creates a channel and returns its two ends in <code>$read</code> and <code>$write</code>.</li>
+  <li><a href="/phasync/publisher/"><code>phasync::publisher</code></a> Creates a publisher: what is written to <code>$publisher</code> is delivered to every subscription of <code>$subscribers</code>.</li>
+  <li><a href="/phasync/raiseFlag/"><code>phasync::raiseFlag</code></a> Wakes every coroutine waiting for <code>$signal</code> in <a href="/phasync/awaitFlag/"><code>phasync::awaitFlag</code></a>, and returns how many it woke.</li>
+  <li><a href="/phasync/awaitFlag/"><code>phasync::awaitFlag</code></a> Suspends the current coroutine until <code>$signal</code> is raised with <a href="/phasync/raiseFlag/"><code>phasync::raiseFlag</code></a>.</li>
+  <li><a href="/phasync/awaitContext/"><code>phasync::awaitContext</code></a> Waits until every coroutine of <code>$context</code>, and of the contexts nested in it, has ended.</li>
+  <li><a href="/phasync/isRunning/"><code>phasync::isRunning</code></a> Returns true while a <a href="/phasync/run/"><code>phasync::run</code></a> is in progress, and false otherwise.</li>
+  <li><a href="/phasync/withContext/"><code>phasync::withContext</code></a> Runs <code>$fn</code> in the current coroutine as the main coroutine of a <code>run()</code> of <code>$context</code>, without starting a coroutine.</li>
+  <li><a href="/phasync/getLoop/"><code>phasync::getLoop</code></a> Returns the event loop, for code that waits with its low-level API (<code>getSlot()</code>, <code>park()</code> and <code>unpark()</code> of the returned object).</li>
+  <li><a href="/phasync/getFiber/"><code>phasync::getFiber</code></a> Returns the running coroutine.</li>
+  <li><a href="/phasync/getRootContext/"><code>phasync::getRootContext</code></a> Returns the root context of the running coroutine.</li>
+  <li><a href="/phasync/getContext/"><code>phasync::getContext</code></a> Returns the context of the running coroutine: the object given to <code>run()</code>, <code>go()</code> or <code>withContext()</code>, or the one it inherited.</li>
 </ul>
 
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<div class="code" data-lang="php" data-run><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
-    </span>$a <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.2<span class="hl-k">); return </span><span class="hl-s">'a'</span><span class="hl-k">; });
-    </span>$b <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">); return </span><span class="hl-s">'b'</span><span class="hl-k">; });
-
-    echo </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$a<span class="hl-k">), </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$b<span class="hl-k">), </span><span class="hl-s">"\n"</span><span class="hl-k">;   </span><span class="hl-c">// ab, after 0.2 seconds
-</span><span class="hl-k">});</span></code></pre></div>
-
-<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<ul>
-<li><code>phasync</code> is a final class of static methods in the global namespace.</li>
-<li>The package is <code>phasync/phasync</code>. It behaves the same with and without the <code>phasync-ext</code> extension, which lets more code wait without blocking and makes waiting cheaper.</li>
-</ul>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/phasync/run/"><code>phasync::run</code></a> Register a coroutine/Fiber to run in the event loop and await the result.</li>
-  <li><a href="/Channel/"><code>Channel</code></a> Pass values between coroutines with phasync::channel(): a read waits for a writer, a write into a full channel waits for a reader.</li>
-  <li><a href="/WaitGroup/"><code>WaitGroup</code></a> This class provides an efficient tool for waiting until multiple coroutines have completed their task.</li>
+  <li><a href="/phasync/run/"><code>phasync::run</code></a> Runs <code>$fn</code> as a coroutine and returns its result once it and every coroutine started inside it have ended.</li>
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> Starts <code>$fn</code> as a coroutine in the current context and returns it, without waiting for it.</li>
+  <li><a href="/phasync/channel/"><code>phasync::channel</code></a> Creates a channel and returns its two ends in <code>$read</code> and <code>$write</code>.</li>
+  <li><a href="/WaitGroup/"><code>WaitGroup</code></a> Waits until a counted amount of work has been done, like Go's <code>sync.WaitGroup</code>.</li>
 </ul>
 </article>
 </main>

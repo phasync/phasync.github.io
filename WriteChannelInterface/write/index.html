@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WriteChannelInterface::write - phasync</title>
-<meta name="description" content="Write a value to the channel.">
+<meta name="description" content="Sends a value, and waits while the channel cannot take it: for a reader on an unbuffered channel, for room on a full buffer.">
 <link rel="canonical" href="https://phasync.github.io/WriteChannelInterface/write/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,36 +42,38 @@
   <li aria-current="page">write</li>
 </ol></nav>
 <h1>WriteChannelInterface::write <span class="badge kind">Method</span></h1>
-<p class="lead">Write a value to the channel.</p>
+<p class="lead">Sends a value, and waits while the channel cannot take it: for a reader on an unbuffered channel, for room on a full buffer.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WriteChannelInterface<span class="hl-k">::</span>write<span class="hl-k">(</span>mixed $value<span class="hl-k">, </span>float $timeout <span class="hl-k">= </span>PHP_FLOAT_MAX<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>Writing may cause the coroutine to be
-suspended, for example while waiting for a reader on an unbuffered
-channel.</p>
-<p>Any value is accepted -- a channel is single-process, in-memory
-communication between coroutines, so nothing is ever serialized. This
-is unrelated to whether a value can cross a process boundary; that is
-a separate concern (see the 2.0.0 clustering primitive in
-docs/roadmap-2.0.md), not something a channel itself restricts.</p>
+<p>Any value is accepted: a channel is in-memory communication between coroutines of one process, and nothing is serialized.</p>
 <p class="meta">Defined in <a href="/WriteChannelInterface/"><code>phasync\WriteChannelInterface</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$value</code> <span class="type">mixed</span></dt>
-  <dd></dd>
+  <dd>what to send</dd>
   <dt><code>$timeout</code> <span class="type">float</span> <span class="default">default <code>PHP_FLOAT_MAX</code></span></dt>
-  <dd></dd>
+  <dd>seconds to wait at most</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
 <p>No value is returned.</p>
 
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code><a href="/ChannelException/">ChannelException</a></code></dt>
+  <dd>If the channel is closed, or the creator of the channel waits on it alone, see <a href="/WriteChannelInterface/activate/"><code>WriteChannelInterface::activate</code></a></dd>
+  <dt><code><a href="/TimeoutException/">TimeoutException</a></code></dt>
+  <dd>If the value could not be sent in time</dd>
+</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/ReadChannelInterface/read/"><code>ReadChannelInterface::read</code></a> Returns the next value, and waits while there is none and the channel is open.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

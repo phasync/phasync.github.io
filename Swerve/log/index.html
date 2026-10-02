@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swerve::log - phasync</title>
-<meta name="description" content="The log of this process: swerve&#039;s own, in its format (the time, this worker&#039;s slot), wherever swerve logs (the terminal, or --log&#039;s file); a NullLogger with -q.">
+<meta name="description" content="The log of this process: swerve&#039;s own PSR-3 logger, in its format (the time, this worker&#039;s slot).">
 <link rel="canonical" href="https://phasync.github.io/Swerve/log/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,28 +42,32 @@
   <li aria-current="page">log</li>
 </ol></nav>
 <h1>Swerve::log <span class="badge kind">Method</span></h1>
-<p class="lead">The log of this process: swerve&#039;s own, in its format (the time, this worker&#039;s slot), wherever swerve logs (the terminal, or --log&#039;s file); a NullLogger with -q.</p>
+<p class="lead">The log of this process: swerve's own PSR-3 logger, in its format (the time, this worker's slot).</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>Swerve<span class="hl-k">::</span>log<span class="hl-k">(): </span>LoggerInterface</code></pre></div>
 </div>
-<p>Give it to
-the libraries that take a PSR-3 logger, such as Slim's error middleware:</p>
-<div class="code" data-lang="php"><pre><code>$app<span class="hl-k">-&gt;</span>addErrorMiddleware<span class="hl-k">(</span>true<span class="hl-k">, </span>true<span class="hl-k">, </span>false<span class="hl-k">, </span>Swerve<span class="hl-k">::</span>log<span class="hl-k">());</span></code></pre></div>
+<p>It writes wherever swerve logs (the terminal, or <code>--log</code>'s file), and is a <code>NullLogger</code> with
+<code>-q</code>. Without swerve's command line (swerve embedded), it is a <code>NullLogger</code> until
+<a href="/Swerve/setLog/"><code>Swerve::setLog</code></a> is called. Give it to the libraries that take a PSR-3 logger, such
+as Slim's error middleware:</p>
+<div class="code" data-lang="php"><pre><code>$app<span class="hl-k">-&gt;</span>addErrorMiddleware<span class="hl-k">(</span>true<span class="hl-k">, </span>true<span class="hl-k">, </span>false<span class="hl-k">, </span>Swerve<span class="hl-k">::</span>log<span class="hl-k">());
+</span>Swerve<span class="hl-k">::</span>log<span class="hl-k">()-&gt;</span>warning<span class="hl-k">(</span><span class="hl-s">'disk almost full: {free} MB'</span><span class="hl-k">, [</span><span class="hl-s">'free' </span><span class="hl-k">=&gt; </span>$free<span class="hl-k">]);</span></code></pre></div>
 
-<p>Without swerve's command line (swerve embedded), a NullLogger until setLog() is called.</p>
 <p class="meta">Defined in <a href="/Swerve/"><code>Swerve\Swerve</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <p>This method has no parameters.</p>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>LoggerInterface</code>.</p>
+<p>The log of this process <span class="type">LoggerInterface</span></p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Swerve/setLog/"><code>Swerve::setLog</code></a> replaces it</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

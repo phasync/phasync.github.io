@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WebSocket::receive - phasync</title>
-<meta name="description" content="The next text or binary message, or null once the connection is closed: by the client, by end(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.">
+<meta name="description" content="The next text or binary message, or null once the connection is closed.">
 <link rel="canonical" href="https://phasync.github.io/WebSocket/receive/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,11 +42,18 @@
   <li aria-current="page">receive</li>
 </ol></nav>
 <h1>WebSocket::receive <span class="badge kind">Method</span></h1>
-<p class="lead">The next text or binary message, or null once the connection is closed: by the client, by end(), because the client broke the protocol, or because swerve drains (a shutdown or reload), which closes it with 1001.</p>
+<p class="lead">The next text or binary message, or null once the connection is closed.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WebSocket<span class="hl-k">::</span>receive<span class="hl-k">(): ?</span>string</code></pre></div>
 </div>
+<p>Closed by the client, by <code>end()</code>, because the client broke the protocol, or because swerve
+drains (a shutdown or reload), which closes it with 1001. Waits for a message. It is the
+alternative to <code>$onMessage</code>, and the two don't mix.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">while (</span>null <span class="hl-k">!== (</span>$message <span class="hl-k">= </span>$ws<span class="hl-k">-&gt;</span>receive<span class="hl-k">())) {
+    </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>strrev<span class="hl-k">(</span>$message<span class="hl-k">));
+}</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/WebSocket/"><code>Swerve\Http\WebSocket</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -58,12 +65,14 @@
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code>LogicException</code></dt>
-  <dd>While $onMessage has listeners: they get the messages</dd>
+  <dd>While <code>$onMessage</code> has listeners: they get the messages</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/WebSocket/isBinary/"><code>WebSocket::isBinary</code></a> Whether the message <code>receive()</code> returned last was binary, rather than text.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

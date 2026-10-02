@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WebSocket::end - phasync</title>
-<meta name="description" content="Say goodbye, once: receive() returns null from then on, and the connection closes after the client&#039;s own goodbye, or a moment without one.">
+<meta name="description" content="Close the connection: send a close frame with $code and $reason, once.">
 <link rel="canonical" href="https://phasync.github.io/WebSocket/end/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,21 +42,29 @@
   <li aria-current="page">end</li>
 </ol></nav>
 <h1>WebSocket::end <span class="badge kind">Method</span></h1>
-<p class="lead">Say goodbye, once: receive() returns null from then on, and the connection closes after the client&#039;s own goodbye, or a moment without one.</p>
+<p class="lead">Close the connection: send a close frame with <code>$code</code> and <code>$reason</code>, once.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WebSocket<span class="hl-k">::</span>end<span class="hl-k">(</span>int $code <span class="hl-k">= </span>1000<span class="hl-k">, </span>string $reason <span class="hl-k">= </span><span class="hl-s">''</span><span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>$onClose gets $code and $reason, unless
-the client said goodbye first.</p>
+<p><code>receive()</code> returns null from then on, and the connection closes after the client's own
+goodbye, or a moment without one. <code>$onClose</code> fires once, with the code and reason of whoever
+said goodbye first. Returning from the callback does the same with 1000. May be called from
+any coroutine.</p>
+<div class="code" data-lang="php"><pre><code>$ws<span class="hl-k">-&gt;</span>onMessage<span class="hl-k">-&gt;</span>listen<span class="hl-k">(function (</span>string $data<span class="hl-k">) use (</span>$ws<span class="hl-k">) {
+    if (</span><span class="hl-s">'bye' </span><span class="hl-k">=== </span>$data<span class="hl-k">) {
+        </span>$ws<span class="hl-k">-&gt;</span>end<span class="hl-k">(</span>1000<span class="hl-k">, </span><span class="hl-s">'bye'</span><span class="hl-k">);
+    }
+});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/WebSocket/"><code>Swerve\Http\WebSocket</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$code</code> <span class="type">int</span> <span class="default">default <code>1000</code></span></dt>
-  <dd></dd>
+  <dd>the close code (RFC 6455, section 7.4): 1000 is a normal closure</dd>
   <dt><code>$reason</code> <span class="type">string</span> <span class="default">default <code>&#039;&#039;</code></span></dt>
-  <dd></dd>
+  <dd>the close frame's reason text</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -64,8 +72,6 @@ the client said goodbye first.</p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

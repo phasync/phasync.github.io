@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ReadChannelInterface::read - phasync</title>
-<meta name="description" content="Returns the next item that can be read.">
+<meta name="description" content="Returns the next value, and waits while there is none and the channel is open.">
 <link rel="canonical" href="https://phasync.github.io/ReadChannelInterface/read/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">read</li>
 </ol></nav>
 <h1>ReadChannelInterface::read <span class="badge kind">Method</span></h1>
-<p class="lead">Returns the next item that can be read.</p>
+<p class="lead">Returns the next value, and waits while there is none and the channel is open.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ReadChannelInterface<span class="hl-k">::</span>read<span class="hl-k">(
@@ -50,37 +50,42 @@
     ?</span>bool <span class="hl-k">&amp;</span>$eof <span class="hl-k">= </span>null
 <span class="hl-k">): </span>mixed</code></pre></div>
 </div>
-<p>If no item is
-available and the channel is still open, the function
-will suspend the coroutine and allow other coroutines
-to work.</p>
-<p><code>null</code> is both a legal value (if it was written) and what is returned when the channel
-is closed with nothing left to read, so the two are not distinguishable from the return
-value alone. Pass <code>$eof</code> by reference to tell them apart: it is set to <code>true</code> only when
-the channel is closed and there was nothing left, <code>false</code> otherwise (including when the
-returned value happens to be <code>null</code>).</p>
+<p><code>null</code> is both a value that can be written and what <code>read()</code> returns when the channel is closed with nothing left, so the return value alone cannot tell them apart. Pass <code>$eof</code>: it is set to true only when the channel is closed and empty, and false otherwise, also when the value is <code>null</code>.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>channel<span class="hl-k">(</span>$read<span class="hl-k">, </span>$write<span class="hl-k">, </span>2<span class="hl-k">);
+    </span>$write<span class="hl-k">-&gt;</span>write<span class="hl-k">(</span>null<span class="hl-k">);
+    </span>$write<span class="hl-k">-&gt;</span>close<span class="hl-k">();
+
+    </span>$read<span class="hl-k">-&gt;</span>read<span class="hl-k">(</span>eof<span class="hl-k">: </span>$eof<span class="hl-k">);   </span><span class="hl-c">// null, $eof is false: a value
+    </span>$read<span class="hl-k">-&gt;</span>read<span class="hl-k">(</span>eof<span class="hl-k">: </span>$eof<span class="hl-k">);   </span><span class="hl-c">// null, $eof is true: the end
+</span><span class="hl-k">});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/ReadChannelInterface/"><code>phasync\ReadChannelInterface</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$timeout</code> <span class="type">float</span> <span class="default">default <code>PHP_FLOAT_MAX</code></span></dt>
-  <dd></dd>
+  <dd>seconds to wait at most</dd>
   <dt><code>$eof</code> <span class="type">?bool</span> <span class="default">default <code>null</code></span></dt>
-  <dd></dd>
+  <dd>set to true if the channel is closed and empty</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>mixed</code>.</p>
+<p>The value, or null at the end of the channel <span class="type">mixed</span></p>
 
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
-  <dt><code>RuntimeException</code></dt>
-  <dd></dd>
+  <dt><code><a href="/TimeoutException/">TimeoutException</a></code></dt>
+  <dd>If nothing arrived in time</dd>
+  <dt><code><a href="/ChannelException/">ChannelException</a></code></dt>
+  <dd>If the creator of the channel waits on it alone, see <a href="/ReadChannelInterface/activate/"><code>ReadChannelInterface::activate</code></a></dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/WriteChannelInterface/write/"><code>WriteChannelInterface::write</code></a> Sends a value, and waits while the channel cannot take it: for a reader on an unbuffered channel, for room on a full buffer.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

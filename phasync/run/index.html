@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::run - phasync</title>
-<meta name="description" content="Run a function as a coroutine, wait for it and every coroutine started inside it, and return its result.">
+<meta name="description" content="Runs $fn as a coroutine and returns its result once it and every coroutine started inside it have ended.">
 <link rel="canonical" href="https://phasync.github.io/phasync/run/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -41,67 +41,58 @@
   <li><a href="/phasync/">phasync</a></li>
   <li aria-current="page">run</li>
 </ol></nav>
-<h1>phasync::run <span class="badge kind">Method</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">Register a coroutine/Fiber to run in the event loop and await the result.</p>
+<h1>phasync::run <span class="badge kind">Method</span></h1>
+<p class="lead">Runs <code>$fn</code> as a coroutine and returns its result once it and every coroutine started inside it have ended.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>run<span class="hl-k">(</span>Closure $fn<span class="hl-k">, ?array </span>$args <span class="hl-k">= [], ?</span>object $context <span class="hl-k">= </span>null<span class="hl-k">): </span>mixed</code></pre></div>
 </div>
-<p>Running a coroutine this way also ensures that the event loop will run
-until all nested coroutines have completed. If you want to create a coroutine
-inside this context, and leave it running after - the coroutine must be
-created from within another coroutine outside of the context, for example by
-using a Channel.</p>
-<p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
-
-<h2 id="parameters">Parameters</h2>
-<dl class="params">
-  <dt><code>$fn</code> <span class="type">Closure</span></dt>
-  <dd></dd>
-  <dt><code>$args</code> <span class="type">?array</span> <span class="default">default <code>[]</code></span></dt>
-  <dd></dd>
-  <dt><code>$context</code> <span class="type">?object</span> <span class="default">default <code>null</code></span></dt>
-  <dd></dd>
-</dl>
-
-<h2 id="return-values">Return values</h2>
-<p>Returns <code>mixed</code>.</p>
-
-<h2 id="errors">Errors / Exceptions</h2>
-<dl class="params">
-  <dt><code>FiberError</code></dt>
-  <dd></dd>
-  <dt><code>Throwable</code></dt>
-  <dd></dd>
-</dl>
-
-
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<div class="code" data-lang="php" data-run><pre><code>$result <span class="hl-k">= </span>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
-    return </span><span class="hl-s">'done'</span><span class="hl-k">;
-});
-echo </span>$result<span class="hl-k">;     </span><span class="hl-c">// done</span></code></pre></div>
-
-<p><code>run()</code> returns when the function and every coroutine started inside it have ended:</p>
-<div class="code" data-lang="php" data-run><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+<p>Outside a coroutine, <code>run()</code> starts the event loop and blocks the process until then. This is how a script, a test or a controller under PHP-FPM enters phasync. Inside a coroutine it opens a nested scope in the same loop: the calling coroutine waits and the others go on.</p>
+<p>The coroutines started inside belong to <code>$context</code>. If one of them throws and nobody awaits it, and no handler takes it (see <a href="/ExceptionHandlerInterface/"><code>ExceptionHandlerInterface</code></a>), the run fails: its other coroutines are cancelled with a CancelledException, their <code>finally</code> blocks run, and <code>run()</code> throws the failure, or an AggregateException when several coroutines failed. A cancellation a coroutine ends with is no failure. What <code>$fn</code> itself throws is thrown from <code>run()</code> in the same way. A nested <code>run()</code> fails alone, and throws into the coroutine that called it.</p>
+<p><code>$context</code> may be any object. A context can be used once: a second <code>run()</code>, <code>go()</code> or <code>withContext()</code> with the same object throws ContextUsedException. Without one, the run gets a new <code>stdClass</code>.</p>
+<div class="code" data-lang="php"><pre><code>$result <span class="hl-k">= </span>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
     </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () {
         </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">);
         echo </span><span class="hl-s">"second\n"</span><span class="hl-k">;
     });
     echo </span><span class="hl-s">"first\n"</span><span class="hl-k">;
-});
-echo </span><span class="hl-s">"third\n"</span><span class="hl-k">;</span></code></pre></div>
 
-<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<ul>
-<li>Inside Swerve, a request is already served in a <code>run()</code> of its own. You call <code>run()</code> in a library, a script or a test, where nothing has started the loop yet.</li>
-<li>Called from inside a coroutine, it runs the function as a coroutine in the same event loop.</li>
-<li>An exception thrown in the function is thrown from <code>run()</code>.</li>
-</ul>
+    return </span><span class="hl-s">'done'</span><span class="hl-k">;
+});
+echo </span><span class="hl-s">"third: </span>$result<span class="hl-s">\n"</span><span class="hl-k">;    </span><span class="hl-c">// run() returned after the coroutine ended</span></code></pre></div>
+
+<p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
+
+<h2 id="parameters">Parameters</h2>
+<dl class="params">
+  <dt><code>$fn</code> <span class="type">Closure</span></dt>
+  <dd>the main coroutine</dd>
+  <dt><code>$args</code> <span class="type">?array</span> <span class="default">default <code>[]</code></span></dt>
+  <dd>passed to <code>$fn</code></dd>
+  <dt><code>$context</code> <span class="type">?object</span> <span class="default">default <code>null</code></span></dt>
+  <dd>the context of the run; used once</dd>
+</dl>
+
+<h2 id="return-values">Return values</h2>
+<p>What <code>$fn</code> returned <span class="type">mixed</span></p>
+
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>Throwable</code></dt>
+  <dd>What <code>$fn</code> threw, or the failure of a coroutine nobody awaited</dd>
+  <dt><code><a href="/AggregateException/">AggregateException</a></code></dt>
+  <dd>When several coroutines failed</dd>
+  <dt><code><a href="/ContextUsedException/">ContextUsedException</a></code></dt>
+  <dd>If <code>$context</code> was used before</dd>
+</dl>
+
+
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/phasync/go/"><code>phasync::go</code></a> Creates a normal coroutine and starts running it.</li>
-  <li><a href="/phasync/sleep/"><code>phasync::sleep</code></a> Yield time so that other coroutines can continue processing.</li>
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> starts a coroutine without waiting for it</li>
+  <li><a href="/phasync/withContext/"><code>phasync::withContext</code></a> the same, without starting a coroutine</li>
+  <li><a href="/phasync/await/"><code>phasync::await</code></a> Waits for a coroutine or a promise, and returns its result or throws the exception it ended with.</li>
+  <li><a href="/phasync/service/"><code>phasync::service</code></a> Starts <code>$coroutine</code> as a service: a coroutine that belongs to no context, so that it outlives the scope that started it.</li>
 </ul>
 </article>
 </main>

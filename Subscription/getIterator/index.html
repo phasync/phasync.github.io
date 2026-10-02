@@ -42,13 +42,16 @@
   <li aria-current="page">getIterator</li>
 </ol></nav>
 <h1>Subscription::getIterator <span class="badge kind">Method</span></h1>
-<p class="lead">The messages, as they come; null after each $heartbeat seconds without one.</p>
+<p class="lead">The messages, as they come; null after each <code>$heartbeat</code> seconds without one.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>Subscription<span class="hl-k">::</span>getIterator<span class="hl-k">(): </span>Generator</code></pre></div>
 </div>
-<p>Ends when the
-process drains.</p>
+<p>Ends when the process drains. A subscription made while draining ends at once.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {
+    </span>handle<span class="hl-k">(</span>$message<span class="hl-k">);
+}</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/Subscription/"><code>Swerve\Subscription</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -60,12 +63,10 @@ process drains.</p>
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code><a href="/SubscriberLagException/">SubscriberLagException</a></code></dt>
-  <dd></dd>
+  <dd>When the next message arrived more than <code>$maxLag</code> seconds ago</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

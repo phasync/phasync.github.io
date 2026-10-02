@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OrderedChannel::write - phasync</title>
-<meta name="description" content="Append $message, as Swerve::publish() sends one: nothing is written, and the message is dropped, while the channel has no subscriber anywhere.">
+<meta name="description" content="Append $message to the channel, where every subscriber receives it in the channel&#039;s one order.">
 <link rel="canonical" href="https://phasync.github.io/OrderedChannel/write/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,17 +42,22 @@
   <li aria-current="page">write</li>
 </ol></nav>
 <h1>OrderedChannel::write <span class="badge kind">Method</span></h1>
-<p class="lead">Append $message, as Swerve::publish() sends one: nothing is written, and the message is dropped, while the channel has no subscriber anywhere.</p>
+<p class="lead">Append <code>$message</code> to the channel, where every subscriber receives it in the channel's one order.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>OrderedChannel<span class="hl-k">::</span>write<span class="hl-k">(</span>mixed $message<span class="hl-k">): </span>void</code></pre></div>
 </div>
+<p>The message is encoded as <a href="/Swerve/publish/"><code>Swerve::publish</code></a> does. While the channel has no subscriber
+anywhere nothing is written and the message is dropped.</p>
+<div class="code" data-lang="php"><pre><code>$ledger <span class="hl-k">= new </span>OrderedChannel<span class="hl-k">(</span><span class="hl-s">'ledger'</span><span class="hl-k">);
+</span>$ledger<span class="hl-k">-&gt;</span>write<span class="hl-k">([</span><span class="hl-s">'debit'</span><span class="hl-k">, </span>12<span class="hl-k">]);</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/OrderedChannel/"><code>Swerve\OrderedChannel</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$message</code> <span class="type">mixed</span></dt>
-  <dd></dd>
+  <dd>anything <code>json_encode()</code> takes except null; at most 128 KiB encoded</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -69,8 +74,11 @@
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/OrderedChannel/subscribe/"><code>OrderedChannel::subscribe</code></a> Receive what is written from now on, as <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> does.</li>
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of <code>$topic</code>, in every worker process of this swerve, this one included.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

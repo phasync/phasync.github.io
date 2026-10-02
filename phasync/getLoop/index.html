@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::getLoop - phasync</title>
-<meta name="description" content="The event loop, for code that waits with its low-level API (`EventLoop::park()`).">
+<meta name="description" content="Returns the event loop, for code that waits with its low-level API (getSlot(), park() and unpark() of the returned object).">
 <link rel="canonical" href="https://phasync.github.io/phasync/getLoop/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,12 +42,12 @@
   <li aria-current="page">getLoop</li>
 </ol></nav>
 <h1>phasync::getLoop <span class="badge kind">Method</span></h1>
-<p class="lead">The event loop, for code that waits with its low-level API (`EventLoop::park()`).</p>
+<p class="lead">Returns the event loop, for code that waits with its low-level API (<code>getSlot()</code>, <code>park()</code> and <code>unpark()</code> of the returned object).</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>getLoop<span class="hl-k">(): </span>EventLoop</code></pre></div>
 </div>
-<p>It runs only inside phasync::run().</p>
+<p>Application code does not need it: the other methods of this class are the API of the loop.</p>
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -59,12 +59,10 @@
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code>LogicException</code></dt>
-  <dd>Outside phasync::run()</dd>
+  <dd>Outside <code>phasync::run()</code></dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

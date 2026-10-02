@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swerve - phasync</title>
-<meta name="description" content="What Swerve gives the application: its log, the cache and the messages shared by every worker.">
+<meta name="description" content="What swerve gives the application: its log, the cache and the messages shared by every worker, and the state of the worker.">
 <link rel="canonical" href="https://phasync.github.io/Swerve/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -40,55 +40,40 @@
   <li><a href="/reference/">Reference</a></li>
   <li aria-current="page">Swerve</li>
 </ol></nav>
-<h1>Swerve <span class="badge kind">Class</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">What swerve gives the application: its log, the cache and the messages shared by every worker (see the methods), and the state of the worker.</p>
+<h1>Swerve <span class="badge kind">Class</span></h1>
+<p class="lead">What swerve gives the application: its log, the cache and the messages shared by every worker, and the state of the worker.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>Swerve</code></pre></div>
 </div>
+<p>Every method is static. Workers share no memory: the cache and the messages go through the
+master process, and work once the worker serves, not while <code>swerve.php</code> loads.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\Swerve<span class="hl-k">;
+
+</span>Swerve<span class="hl-k">::</span>log<span class="hl-k">()-&gt;</span>info<span class="hl-k">(</span><span class="hl-s">'started'</span><span class="hl-k">);
+</span>Swerve<span class="hl-k">::</span>cache<span class="hl-k">()-&gt;</span>set<span class="hl-k">(</span><span class="hl-s">'hits'</span><span class="hl-k">, </span>1<span class="hl-k">, </span>60<span class="hl-k">);
+</span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, [</span><span class="hl-s">'user' </span><span class="hl-k">=&gt; </span><span class="hl-s">'ann'</span><span class="hl-k">, </span><span class="hl-s">'text' </span><span class="hl-k">=&gt; </span><span class="hl-s">'hi'</span><span class="hl-k">]);</span></code></pre></div>
+
 <p class="meta">Defined in <code>Swerve\Swerve</code>, package <code>phasync/swerve</code>.</p>
 
 
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/Swerve/log/"><code>Swerve::log</code></a> The log of this process: swerve&#039;s own, in its format (the time, this worker&#039;s slot), wherever swerve logs (the terminal, or --log&#039;s file); a NullLogger with -q.</li>
-  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</li>
-  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</li>
-  <li><a href="/Swerve/cache/"><code>Swerve::cache</code></a> The cache every worker shares, held by the master: see Cache.</li>
-  <li><a href="/Swerve/claim/"><code>Swerve::claim</code></a> A handle on the name $name, one holder at a time across the workers; claims nothing until acquire() is called: `Swerve::claim(&#039;name&#039;)-&gt;acquire()` is null, or the held handle.</li>
+  <li><a href="/Swerve/log/"><code>Swerve::log</code></a> The log of this process: swerve's own PSR-3 logger, in its format (the time, this worker's slot).</li>
+  <li><a href="/Swerve/setLog/"><code>Swerve::setLog</code></a> Replace the logger that <a href="/Swerve/log/"><code>Swerve::log</code></a> returns.</li>
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of <code>$topic</code>, in every worker process of this swerve, this one included.</li>
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to <code>$topic</code> from now on.</li>
+  <li><a href="/Swerve/cache/"><code>Swerve::cache</code></a> The cache every worker shares, held by the master process.</li>
+  <li><a href="/Swerve/claim/"><code>Swerve::claim</code></a> A handle on the name <code>$name</code>, which one holder at a time can hold across the workers.</li>
   <li><a href="/Swerve/draining/"><code>Swerve::draining</code></a> Whether this worker drains: it is shutting down, reloading or being recycled, and finishes the requests in flight.</li>
-  <li><a href="/Swerve/getVersion/"><code>Swerve::getVersion</code></a> The installed version, as Composer knows it: 0.1.0-alpha3, or dev-main in a checkout.</li>
+  <li><a href="/Swerve/getVersion/"><code>Swerve::getVersion</code></a> The installed version, as Composer knows it: <code>0.1.0-beta1</code>, or <code>dev-main</code> in a checkout.</li>
 </ul>
 
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\Swerve<span class="hl-k">;
-
-</span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'news'</span><span class="hl-k">, </span><span class="hl-s">'a message'</span><span class="hl-k">);                 </span><span class="hl-c">// to every subscriber, in every worker
-</span><span class="hl-k">foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'news'</span><span class="hl-k">) as </span>$message<span class="hl-k">) { }   </span><span class="hl-c">// receive them
-
-</span>Swerve<span class="hl-k">::</span>cache<span class="hl-k">()-&gt;</span>set<span class="hl-k">(</span><span class="hl-s">'key'</span><span class="hl-k">, </span><span class="hl-s">'value'</span><span class="hl-k">, </span>60<span class="hl-k">);             </span><span class="hl-c">// a PSR-16 cache shared by the workers
-</span>Swerve<span class="hl-k">::</span>log<span class="hl-k">()-&gt;</span>info<span class="hl-k">(</span><span class="hl-s">'served'</span><span class="hl-k">);                        </span><span class="hl-c">// a PSR-3 logger, in Swerve's format</span></code></pre></div>
-
-<p><code>Swerve::log()</code> is the logger to give to a library that takes a PSR-3 logger, such as Slim's error middleware:</p>
-<div class="code" data-lang="php"><pre><code>$app<span class="hl-k">-&gt;</span>addErrorMiddleware<span class="hl-k">(</span>true<span class="hl-k">, </span>true<span class="hl-k">, </span>false<span class="hl-k">, </span>Swerve<span class="hl-k">::</span>log<span class="hl-k">());</span></code></pre></div>
-
-<p>A claim lets one worker at a time hold a name:</p>
-<div class="code" data-lang="php"><pre><code><span class="hl-k">if (</span>$claim <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>claim<span class="hl-k">(</span><span class="hl-s">'nightly-report'</span><span class="hl-k">)-&gt;</span>acquire<span class="hl-k">()) {
-    </span><span class="hl-c">// this worker holds the claim until $claim goes out of scope
-</span><span class="hl-k">}</span></code></pre></div>
-
-<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<ul>
-<li><code>Swerve</code> is a class of static methods; it has no instances.</li>
-<li>Without Swerve's command line (Swerve embedded in your own process), <code>log()</code> is a <code>NullLogger</code> until <code>setLog()</code> is called, and <code>publish()</code>, <code>cache()</code> and <code>claim()</code> work in that process only.</li>
-</ul>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/Subscription/"><code>Subscription</code></a> Messages published to a topic, from Swerve::subscribe(): iterate over it to receive them.</li>
-  <li><a href="/OrderedChannel/"><code>OrderedChannel</code></a> A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher&#039;s own messages keep theirs: $ledger = new OrderedChannel(&#039;ledger&#039;); $ledger-&gt;write([&#039;debit&#039;, 12]); foreach ($ledger as $entry) { ...</li>
-  <li><a href="/Claim/"><code>Claim</code></a> A handle on a name that one holder at a time can hold across the whole server, from Swerve::claim().</li>
-  <li><a href="/WebSocket/"><code>WebSocket</code></a> A WebSocket connection (RFC 6455), server side.</li>
-  <li><a href="/phasync/"><code>phasync</code></a> This class defines the essential API for all coroutine based applications.</li>
+  <li><a href="/Cache/"><code>Cache</code></a> The cache every worker shares, from Swerve::cache(): a PSR-16 cache held by the master process, the least recently used entries evicted past --cache-size.</li>
+  <li><a href="/Claim/"><code>Claim</code></a> A handle on a name that one holder at a time can hold across the whole server, from <a href="/Swerve/claim/"><code>Swerve::claim</code></a>.</li>
+  <li><a href="/Subscription/"><code>Subscription</code></a> The messages published to a topic, from <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>: iterate over it to receive them.</li>
 </ul>
 </article>
 </main>

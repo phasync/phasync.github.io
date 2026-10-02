@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swerve::subscribe - phasync</title>
-<meta name="description" content="Receive what is published to a topic from now on.">
+<meta name="description" content="Receive what is published to $topic from now on.">
 <link rel="canonical" href="https://phasync.github.io/Swerve/subscribe/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -41,8 +41,8 @@
   <li><a href="/Swerve/">Swerve</a></li>
   <li aria-current="page">subscribe</li>
 </ol></nav>
-<h1>Swerve::subscribe <span class="badge kind">Method</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</p>
+<h1>Swerve::subscribe <span class="badge kind">Method</span></h1>
+<p class="lead">Receive what is published to <code>$topic</code> from now on.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(
@@ -51,62 +51,41 @@
     ?</span>float $heartbeat <span class="hl-k">= </span>null
 <span class="hl-k">): </span>Subscription</code></pre></div>
 </div>
-<p>}</p>
-<p>The subscription ends when its last reference goes, and its loop when the process drains,
-see Subscription. One falling more than $maxLag seconds behind gets a
-SubscriberLagException from the loop. With $heartbeat, the loop also gets null after
-that many seconds without a message: for a keep-alive.</p>
+<p>The subscription exists once this returns, not from the first iteration. It ends when its
+last reference goes, and its loop when the process drains; see <a href="/Subscription/"><code>Subscription</code></a>. A
+subscriber falling more than <code>$maxLag</code> seconds behind gets a <a href="/SubscriberLagException/"><code>SubscriberLagException</code></a>
+from the loop. With <code>$heartbeat</code>, the loop also gets <code>null</code> after that many seconds without
+a message: for a keep-alive.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {
+    echo </span>$message<span class="hl-k">-&gt;</span>text<span class="hl-k">, </span><span class="hl-s">"\n"</span><span class="hl-k">;   </span><span class="hl-c">// an object arrives as a read-only SealedObject
+</span><span class="hl-k">}</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/Swerve/"><code>Swerve\Swerve</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$topic</code> <span class="type">string</span></dt>
-  <dd></dd>
+  <dd>what <a href="/Swerve/publish/"><code>Swerve::publish</code></a> sent to</dd>
   <dt><code>$maxLag</code> <span class="type">float</span> <span class="default">default <code>30.0</code></span></dt>
-  <dd></dd>
+  <dd>seconds a message may wait before this subscriber reads it</dd>
   <dt><code>$heartbeat</code> <span class="type">?float</span> <span class="default">default <code>null</code></span></dt>
-  <dd></dd>
+  <dd>seconds without a message after which the loop yields null; null for never</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>Subscription</code>.</p>
+<p>Iterate over it to receive the messages <span class="type">Subscription</span></p>
+
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>InvalidArgumentException</code></dt>
+  <dd>For a topic starting with &quot;\0&quot;</dd>
+</dl>
 
 
-
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\Swerve<span class="hl-k">;
-
-foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'room:lobby'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {
-    </span><span class="hl-c">// every message published to room:lobby since subscribe() returned
-</span><span class="hl-k">}</span></code></pre></div>
-
-<p>Subscribe before you read the current state, so that no change falls between the two. A message may then be older than the state you read; give state a version and let the client ignore an older one.</p>
-<div class="code" data-lang="php"><pre><code>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'poll'</span><span class="hl-k">);
-</span>$state        <span class="hl-k">= </span>$db<span class="hl-k">-&gt;</span>query<span class="hl-k">(</span><span class="hl-s">'SELECT version, counts FROM poll'</span><span class="hl-k">)-&gt;</span>fetch<span class="hl-k">();
-echo </span><span class="hl-s">'data: ' </span><span class="hl-k">. </span>json_encode<span class="hl-k">(</span>$state<span class="hl-k">) . </span><span class="hl-s">"\n\n"</span><span class="hl-k">;
-
-foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
-    echo </span><span class="hl-s">"data: </span>$message<span class="hl-s">\n\n"</span><span class="hl-k">;
-}</span></code></pre></div>
-
-<p>With <code>heartbeat</code>, the loop yields <code>null</code> when nothing came for that many seconds, so that a producer can send a keep-alive and notice a client that left.</p>
-<div class="code" data-lang="php"><pre><code><span class="hl-k">foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>heartbeat<span class="hl-k">: </span>15<span class="hl-k">) as </span>$message<span class="hl-k">) {
-    echo </span>null <span class="hl-k">=== </span>$message <span class="hl-k">? </span><span class="hl-s">": keep-alive\n\n" </span><span class="hl-k">: </span><span class="hl-s">"data: </span>$message<span class="hl-s">\n\n"</span><span class="hl-k">;
-}</span></code></pre></div>
-
-<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<ul>
-<li>The subscription receives from the moment <code>subscribe()</code> returns, not from the first iteration.</li>
-<li>It ends when its last reference goes: a <code>break</code> out of the loop, the variable going out of scope, or the code holding it ending. There is no unsubscribe.</li>
-<li>The loop ends when the worker drains (a shutdown, reload or recycle), so that responses fed by it end too.</li>
-<li>A subscriber that falls more than <code>$maxLag</code> seconds behind gets a <code>SubscriberLagException</code> from its loop. A client that cannot keep up is better disconnected, and catches up from storage when it reconnects.</li>
-<li>A topic costs nothing in a worker without subscribers.</li>
-</ul>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</li>
-  <li><a href="/Subscription/"><code>Subscription</code></a> Messages published to a topic, from Swerve::subscribe(): iterate over it to receive them.</li>
-  <li><a href="/guides/realtime/">Realtime: SSE and WebSockets</a> Push to the browser with Server-Sent Events or WebSockets, across all workers.</li>
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> sends the messages</li>
+  <li><a href="/OrderedChannel/"><code>OrderedChannel</code></a> when every subscriber must see one common order</li>
 </ul>
 </article>
 </main>

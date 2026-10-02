@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OrderedChannel - phasync</title>
-<meta name="description" content="A topic where every subscriber, in every worker, receives the messages in one and the same order.">
+<meta name="description" content="A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher&#039;s own messages keep theirs.">
 <link rel="canonical" href="https://phasync.github.io/OrderedChannel/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -40,13 +40,16 @@
   <li><a href="/reference/">Reference</a></li>
   <li aria-current="page">OrderedChannel</li>
 </ol></nav>
-<h1>OrderedChannel <span class="badge kind">Class</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher&#039;s own messages keep theirs: $ledger = new OrderedChannel(&#039;ledger&#039;); $ledger-&gt;write([&#039;debit&#039;, 12]); foreach ($ledger as $entry) { ...</p>
+<h1>OrderedChannel <span class="badge kind">Class</span></h1>
+<p class="lead">A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher's own messages keep theirs.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>OrderedChannel <span class="hl-k">implements </span>\IteratorAggregate<span class="hl-k">, </span>\Traversable</code></pre></div>
 </div>
-<p>}</p>
+<div class="code" data-lang="php"><pre><code>$ledger <span class="hl-k">= new </span>OrderedChannel<span class="hl-k">(</span><span class="hl-s">'ledger'</span><span class="hl-k">);
+</span>$ledger<span class="hl-k">-&gt;</span>write<span class="hl-k">([</span><span class="hl-s">'debit'</span><span class="hl-k">, </span>12<span class="hl-k">]);
+foreach (</span>$ledger <span class="hl-k">as </span>$entry<span class="hl-k">) { ... }</span></code></pre></div>
+
 <p>Plain Swerve::publish() from one publisher is already ordered for its subscribers, which is
 enough for a stream between two coroutines or workers. This is for many publishers that need
 one common order.</p>
@@ -65,35 +68,17 @@ the plain topic of the same name. See docs/publish-subscribe.md.</p>
 </dl>
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/OrderedChannel/__construct/"><code>OrderedChannel::__construct</code></a> </li>
-  <li><a href="/OrderedChannel/write/"><code>OrderedChannel::write</code></a> Append $message, as Swerve::publish() sends one: nothing is written, and the message is dropped, while the channel has no subscriber anywhere.</li>
-  <li><a href="/OrderedChannel/subscribe/"><code>OrderedChannel::subscribe</code></a> Receive what is written from now on, as Swerve::subscribe() does: the subscription exists once this returns.</li>
-  <li><a href="/OrderedChannel/getIterator/"><code>OrderedChannel::getIterator</code></a> Subscribes with the defaults, so `foreach ($channel as $message)` subscribes at the foreach.</li>
+  <li><a href="/OrderedChannel/__construct/"><code>OrderedChannel::__construct</code></a> A channel by <code>$name</code>, separate from the plain topic of the same name.</li>
+  <li><a href="/OrderedChannel/write/"><code>OrderedChannel::write</code></a> Append <code>$message</code> to the channel, where every subscriber receives it in the channel's one order.</li>
+  <li><a href="/OrderedChannel/subscribe/"><code>OrderedChannel::subscribe</code></a> Receive what is written from now on, as <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> does.</li>
+  <li><a href="/OrderedChannel/getIterator/"><code>OrderedChannel::getIterator</code></a> Subscribes with the defaults, so <code>foreach ($channel as $message)</code> subscribes at the foreach.</li>
 </ul>
 
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\OrderedChannel<span class="hl-k">;
-
-</span>$ledger <span class="hl-k">= new </span>OrderedChannel<span class="hl-k">(</span><span class="hl-s">'ledger'</span><span class="hl-k">);
-</span>$ledger<span class="hl-k">-&gt;</span>write<span class="hl-k">([</span><span class="hl-s">'debit'</span><span class="hl-k">, </span>12<span class="hl-k">]);
-
-foreach (</span>$ledger <span class="hl-k">as </span>$entry<span class="hl-k">) {
-    </span><span class="hl-c">// every subscriber, in every worker, sees the entries in the same order
-</span><span class="hl-k">}</span></code></pre></div>
-
-<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<ul>
-<li>Plain <code>Swerve::publish()</code> from one publisher is already ordered for its subscribers. <code>OrderedChannel</code> is for many publishers that need one common order.</li>
-<li>It is a broadcast, not a queue: nothing is written while nobody subscribes, and a subscriber sees what is written after it subscribed.</li>
-<li>Retention is about 30 seconds. A subscriber lagging beyond that gets a <code>SubscriberLagException</code>.</li>
-<li>Each message costs one append to a file in the master's temporary directory.</li>
-<li>It is separate from the plain topic of the same name.</li>
-</ul>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</li>
-  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</li>
-  <li><a href="/advanced/ordered-channel/">OrderedChannel</a> One order for every subscriber, from many publishers.</li>
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of <code>$topic</code>, in every worker process of this swerve, this one included.</li>
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to <code>$topic</code> from now on.</li>
+  <li><a href="/Subscription/"><code>Subscription</code></a> The messages published to a topic, from <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>: iterate over it to receive them.</li>
 </ul>
 </article>
 </main>

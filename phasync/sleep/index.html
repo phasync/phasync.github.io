@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::sleep - phasync</title>
-<meta name="description" content="Yield time so that other coroutines can continue processing.">
+<meta name="description" content="Pauses the current coroutine for $seconds, and lets the others run meanwhile.">
 <link rel="canonical" href="https://phasync.github.io/phasync/sleep/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,35 +42,36 @@
   <li aria-current="page">sleep</li>
 </ol></nav>
 <h1>phasync::sleep <span class="badge kind">Method</span></h1>
-<p class="lead">Yield time so that other coroutines can continue processing.</p>
+<p class="lead">Pauses the current coroutine for <code>$seconds</code>, and lets the others run meanwhile.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>float $seconds <span class="hl-k">= </span>0.0<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>Note that
-if you intend to wait for something to happen in other coroutines, you
-should use <code>phasync::yield()</code>, which will suspend the coroutine until
-after any other fibers have done some work.</p>
+<p>With the default of 0 the coroutine goes to the back of the line: every coroutine that is ready runs before it resumes. A timer wakes the coroutine after <code>$seconds</code>, never earlier. Outside a coroutine it blocks the process for that long, and returns at once for 0.</p>
+<p>Inside a coroutine, PHP's <code>sleep()</code> blocks the whole process, unless phasync-ext is loaded. <code>phasync\sleep()</code> is this function under the name of the native one.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.2<span class="hl-k">); echo </span><span class="hl-s">"slow\n"</span><span class="hl-k">; });
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">); echo </span><span class="hl-s">"fast\n"</span><span class="hl-k">; });
+});   </span><span class="hl-c">// fast, slow</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$seconds</code> <span class="type">float</span> <span class="default">default <code>0.0</code></span></dt>
-  <dd>If null, the coroutine won't be resumed until another coroutine resumes</dd>
+  <dd>how long to pause; 0 lets the others run once</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
 <p>No value is returned.</p>
 
-<h2 id="errors">Errors / Exceptions</h2>
-<dl class="params">
-  <dt><code>RuntimeException</code></dt>
-  <dd></dd>
-</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/yield/"><code>phasync::yield</code></a> Suspends the current coroutine until the loop has made its next round, after the coroutines that were ready have run.</li>
+  <li><a href="/sleep/"><code>sleep</code></a> Suspends the current coroutine for <code>$seconds</code> seconds, letting the others run.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

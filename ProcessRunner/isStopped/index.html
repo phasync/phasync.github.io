@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::isStopped - phasync</title>
-<meta name="description" content="Returns true if the process is stopped (generally via `Process::sigstop()`).">
+<meta name="description" content="Returns true if the process is paused by a stop signal.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/isStopped/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,13 +42,12 @@
   <li aria-current="page">isStopped</li>
 </ol></nav>
 <h1>ProcessRunner::isStopped <span class="badge kind">Method</span></h1>
-<p class="lead">Returns true if the process is stopped (generally via `Process::sigstop()`).</p>
+<p class="lead">Returns true if the process is paused by a stop signal.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>isStopped<span class="hl-k">(): </span>bool</code></pre></div>
 </div>
-<p>Always false on Windows: there is no signal there that pauses a process the way SIGSTOP
-does (see sigstop()).</p>
+<p>Always false on Windows.</p>
 <p class="meta">Defined in <a href="/ProcessRunner/"><code>phasync\Util\ProcessRunner</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -59,8 +58,6 @@ does (see sigstop()).</p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::sighup - phasync</title>
-<meta name="description" content="Originally sent when a terminal was closed, today SIGHUP is often used to instruct background processes to reload their configuration files or to gracefully restart.">
+<meta name="description" content="Sends SIGHUP, which many daemons take as a request to reload their configuration.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/sighup/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,15 +42,12 @@
   <li aria-current="page">sighup</li>
 </ol></nav>
 <h1>ProcessRunner::sighup <span class="badge kind">Method</span></h1>
-<p class="lead">Originally sent when a terminal was closed, today SIGHUP is often used to instruct background processes to reload their configuration files or to gracefully restart.</p>
+<p class="lead">Sends SIGHUP, which many daemons take as a request to reload their configuration.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>sighup<span class="hl-k">(): </span>bool</code></pre></div>
 </div>
-<p>It can be caught and handled, which
-allows applications to perform specific actions, such as re-reading
-a configuration file.</p>
-<p>On Windows this hard-kills the process instead; see sendSignal().</p>
+<p>On Windows it ends the process at once.</p>
 <p class="meta">Defined in <a href="/ProcessRunner/"><code>phasync\Util\ProcessRunner</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -61,8 +58,10 @@ a configuration file.</p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/ProcessRunner/sendSignal/"><code>ProcessRunner::sendSignal</code></a> Sends a signal to the process, and returns false without sending it if the process is not running.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

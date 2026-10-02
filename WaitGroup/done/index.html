@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WaitGroup::done - phasync</title>
-<meta name="description" content="Signal that work has been completed to the WaitGroup.">
+<meta name="description" content="Marks one piece of work as done.">
 <link rel="canonical" href="https://phasync.github.io/WaitGroup/done/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">done</li>
 </ol></nav>
 <h1>WaitGroup::done <span class="badge kind">Method</span></h1>
-<p class="lead">Signal that work has been completed to the WaitGroup.</p>
+<p class="lead">Marks one piece of work as done.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WaitGroup<span class="hl-k">::</span>done<span class="hl-k">(): </span>void</code></pre></div>
@@ -58,12 +58,14 @@
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code>LogicException</code></dt>
-  <dd></dd>
+  <dd>If the counter is zero already</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/WaitGroup/add/"><code>WaitGroup::add</code></a> Adds <code>$delta</code> to the counter of unfinished work.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

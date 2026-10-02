@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::withContext - phasync</title>
-<meta name="description" content="Run $fn in the current coroutine as if it were the main coroutine of a phasync::run() of $context, without starting a coroutine, which costs far more: it returns what $fn returns, once the coroutines $fn started in the context have ended too.">
+<meta name="description" content="Runs $fn in the current coroutine as the main coroutine of a run() of $context, without starting a coroutine.">
 <link rel="canonical" href="https://phasync.github.io/phasync/withContext/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,43 +42,51 @@
   <li aria-current="page">withContext</li>
 </ol></nav>
 <h1>phasync::withContext <span class="badge kind">Method</span></h1>
-<p class="lead">Run $fn in the current coroutine as if it were the main coroutine of a phasync::run() of $context, without starting a coroutine, which costs far more: it returns what $fn returns, once the coroutines $fn started in the context have ended too.</p>
+<p class="lead">Runs <code>$fn</code> in the current coroutine as the main coroutine of a <code>run()</code> of <code>$context</code>, without starting a coroutine.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>withContext<span class="hl-k">(</span>Closure $fn<span class="hl-k">, </span>object $context<span class="hl-k">): </span>mixed</code></pre></div>
 </div>
-<p>When $fn throws, those are
-cancelled first, and the exception is rethrown; when the calling coroutine is cancelled
-while waiting, so are they. A server gives each request a context of its own this way.
-Unlike run(), the failure of a coroutine that nobody awaited is not thrown.</p>
-<p>Given a <code>\phasync\Context\ContextFactoryInterface</code> instead of a context, $fn runs in the
-coroutine's own context until it needs the context of its own: getContext(), getRootContext(),
-go(), finally(), run() and withContext() called inside create it, once, with the factory. A
-request handler that does none of these costs no context at all.</p>
+<p>It returns what <code>$fn</code> returns, once the coroutines <code>$fn</code> started in the context have ended too. When <code>$fn</code> throws, those are cancelled first and the exception is rethrown. A coroutine of the context that fails with nobody awaiting it fails the call as it fails a <code>run()</code>: the rest are cancelled, and the failure is thrown from <code>withContext()</code>. Starting a coroutine costs far more than this: a server gives each request a context of its own this way.</p>
+<p>Given a <code>Context\ContextFactoryInterface</code> instead of a context, <code>$fn</code> runs in the coroutine's own context until it needs a context of its own: <code>getContext()</code>, <code>getRootContext()</code>, <code>go()</code>, <code>finally()</code>, <code>run()</code> and <code>withContext()</code> called inside create it, once, with the factory. A request handler that does none of these costs no context at all.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$request <span class="hl-k">= new </span>stdClass<span class="hl-k">();
+    </span>$result  <span class="hl-k">= </span>phasync<span class="hl-k">::</span>withContext<span class="hl-k">(function () use (</span>$request<span class="hl-k">) {
+        </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">); echo </span><span class="hl-s">"child ended\n"</span><span class="hl-k">; });
+        </span>var_dump<span class="hl-k">(</span>phasync<span class="hl-k">::</span>getContext<span class="hl-k">() === </span>$request<span class="hl-k">);   </span><span class="hl-c">// true
+        </span><span class="hl-k">return </span><span class="hl-s">'response'</span><span class="hl-k">;
+    }, </span>$request<span class="hl-k">);
+    echo </span><span class="hl-s">"</span>$result<span class="hl-s">\n"</span><span class="hl-k">;   </span><span class="hl-c">// after "child ended"
+</span><span class="hl-k">});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$fn</code> <span class="type">Closure</span></dt>
-  <dd></dd>
+  <dd>what to run</dd>
   <dt><code>$context</code> <span class="type">object</span></dt>
-  <dd></dd>
+  <dd>a context, or a ContextFactoryInterface; used once</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>mixed</code>.</p>
+<p>What <code>$fn</code> returned <span class="type">mixed</span></p>
 
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code>LogicException</code></dt>
   <dd>Outside a coroutine</dd>
-  <dt><code>phasync\ContextUsedException</code></dt>
-  <dd>If $context was used before</dd>
+  <dt><code><a href="/ContextUsedException/">ContextUsedException</a></code></dt>
+  <dd>If <code>$context</code> was used before</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/run/"><code>phasync::run</code></a> Runs <code>$fn</code> as a coroutine and returns its result once it and every coroutine started inside it have ended.</li>
+  <li><a href="/phasync/finally/"><code>phasync::finally</code></a> Registers <code>$fn</code> to run when the current coroutine ends, or when the <code>withContext()</code> call it is in returns.</li>
+  <li><a href="/phasync/awaitContext/"><code>phasync::awaitContext</code></a> Waits until every coroutine of <code>$context</code>, and of the contexts nested in it, has ended.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

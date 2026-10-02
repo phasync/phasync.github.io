@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HttpClient - phasync</title>
-<meta name="description" content="An asynchronous PSR-18 HTTP client, in the package phasync/http-client.">
+<meta name="description" content="A PSR-18 HTTP client that runs concurrent requests on curl_multi.">
 <link rel="canonical" href="https://phasync.github.io/HttpClient/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -40,35 +40,51 @@
   <li><a href="/reference/">Reference</a></li>
   <li aria-current="page">HttpClient</li>
 </ol></nav>
-<h1>HttpClient <span class="badge kind">Topic</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">An asynchronous PSR-18 HTTP client, in the package phasync/http-client.</p>
+<h1>HttpClient <span class="badge kind">Class</span></h1>
+<p class="lead">A PSR-18 HTTP client that runs concurrent requests on <code>curl_multi</code>.</p>
 
-
-
-
-<p><code>phasync\HttpClient\HttpClient</code> sends requests with <code>curl_multi</code>. Requests run at the same time, and no request starts to fetch until its body is read.</p>
-<div class="code" data-lang="bash"><pre><code>composer require phasync/http-client</code></pre></div>
-
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>HttpClient <span class="hl-k">implements </span>ClientInterface</code></pre></div>
+</div>
+<p><code>get()</code>, <code>post()</code>, <code>put()</code>, <code>request()</code> and <code>sendRequest()</code> return a <a href="/CurlResponse/"><code>CurlResponse</code></a> at once.
+The transfer starts when its status, headers or body is first read, and every request created
+up to then starts together. Inside a coroutine only the reading coroutine is suspended; outside
+one, the reading call blocks until the response has arrived. An HTTP error status such as 404 or
+500 is a normal response and throws nothing.</p>
 <div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>phasync\HttpClient\HttpClient<span class="hl-k">;
 
-</span>$client <span class="hl-k">= new </span>HttpClient<span class="hl-k">();
+</span>$client <span class="hl-k">= new </span>HttpClient<span class="hl-k">([</span><span class="hl-s">'timeoutMs' </span><span class="hl-k">=&gt; </span>5000<span class="hl-k">]);
 
-</span><span class="hl-c">// Neither request starts fetching until its body is read, so both run together.
+</span><span class="hl-c">// Neither transfer has started yet, so both run at the same time once the first is read.
 </span>$a <span class="hl-k">= </span>$client<span class="hl-k">-&gt;</span>get<span class="hl-k">(</span><span class="hl-s">'https://example.com/a'</span><span class="hl-k">);
 </span>$b <span class="hl-k">= </span>$client<span class="hl-k">-&gt;</span>get<span class="hl-k">(</span><span class="hl-s">'https://example.com/b'</span><span class="hl-k">);
 
-echo </span>$a<span class="hl-k">-&gt;</span>getBody<span class="hl-k">();
+echo </span>$a<span class="hl-k">-&gt;</span>getStatusCode<span class="hl-k">(), </span><span class="hl-s">"\n"</span><span class="hl-k">;
 echo </span>$b<span class="hl-k">-&gt;</span>getBody<span class="hl-k">();</span></code></pre></div>
 
-<div class="code" data-lang="php"><pre><code>$response <span class="hl-k">= </span>$client<span class="hl-k">-&gt;</span>post<span class="hl-k">(</span><span class="hl-s">'https://example.com/post'</span><span class="hl-k">, [</span><span class="hl-s">'foo' </span><span class="hl-k">=&gt; </span><span class="hl-s">'bar'</span><span class="hl-k">]);
-echo </span>$response<span class="hl-k">-&gt;</span>getBody<span class="hl-k">();</span></code></pre></div>
+<p>Cancelling a coroutine that is waiting for a response throws <code>phasync\CancelledException</code> in it.
+The client stays usable.</p>
+<p class="meta">Defined in <code>phasync\HttpClient\HttpClient</code>, package <code>phasync/http-client</code>.</p>
 
-<p>A body may be a string, a PSR-7 stream, or an array or object, which is encoded as <code>application/x-www-form-urlencoded</code> or JSON depending on the <code>Content-Type</code> header. See the package README for multipart uploads and the options.</p>
+
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/HttpClient/__construct/"><code>HttpClient::__construct</code></a> Create a client whose options are the defaults for every request it sends.</li>
+  <li><a href="/HttpClient/addMiddlewareFunction/"><code>HttpClient::addMiddlewareFunction</code></a> Wrap <a href="/HttpClient/sendRequest/"><code>HttpClient::sendRequest</code></a> in a function that can change the request or the response.</li>
+  <li><a href="/HttpClient/sendRequest/"><code>HttpClient::sendRequest</code></a> Send a PSR-7 request with the client's default options.</li>
+  <li><a href="/HttpClient/request/"><code>HttpClient::request</code></a> Send a request with any method, a body and options for this request only.</li>
+  <li><a href="/HttpClient/get/"><code>HttpClient::get</code></a> Send a GET request.</li>
+  <li><a href="/HttpClient/post/"><code>HttpClient::post</code></a> Send a POST request with a body.</li>
+  <li><a href="/HttpClient/put/"><code>HttpClient::put</code></a> Send a PUT request with a body.</li>
+</ul>
+
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/phasync/go/"><code>phasync::go</code></a> Creates a normal coroutine and starts running it.</li>
-  <li><a href="/guides/concurrent-api-calls/">Concurrent API calls</a> Call several APIs at once and wait for all of them.</li>
+  <li><a href="/HttpClient/request/"><code>HttpClient::request</code></a> Send a request with any method, a body and options for this request only.</li>
+  <li><a href="/HttpClientOptions/"><code>HttpClientOptions</code></a> The options of an HTTP request, as public properties that map to cURL options.</li>
+  <li><a href="/CurlResponse/"><code>CurlResponse</code></a> The PSR-7 response of an <a href="/HttpClient/"><code>HttpClient</code></a> request, filled in by a cURL transfer.</li>
+  <li><a href="/MultipartStream/"><code>MultipartStream</code></a> A <code>multipart/form-data</code> request body built from a nested array of fields.</li>
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> Starts <code>$fn</code> as a coroutine in the current context and returns it, without waiting for it.</li>
 </ul>
 </article>
 </main>

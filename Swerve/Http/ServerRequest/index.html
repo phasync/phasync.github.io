@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swerve\Http\ServerRequest - phasync</title>
+<meta name="description" content="The PSR-7 request a server gives the application, the same for every protocol.">
+<link rel="canonical" href="https://phasync.github.io/Swerve/Http/ServerRequest/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">Swerve\Http\ServerRequest</li>
+</ol></nav>
+<h1>Swerve\Http\ServerRequest <span class="badge kind">Class</span></h1>
+<p class="lead">The PSR-7 request a server gives the application, the same for every protocol.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>ServerRequest <span class="hl-k">extends </span>ServerRequest <span class="hl-k">implements </span>ServerRequestInterface<span class="hl-k">, </span>MessageInterface<span class="hl-k">, </span>RequestInterface</code></pre></div>
+</div>
+<p>A server supplies what its protocol parsed (method, target, headers, body stream, server
+params). The cookies and the form data are derived when first asked for: <code>getParsedBody()</code> and
+<code>getUploadedFiles()</code> give a POST form's fields and files as PHP's <code>$_POST</code> and <code>$_FILES</code>, and
+<code>getParsedBody()</code> is null for any other body, which is left raw in <code>getBody()</code>. The application
+receives one from the server; it is not meant to create them.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">public function </span>handle<span class="hl-k">(</span>ServerRequestInterface $request<span class="hl-k">): </span>ResponseInterface
+<span class="hl-k">{
+    </span>$name <span class="hl-k">= </span>$request<span class="hl-k">-&gt;</span>getParsedBody<span class="hl-k">()[</span><span class="hl-s">'name'</span><span class="hl-k">] ?? </span>$request<span class="hl-k">-&gt;</span>getCookieParams<span class="hl-k">()[</span><span class="hl-s">'name'</span><span class="hl-k">] ?? </span><span class="hl-s">'guest'</span><span class="hl-k">;
+    </span>$json <span class="hl-k">= </span>json_decode<span class="hl-k">((string) </span>$request<span class="hl-k">-&gt;</span>getBody<span class="hl-k">(), </span>true<span class="hl-k">);   </span><span class="hl-c">// any other body is read raw
+    </span><span class="hl-k">...
+}</span></code></pre></div>
+
+<p class="meta">Defined in <code>Swerve\Http\ServerRequest</code>, package <code>phasync/swerve</code>.</p>
+
+
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/Swerve/Http/ServerRequest/__construct/"><code>Swerve\Http\ServerRequest::__construct</code></a> Make the request of a protocol server, which gives the headers in the form this keeps them in.</li>
+  <li><a href="/Swerve/Http/ServerRequest/getCookieParams/"><code>Swerve\Http\ServerRequest::getCookieParams</code></a> Retrieve cookies.</li>
+  <li><a href="/Swerve/Http/ServerRequest/withCookieParams/"><code>Swerve\Http\ServerRequest::withCookieParams</code></a> Return an instance with the specified cookies.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Dispatcher/"><code>Dispatcher</code></a> Where a request meets the application, whatever protocol it came in.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Subscription - phasync</title>
-<meta name="description" content="Messages published to a topic, from Swerve::subscribe(): iterate over it to receive them.">
+<meta name="description" content="The messages published to a topic, from Swerve::subscribe: iterate over it to receive them.">
 <link rel="canonical" href="https://phasync.github.io/Subscription/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -40,8 +40,8 @@
   <li><a href="/reference/">Reference</a></li>
   <li aria-current="page">Subscription</li>
 </ol></nav>
-<h1>Subscription <span class="badge kind">Class</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">Messages published to a topic, from Swerve::subscribe(): iterate over it to receive them.</p>
+<h1>Subscription <span class="badge kind">Class</span></h1>
+<p class="lead">The messages published to a topic, from <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>: iterate over it to receive them.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>Subscription <span class="hl-k">implements </span>\IteratorAggregate<span class="hl-k">, </span>\Traversable</code></pre></div>
@@ -50,9 +50,17 @@
 It ends when its last reference goes: a <code>break</code> out of the loop, the variable going out of
 scope, or the request's coroutine ending. There is no unsubscribe() to forget. Its iteration
 ends when the process drains (shutdown, reload, recycle).</p>
-<p>A subscriber that falls behind gets a SubscriberLagException from the iteration: when the
-message it is about to receive arrived in this process more than $maxLag seconds ago.
+<p>A subscriber that falls behind gets a <a href="/SubscriberLagException/"><code>SubscriberLagException</code></a> from the iteration: when
+the message it is about to receive arrived in this process more than <code>$maxLag</code> seconds ago.
 Messages wait for it meanwhile, shared with the topic's other subscribers.</p>
+<div class="code" data-lang="php"><pre><code>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>heartbeat<span class="hl-k">: </span>15<span class="hl-k">);   </span><span class="hl-c">// subscribed from here
+</span><span class="hl-k">foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
+    if (</span>null <span class="hl-k">=== </span>$message<span class="hl-k">) {
+        continue;                      </span><span class="hl-c">// 15 s without a message
+    </span><span class="hl-k">}
+    </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>json_encode<span class="hl-k">(</span>$message<span class="hl-k">));
+}</span></code></pre></div>
+
 <p class="meta">Defined in <code>Swerve\Subscription</code>, package <code>phasync/swerve</code>.</p>
 
 
@@ -67,31 +75,16 @@ Messages wait for it meanwhile, shared with the topic's other subscribers.</p>
 </dl>
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/Subscription/__construct/"><code>Subscription::__construct</code></a> </li>
-  <li><a href="/Subscription/getIterator/"><code>Subscription::getIterator</code></a> The messages, as they come; null after each $heartbeat seconds without one.</li>
-  <li><a href="/Subscription/__destruct/"><code>Subscription::__destruct</code></a> </li>
+  <li><a href="/Subscription/__construct/"><code>Subscription::__construct</code></a> Subscribe to <code>$topic</code>: <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> is how an application gets one.</li>
+  <li><a href="/Subscription/getIterator/"><code>Subscription::getIterator</code></a> The messages, as they come; null after each <code>$heartbeat</code> seconds without one.</li>
+  <li><a href="/Subscription/__destruct/"><code>Subscription::__destruct</code></a> Ends the subscription: the topic stops keeping messages for it.</li>
 </ul>
 
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<div class="code" data-lang="php"><pre><code>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>maxLag<span class="hl-k">: </span>10<span class="hl-k">, </span>heartbeat<span class="hl-k">: </span>15<span class="hl-k">);
-
-foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
-    if (</span>null <span class="hl-k">=== </span>$message<span class="hl-k">) {
-        continue;       </span><span class="hl-c">// 15 seconds without a message
-    </span><span class="hl-k">}
-    </span><span class="hl-c">// ...
-</span><span class="hl-k">}</span></code></pre></div>
-
-<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<ul>
-<li>Create it with <code>Swerve::subscribe()</code>; the constructor is the same call.</li>
-<li><code>topic</code>, <code>maxLag</code> and <code>heartbeat</code> are public and read-only.</li>
-</ul>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</li>
-  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</li>
-  <li><a href="/SubscriberLagException/"><code>SubscriberLagException</code></a> A subscription fell further behind its topic than its maxLag, see Subscription.</li>
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to <code>$topic</code> from now on.</li>
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of <code>$topic</code>, in every worker process of this swerve, this one included.</li>
+  <li><a href="/OrderedChannel/"><code>OrderedChannel</code></a> A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher's own messages keep theirs.</li>
 </ul>
 </article>
 </main>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RateLimiter - phasync</title>
-<meta name="description" content="This class provides an efficient tool for limiting the rate at which events happen, potentially across coroutines.">
+<meta name="description" content="Lets events pass at a fixed rate, shared by every coroutine that calls wait().">
 <link rel="canonical" href="https://phasync.github.io/RateLimiter/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -41,20 +41,19 @@
   <li aria-current="page">RateLimiter</li>
 </ol></nav>
 <h1>RateLimiter <span class="badge kind">Class</span></h1>
-<p class="lead">This class provides an efficient tool for limiting the rate at which events happen, potentially across coroutines.</p>
+<p class="lead">Lets events pass at a fixed rate, shared by every coroutine that calls <code>wait()</code>.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>RateLimiter <span class="hl-k">implements </span>SelectableInterface</code></pre></div>
 </div>
-<p>Example:</p>
-<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function() {
-  </span>$rateLimiter <span class="hl-k">= new </span>RateLimiter<span class="hl-k">(</span>10<span class="hl-k">);
-  </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function() use (</span>$rateLimiter<span class="hl-k">) {
-     for (</span>$i <span class="hl-k">= </span>0<span class="hl-k">; </span>$i <span class="hl-k">&lt; </span>100<span class="hl-k">; </span>$i<span class="hl-k">++) {
-       </span>$rateLimiter<span class="hl-k">-&gt;</span>wait<span class="hl-k">();
-       echo </span><span class="hl-s">"This happens 10 times per second\n"</span><span class="hl-k">;
-     }
-  });
+<p>The constructor starts a coroutine in the current context that issues one permit every <code>1 / $eventsPerSecond</code> seconds, and it stops when the limiter is dropped. The first <code>wait()</code> returns at once. A <code>$burst</code> above 0 lets permits accumulate while nobody waits: after an idle period, up to <code>$burst + 1</code> events pass at once. A limiter is a SelectableInterface: it is ready when a permit is available.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$limiter <span class="hl-k">= new </span>phasync\Util\RateLimiter<span class="hl-k">(</span>10<span class="hl-k">);
+
+    for (</span>$i <span class="hl-k">= </span>0<span class="hl-k">; </span>$i <span class="hl-k">&lt; </span>5<span class="hl-k">; </span>$i<span class="hl-k">++) {
+        </span>$limiter<span class="hl-k">-&gt;</span>wait<span class="hl-k">();
+        echo </span><span class="hl-s">"at most 10 per second\n"</span><span class="hl-k">;
+    }
 });</span></code></pre></div>
 
 <p class="meta">Defined in <code>phasync\Util\RateLimiter</code>, package <code>phasync/phasync</code>.</p>
@@ -62,14 +61,17 @@
 
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/RateLimiter/__construct/"><code>RateLimiter::__construct</code></a> </li>
-  <li><a href="/RateLimiter/await/"><code>RateLimiter::await</code></a> </li>
-  <li><a href="/RateLimiter/isReady/"><code>RateLimiter::isReady</code></a> </li>
-  <li><a href="/RateLimiter/wait/"><code>RateLimiter::wait</code></a> Blocks the current coroutine if rate limiting is needed.</li>
+  <li><a href="/RateLimiter/__construct/"><code>RateLimiter::__construct</code></a> Creates the limiter and starts its coroutine.</li>
+  <li><a href="/RateLimiter/await/"><code>RateLimiter::await</code></a> Waits for a permit and takes it.</li>
+  <li><a href="/RateLimiter/isReady/"><code>RateLimiter::isReady</code></a> Returns true if a permit is available.</li>
+  <li><a href="/RateLimiter/wait/"><code>RateLimiter::wait</code></a> Waits for a permit, which delays the coroutine as much as the rate requires.</li>
 </ul>
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/SelectableInterface/"><code>SelectableInterface</code></a> An object that can be asked whether using it would block, and waited for until it would not.</li>
+  <li><a href="/phasync/sleep/"><code>phasync::sleep</code></a> Pauses the current coroutine for <code>$seconds</code>, and lets the others run meanwhile.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

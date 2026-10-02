@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Claim::acquire - phasync</title>
-<meta name="description" content="Take the name, trying every 20 ms for up to $timeout seconds when another holds it: whoever tries first when it frees gets it, in no order.">
+<meta name="description" content="Take the name, trying every 20 ms for up to $timeout seconds when another holds it.">
 <link rel="canonical" href="https://phasync.github.io/Claim/acquire/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,28 +42,35 @@
   <li aria-current="page">acquire</li>
 </ol></nav>
 <h1>Claim::acquire <span class="badge kind">Method</span></h1>
-<p class="lead">Take the name, trying every 20 ms for up to $timeout seconds when another holds it: whoever tries first when it frees gets it, in no order.</p>
+<p class="lead">Take the name, trying every 20 ms for up to <code>$timeout</code> seconds when another holds it.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>Claim<span class="hl-k">::</span>acquire<span class="hl-k">(</span>float $timeout <span class="hl-k">= </span>0.0<span class="hl-k">): ?static</span></code></pre></div>
 </div>
-<p>Returns this handle when it holds
-the name, also if it did already; null when it could not.</p>
+<p>Whoever tries first when the name frees gets it, in no order. Returns this handle when it
+holds the name, also if it did already; null when it could not.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">if (</span>$leader <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>claim<span class="hl-k">(</span><span class="hl-s">'leader'</span><span class="hl-k">)-&gt;</span>acquire<span class="hl-k">()) {
+    </span><span class="hl-c">// this worker holds the name until $leader is released or destroyed
+</span><span class="hl-k">}</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/Claim/"><code>Swerve\Claim</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$timeout</code> <span class="type">float</span> <span class="default">default <code>0.0</code></span></dt>
-  <dd></dd>
+  <dd>seconds to keep trying while another holds the name; 0 tries once</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>?static</code>.</p>
+<p>This handle, or null when the name is held by another <span class="type">?static</span></p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Claim/release/"><code>Claim::release</code></a> Give the claim up, so that another can take it.</li>
+  <li><a href="/Claim/available/"><code>Claim::available</code></a> Whether nobody holds the name now; nothing is claimed.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

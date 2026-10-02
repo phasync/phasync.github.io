@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Subscription::__construct - phasync</title>
-<meta name="description" content="">
+<meta name="description" content="Subscribe to $topic: Swerve::subscribe is how an application gets one.">
 <link rel="canonical" href="https://phasync.github.io/Subscription/__construct/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">__construct</li>
 </ol></nav>
 <h1>Subscription::__construct <span class="badge kind">Method</span></h1>
-<p class="lead"></p>
+<p class="lead">Subscribe to <code>$topic</code>: <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> is how an application gets one.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>Subscription<span class="hl-k">::</span>__construct<span class="hl-k">(
@@ -56,9 +56,9 @@
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$topic</code> <span class="type">string</span></dt>
-  <dd></dd>
+  <dd>the topic to receive</dd>
   <dt><code>$maxLag</code> <span class="type">float</span> <span class="default">default <code>30.0</code></span></dt>
-  <dd></dd>
+  <dd>seconds a message may wait before this subscriber reads it</dd>
   <dt><code>$heartbeat</code> <span class="type">?float</span> <span class="default">default <code>null</code></span></dt>
   <dd>yield null when no message came for this many seconds</dd>
 </dl>
@@ -68,8 +68,6 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

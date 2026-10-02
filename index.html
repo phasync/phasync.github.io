@@ -37,11 +37,11 @@
 <section class="intro">
   <h1>Run your PHP application on Swerve.</h1>
   <p class="lead">A PHP application server for the code you already write: sequential, in the framework you already use. A request can wait for as long as it needs, and WebSockets and Server-Sent Events need no extra service.</p>
-<div class="terminal"><pre><code><span class="prompt">$ </span>composer config minimum-stability alpha    # while swerve is alpha
+<div class="terminal"><pre><code><span class="prompt">$ </span>composer config minimum-stability beta    # while swerve is beta
 <span class="prompt">$ </span>composer config prefer-stable true
 <span class="prompt">$ </span>composer require phasync/swerve
 <span class="prompt">$ </span>vendor/bin/swerve --watch
-2026-09-26 17:00:30.12    swerve 0.1.0 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
+2026-09-26 17:00:30.12    swerve 0.1.0-beta1 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
 2026-09-26 17:00:31.25 3 GET / 200 1.2ms</code></pre></div>
   <p><code>swerve.php</code>, next to <code>composer.json</code>, returns a PSR-15 request handler. <code>--watch</code> reloads the workers when a PHP file changes; the other options are in <a href="/get-started/dev-server/">the dev server</a> page and <code>vendor/bin/swerve --help</code>.</p>
 </section>
@@ -184,20 +184,16 @@ return new class implements </span>RequestHandlerInterface <span class="hl-k">{
 <div class="code" data-lang="js"><pre><code>const events = new EventSource('/');
 events.onmessage = (e) =&gt; console.log(e.data);
 fetch('/', {method: 'POST', body: 'hello'});</code></pre></div>
-  <p>The same room over a WebSocket, with <a href="/WebSocket/"><code>WebSocket</code></a> in place of the stream:</p>
+  <p>The same room over a WebSocket, with <a href="/WebSocket/"><code>WebSocket</code></a> in place of the stream. Messages from the browser arrive as events; what goes back is a plain loop:</p>
 <div class="code" data-lang="php"><pre><code><span class="hl-k">return </span>WebSocket<span class="hl-k">::</span>from<span class="hl-k">(</span>$request<span class="hl-k">, static function (</span>WebSocket $ws<span class="hl-k">) {
-    </span>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">);
-    </span>$forward      <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$ws<span class="hl-k">, </span>$subscription<span class="hl-k">) {
-        foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
-            </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);              </span><span class="hl-c">// to this browser
-        </span><span class="hl-k">}
-    });
+    </span>$ws<span class="hl-k">-&gt;</span>onMessage<span class="hl-k">-&gt;</span>listen<span class="hl-k">(static function (</span>string $data<span class="hl-k">, </span>bool $binary<span class="hl-k">) {
+        </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>$data<span class="hl-k">);                   </span><span class="hl-c">// to every subscriber, in every worker
+    </span><span class="hl-k">});
 
-    foreach (</span>$ws <span class="hl-k">as </span>$message<span class="hl-k">) {               </span><span class="hl-c">// from this browser
-        </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>$message<span class="hl-k">);    </span><span class="hl-c">// to every subscriber, in every worker
+    foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {     </span><span class="hl-c">// ends when the browser leaves
+        </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);                              </span><span class="hl-c">// to this browser
     </span><span class="hl-k">}
-    </span>phasync<span class="hl-k">::</span>cancel<span class="hl-k">(</span>$forward<span class="hl-k">);                </span><span class="hl-c">// the browser left
-</span><span class="hl-k">});</span></code></pre></div>
+});</span></code></pre></div>
   <p><a href="/guides/realtime/">Realtime guide</a>, <a href="/Swerve/publish/"><code>Swerve::publish</code></a>, <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>.</p>
 </section>
 

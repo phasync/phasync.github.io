@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RateLimiter::__construct - phasync</title>
-<meta name="description" content="">
+<meta name="description" content="Creates the limiter and starts its coroutine.">
 <link rel="canonical" href="https://phasync.github.io/RateLimiter/__construct/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">__construct</li>
 </ol></nav>
 <h1>RateLimiter::__construct <span class="badge kind">Method</span></h1>
-<p class="lead"></p>
+<p class="lead">Creates the limiter and starts its coroutine.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>RateLimiter<span class="hl-k">::</span>__construct<span class="hl-k">(</span>float $eventsPerSecond<span class="hl-k">, </span>int $burst <span class="hl-k">= </span>0<span class="hl-k">)</span></code></pre></div>
@@ -52,18 +52,23 @@
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$eventsPerSecond</code> <span class="type">float</span></dt>
-  <dd></dd>
+  <dd>the rate, above 0</dd>
   <dt><code>$burst</code> <span class="type">int</span> <span class="default">default <code>0</code></span></dt>
-  <dd></dd>
+  <dd>permits that may accumulate while nobody waits</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
 <p>No return type is declared.</p>
 
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>InvalidArgumentException</code></dt>
+  <dd>If <code>$eventsPerSecond</code> is not above 0</dd>
+  <dt><code>LogicException</code></dt>
+  <dd>Outside a coroutine</dd>
+</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

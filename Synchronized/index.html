@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synchronized - phasync</title>
+<meta name="description" content="A mutex for coroutines, identified by a string or an object: only one coroutine at a time runs a closure for the same token.">
+<link rel="canonical" href="https://phasync.github.io/Synchronized/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">Synchronized</li>
+</ol></nav>
+<h1>Synchronized <span class="badge kind">Class</span></h1>
+<p class="lead">A mutex for coroutines, identified by a string or an object: only one coroutine at a time runs a closure for the same token.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>Synchronized</code></pre></div>
+</div>
+<p>Unlike <a href="/LockTrait/"><code>LockTrait</code></a>, it is not reentrant: asking again from the coroutine that holds the lock throws. Other coroutines wait their turn, also those of the same context, in the order they asked: the holder hands the lock to the first in line.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    foreach ([</span>1<span class="hl-k">, </span>2<span class="hl-k">, </span>3<span class="hl-k">] as </span>$i<span class="hl-k">) {
+        </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () use (</span>$i<span class="hl-k">) {
+            </span>phasync\Util\Synchronized<span class="hl-k">::</span>run<span class="hl-k">(</span><span class="hl-s">'report'</span><span class="hl-k">, function () use (</span>$i<span class="hl-k">) {
+                echo </span><span class="hl-s">"start </span>$i<span class="hl-s">\n"</span><span class="hl-k">;
+                </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.01<span class="hl-k">);
+                echo </span><span class="hl-s">"end </span>$i<span class="hl-s">\n"</span><span class="hl-k">;           </span><span class="hl-c">// start and end of different jobs never interleave
+            </span><span class="hl-k">});
+        });
+    }
+});</span></code></pre></div>
+
+<p class="meta">Defined in <code>phasync\Util\Synchronized</code>, package <code>phasync/phasync</code>.</p>
+
+
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/Synchronized/run/"><code>Synchronized::run</code></a> Runs <code>$closure</code> once no other coroutine runs a closure for <code>$token</code>, and returns what it returns.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/LockTrait/"><code>LockTrait</code></a> Implements LockInterface: a lock that is reentrant for the coroutine holding it and fair for the others.</li>
+  <li><a href="/Pool/"><code>Pool</code></a> A pool of interchangeable resources, of which only so many may exist at once.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

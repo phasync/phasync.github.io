@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RateLimiter::await - phasync</title>
-<meta name="description" content="">
+<meta name="description" content="Waits for a permit and takes it.">
 <link rel="canonical" href="https://phasync.github.io/RateLimiter/await/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,17 +42,18 @@
   <li aria-current="page">await</li>
 </ol></nav>
 <h1>RateLimiter::await <span class="badge kind">Method</span></h1>
-<p class="lead"></p>
+<p class="lead">Waits for a permit and takes it.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>RateLimiter<span class="hl-k">::</span>await<span class="hl-k">(</span>float $timeout <span class="hl-k">= </span>PHP_FLOAT_MAX<span class="hl-k">): </span>void</code></pre></div>
 </div>
+<p><code>$timeout</code> is not used: this waits for as long as it takes.</p>
 <p class="meta">Defined in <a href="/RateLimiter/"><code>phasync\Util\RateLimiter</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$timeout</code> <span class="type">float</span> <span class="default">default <code>PHP_FLOAT_MAX</code></span></dt>
-  <dd></dd>
+  <dd>ignored</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -60,8 +61,6 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

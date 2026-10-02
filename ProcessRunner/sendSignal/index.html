@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::sendSignal - phasync</title>
-<meta name="description" content="Send a POSIX signal to the process.">
+<meta name="description" content="Sends a signal to the process, and returns false without sending it if the process is not running.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/sendSignal/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,33 +42,25 @@
   <li aria-current="page">sendSignal</li>
 </ol></nav>
 <h1>ProcessRunner::sendSignal <span class="badge kind">Method</span></h1>
-<p class="lead">Send a POSIX signal to the process.</p>
+<p class="lead">Sends a signal to the process, and returns false without sending it if the process is not running.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>sendSignal<span class="hl-k">(</span>int $signal <span class="hl-k">= </span>15<span class="hl-k">): </span>bool</code></pre></div>
 </div>
-<p>Sends a specified POSIX signal to the running process. If the process
-is not running, the function will return false without sending a signal.</p>
-<p>On Windows, proc_terminate() (what this calls) cannot deliver a specific signal: $signal
-is accepted for interface compatibility but ignored, and every call forcibly ends the
-process outright, the same as sigkill() on POSIX. This means sigstop()/sigcont() cannot
-pause or resume a process there, and sigterm()/sigint()/sighup() cannot ask a Windows
-child to shut down gracefully -- they hard-kill it, same as sigkill().</p>
+<p>On Windows the signal cannot be chosen: <code>$signal</code> is ignored and every call ends the process at once, as <code>sigkill()</code> does on POSIX.</p>
 <p class="meta">Defined in <a href="/ProcessRunner/"><code>phasync\Util\ProcessRunner</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$signal</code> <span class="type">int</span> <span class="default">default <code>15</code></span></dt>
-  <dd>the signal number to send (default: SIGTERM); ignored on Windows</dd>
+  <dd>the signal number; 15 is SIGTERM</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>True if the signal was successfully sent, false otherwise <span class="type">bool</span></p>
+<p>True if the signal was sent <span class="type">bool</span></p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

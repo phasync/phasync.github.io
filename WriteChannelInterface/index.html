@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WriteChannelInterface - phasync</title>
-<meta name="description" content="">
+<meta name="description" content="The writing end of a channel: write() sends a value to the readers of the channel.">
 <link rel="canonical" href="https://phasync.github.io/WriteChannelInterface/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -41,25 +41,44 @@
   <li aria-current="page">WriteChannelInterface</li>
 </ol></nav>
 <h1>WriteChannelInterface <span class="badge kind">Interface</span></h1>
-<p class="lead"></p>
+<p class="lead">The writing end of a channel: <code>write()</code> sends a value to the readers of the channel.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">interface </span>WriteChannelInterface <span class="hl-k">extends </span>SelectableInterface</code></pre></div>
 </div>
+<p>On an unbuffered channel <code>write()</code> returns when a reader has taken the value; on a buffered one it returns at once while the buffer has room, and waits when it is full. Dropping the last reference to an end closes the channel, so a reader sees the end when the writer is gone.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>channel<span class="hl-k">(</span>$read<span class="hl-k">, </span>$write<span class="hl-k">, </span>3<span class="hl-k">);
+
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () use (</span>$write<span class="hl-k">) {
+        foreach ([</span>1<span class="hl-k">, </span>2<span class="hl-k">, </span>3<span class="hl-k">] as </span>$number<span class="hl-k">) {
+            </span>$write<span class="hl-k">-&gt;</span>write<span class="hl-k">(</span>$number<span class="hl-k">);
+        }
+        </span>$write<span class="hl-k">-&gt;</span>close<span class="hl-k">();
+    });
+
+    foreach (</span>$read <span class="hl-k">as </span>$number<span class="hl-k">) {
+        echo </span>$number<span class="hl-k">, </span><span class="hl-s">"\n"</span><span class="hl-k">;
+    }
+});</span></code></pre></div>
+
 <p class="meta">Defined in <code>phasync\WriteChannelInterface</code>, package <code>phasync/phasync</code>.</p>
 
 
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/WriteChannelInterface/activate/"><code>WriteChannelInterface::activate</code></a> This function can be used to activate the channel so that the deadlock protection does not fail.</li>
-  <li><a href="/WriteChannelInterface/close/"><code>WriteChannelInterface::close</code></a> Closes the channel.</li>
-  <li><a href="/WriteChannelInterface/isClosed/"><code>WriteChannelInterface::isClosed</code></a> True if the channel is no longer writable.</li>
-  <li><a href="/WriteChannelInterface/write/"><code>WriteChannelInterface::write</code></a> Write a value to the channel.</li>
-  <li><a href="/WriteChannelInterface/isWritable/"><code>WriteChannelInterface::isWritable</code></a> Returns true if the channel is still readable.</li>
+  <li><a href="/WriteChannelInterface/activate/"><code>WriteChannelInterface::activate</code></a> Switches off the deadlock check of the channel.</li>
+  <li><a href="/WriteChannelInterface/close/"><code>WriteChannelInterface::close</code></a> Closes the channel, for both ends.</li>
+  <li><a href="/WriteChannelInterface/isClosed/"><code>WriteChannelInterface::isClosed</code></a> Returns true if the channel has been closed.</li>
+  <li><a href="/WriteChannelInterface/write/"><code>WriteChannelInterface::write</code></a> Sends a value, and waits while the channel cannot take it: for a reader on an unbuffered channel, for room on a full buffer.</li>
+  <li><a href="/WriteChannelInterface/isWritable/"><code>WriteChannelInterface::isWritable</code></a> Returns true if the channel is open, so a write is accepted.</li>
 </ul>
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/channel/"><code>phasync::channel</code></a> Creates a channel and returns its two ends in <code>$read</code> and <code>$write</code>.</li>
+  <li><a href="/ReadChannelInterface/"><code>ReadChannelInterface</code></a> The reading end of a channel: values written to the channel arrive here in the order they were written.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

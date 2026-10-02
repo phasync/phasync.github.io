@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::isRunning - phasync</title>
-<meta name="description" content="Returns true if the process is still running.">
+<meta name="description" content="Returns true if the process is running.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/isRunning/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,11 +42,12 @@
   <li aria-current="page">isRunning</li>
 </ol></nav>
 <h1>ProcessRunner::isRunning <span class="badge kind">Method</span></h1>
-<p class="lead">Returns true if the process is still running.</p>
+<p class="lead">Returns true if the process is running.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>isRunning<span class="hl-k">(): </span>bool</code></pre></div>
 </div>
+<p>Once it has ended, the standard streams are closed.</p>
 <p class="meta">Defined in <a href="/ProcessRunner/"><code>phasync\Util\ProcessRunner</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -57,8 +58,6 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

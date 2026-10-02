@@ -47,6 +47,8 @@
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>Claim<span class="hl-k">::</span>available<span class="hl-k">(): </span>bool</code></pre></div>
 </div>
+<p>Another worker may take the name before the caller acts on the answer: use
+<a href="/Claim/acquire/"><code>Claim::acquire</code></a> to take it.</p>
 <p class="meta">Defined in <a href="/Claim/"><code>Swerve\Claim</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -57,8 +59,10 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Claim/held/"><code>Claim::held</code></a> Whether this handle holds the name: it was acquired and not released.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::yield - phasync</title>
-<meta name="description" content="Suspend the fiber until immediately after some other fibers has performed work.">
+<meta name="description" content="Suspends the current coroutine until the loop has made its next round, after the coroutines that were ready have run.">
 <link rel="canonical" href="https://phasync.github.io/phasync/yield/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,14 +42,17 @@
   <li aria-current="page">yield</li>
 </ol></nav>
 <h1>phasync::yield <span class="badge kind">Method</span></h1>
-<p class="lead">Suspend the fiber until immediately after some other fibers has performed work.</p>
+<p class="lead">Suspends the current coroutine until the loop has made its next round, after the coroutines that were ready have run.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::yield(): </span>void</code></pre></div>
 </div>
-<p>Suspending a fiber this way will not cause a busy loop. If you intend
-to perform work actively, you should use <code>phasync::sleep(0)</code>
-instead.</p>
+<p>Like <code>sleep(0)</code>, it lets the others run, but it resumes after the coroutines that called <code>sleep(0)</code> in the same round. It returns at once outside a coroutine.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::yield(); echo </span><span class="hl-s">"yielded\n"</span><span class="hl-k">; });
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(); echo </span><span class="hl-s">"slept\n"</span><span class="hl-k">; });
+});   </span><span class="hl-c">// slept, yielded</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -60,8 +63,10 @@ instead.</p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/sleep/"><code>phasync::sleep</code></a> Pauses the current coroutine for <code>$seconds</code>, and lets the others run meanwhile.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::sigstop - phasync</title>
-<meta name="description" content="This signal pauses a process&#039;s execution.">
+<meta name="description" content="Sends SIGSTOP, which pauses the process until sigcont().">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/sigstop/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,16 +42,12 @@
   <li aria-current="page">sigstop</li>
 </ol></nav>
 <h1>ProcessRunner::sigstop <span class="badge kind">Method</span></h1>
-<p class="lead">This signal pauses a process&#039;s execution.</p>
+<p class="lead">Sends SIGSTOP, which pauses the process until <code>sigcont()</code>.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>sigstop<span class="hl-k">(): </span>bool</code></pre></div>
 </div>
-<p>It can be used to
-temporarily stop a process for later resumption with SIGCONT. Like
-SIGKILL, SIGSTOP cannot be caught, handled, or ignored.</p>
-<p>Not supported on Windows: proc_terminate() has no way to pause a process, so this
-hard-kills it instead of pausing it; see sendSignal().</p>
+<p>On Windows it ends the process instead.</p>
 <p class="meta">Defined in <a href="/ProcessRunner/"><code>phasync\Util\ProcessRunner</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -60,15 +56,12 @@ hard-kills it instead of pausing it; see sendSignal().</p>
 <h2 id="return-values">Return values</h2>
 <p>Returns <code>bool</code>.</p>
 
-<h2 id="errors">Errors / Exceptions</h2>
-<dl class="params">
-  <dt><code>LogicException</code></dt>
-  <dd></dd>
-</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/ProcessRunner/sigcont/"><code>ProcessRunner::sigcont</code></a> Sends SIGCONT, which resumes a process paused by <code>sigstop()</code>.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

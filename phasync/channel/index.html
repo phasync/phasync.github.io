@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::channel - phasync</title>
-<meta name="description" content="Creates a channel pair which can be used to communicate between multiple coroutines.">
+<meta name="description" content="Creates a channel and returns its two ends in $read and $write.">
 <link rel="canonical" href="https://phasync.github.io/phasync/channel/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">channel</li>
 </ol></nav>
 <h1>phasync::channel <span class="badge kind">Method</span></h1>
-<p class="lead">Creates a channel pair which can be used to communicate between multiple coroutines.</p>
+<p class="lead">Creates a channel and returns its two ends in <code>$read</code> and <code>$write</code>.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>channel<span class="hl-k">(
@@ -51,23 +51,34 @@
     </span>int $bufferSize <span class="hl-k">= </span>0
 <span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>Channels should be used to pass serializable data, to support
-passing channels to worker processes, but it is possible to pass more
-complex data if you are certain the data will not be passed to other
-processes.</p>
-<p>If a function is passed in either argument, it will be run a coroutine
-with the ReadChannelInterface or the WriteChannelInterface as the first
-argument.</p>
+<p>A channel passes values from coroutines that write to coroutines that read, in the order written, each value to exactly one reader. Any PHP value can be sent: nothing is serialized. With a <code>$bufferSize</code> of 0, <code>write()</code> returns when a reader has taken the value. With a buffer, <code>write()</code> returns at once while the buffer has room, and waits when it is full. <code>read()</code> waits while the channel is empty.</p>
+<p>When the writer closes the channel, readers read what is left, and then see the end: <code>foreach</code> over the reader stops, and <code>read()</code> sets its <code>$eof</code> argument. Writing to a closed channel throws a ChannelException. Dropping the last reference to an end closes the other: that is how a coroutine that serves a channel stops when its peer is gone.</p>
+<p>The coroutine that calls <code>channel()</code> is not expected to wait on it itself: if it does, and no other coroutine has waited on the channel within about 100 ms, the wait throws a ChannelException (a likely deadlock). Call <code>activate()</code> on an end to switch that off.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>channel<span class="hl-k">(</span>$reader<span class="hl-k">, </span>$writer<span class="hl-k">, </span>10<span class="hl-k">);   </span><span class="hl-c">// a buffer of 10 values
+
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () use (</span>$writer<span class="hl-k">) {
+        foreach ([</span><span class="hl-s">'a.txt'</span><span class="hl-k">, </span><span class="hl-s">'b.txt'</span><span class="hl-k">, </span><span class="hl-s">'c.txt'</span><span class="hl-k">] as </span>$file<span class="hl-k">) {
+            </span>$writer<span class="hl-k">-&gt;</span>write<span class="hl-k">(</span>$file<span class="hl-k">);
+        }
+        </span>$writer<span class="hl-k">-&gt;</span>close<span class="hl-k">();
+    });
+
+    foreach (</span>$reader <span class="hl-k">as </span>$file<span class="hl-k">) {              </span><span class="hl-c">// ends when the writer closes
+        </span><span class="hl-k">echo </span><span class="hl-s">"processing </span>$file<span class="hl-s">\n"</span><span class="hl-k">;
+    }
+});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$read</code> <span class="type">?ReadChannelInterface</span></dt>
-  <dd></dd>
+  <dd>receives the reading end</dd>
   <dt><code>$write</code> <span class="type">?WriteChannelInterface</span></dt>
-  <dd></dd>
+  <dd>receives the writing end</dd>
   <dt><code>$bufferSize</code> <span class="type">int</span> <span class="default">default <code>0</code></span></dt>
-  <dd></dd>
+  <dd>values the channel holds before <code>write()</code> waits; 0: none</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -75,8 +86,12 @@ argument.</p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/publisher/"><code>phasync::publisher</code></a> to deliver every value to many readers</li>
+  <li><a href="/ReadChannelInterface/"><code>ReadChannelInterface</code></a> The reading end of a channel: values written to the channel arrive here in the order they were written.</li>
+  <li><a href="/WriteChannelInterface/"><code>WriteChannelInterface</code></a> The writing end of a channel: <code>write()</code> sends a value to the readers of the channel.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

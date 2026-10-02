@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swerve::claim - phasync</title>
-<meta name="description" content="A handle on the name $name, one holder at a time across the workers; claims nothing until acquire() is called: `Swerve::claim(&#039;name&#039;)-&gt;acquire()` is null, or the held handle.">
+<meta name="description" content="A handle on the name $name, which one holder at a time can hold across the workers.">
 <link rel="canonical" href="https://phasync.github.io/Swerve/claim/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,28 +42,40 @@
   <li aria-current="page">claim</li>
 </ol></nav>
 <h1>Swerve::claim <span class="badge kind">Method</span></h1>
-<p class="lead">A handle on the name $name, one holder at a time across the workers; claims nothing until acquire() is called: `Swerve::claim(&#039;name&#039;)-&gt;acquire()` is null, or the held handle.</p>
+<p class="lead">A handle on the name <code>$name</code>, which one holder at a time can hold across the workers.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>Swerve<span class="hl-k">::</span>claim<span class="hl-k">(</span>string $name<span class="hl-k">): </span>Claim</code></pre></div>
 </div>
-<p>It is
-held until released, destroyed, or its worker exits or dies. See Claim.</p>
+<p>Nothing is claimed until <code>acquire()</code> is called: <code>Swerve::claim('name')-&gt;acquire()</code> is null,
+or the held handle. It is held until released, destroyed, or its worker exits or dies.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">if (</span>$claim <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>claim<span class="hl-k">(</span><span class="hl-s">'nightly-report'</span><span class="hl-k">)-&gt;</span>acquire<span class="hl-k">()) {
+    </span>run_report<span class="hl-k">();
+}                                     </span><span class="hl-c">// released when $claim goes out of scope</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/Swerve/"><code>Swerve\Swerve</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$name</code> <span class="type">string</span></dt>
-  <dd></dd>
+  <dd>any non-empty string; a namespace of its own, apart from the cache's keys</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
 <p>Returns <code>Claim</code>.</p>
 
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>InvalidArgumentException</code></dt>
+  <dd>For an empty name</dd>
+</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Claim/"><code>Claim</code></a> A handle on a name that one holder at a time can hold across the whole server, from <a href="/Swerve/claim/"><code>Swerve::claim</code></a>.</li>
+  <li><a href="/Swerve/cache/"><code>Swerve::cache</code></a> The cache every worker shares, held by the master process.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

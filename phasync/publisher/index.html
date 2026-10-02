@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::publisher - phasync</title>
-<meta name="description" content="A publisher works like channels, but supports many subscribing coroutines concurrently.">
+<meta name="description" content="Creates a publisher: what is written to $publisher is delivered to every subscription of $subscribers.">
 <link rel="canonical" href="https://phasync.github.io/phasync/publisher/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">publisher</li>
 </ol></nav>
 <h1>phasync::publisher <span class="badge kind">Method</span></h1>
-<p class="lead">A publisher works like channels, but supports many subscribing coroutines concurrently.</p>
+<p class="lead">Creates a publisher: what is written to <code>$publisher</code> is delivered to every subscription of <code>$subscribers</code>.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>publisher<span class="hl-k">(
@@ -50,14 +50,31 @@
     ?</span>WriteChannelInterface <span class="hl-k">&amp;</span>$publisher
 <span class="hl-k">): </span>void</code></pre></div>
 </div>
+<p>Each subscription receives the messages written after it was made, in order, and a slow subscription does not hold back the others. A subscription made later does not see earlier messages. Writing with no subscriber succeeds. Closing the publisher ends the subscriptions once they have read what was written.</p>
+<p>A publisher runs a <a href="/phasync/service/"><code>phasync::service</code></a> coroutine to forward messages, so the outermost <code>run()</code> does not return before the publisher is closed or its write end is dropped.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>publisher<span class="hl-k">(</span>$subscribers<span class="hl-k">, </span>$publisher<span class="hl-k">);
+
+    foreach ([</span>1<span class="hl-k">, </span>2<span class="hl-k">] as </span>$i<span class="hl-k">) {
+        </span>$subscription <span class="hl-k">= </span>$subscribers<span class="hl-k">-&gt;</span>subscribe<span class="hl-k">();
+        </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () use (</span>$subscription<span class="hl-k">, </span>$i<span class="hl-k">) {
+            foreach (</span>$subscription <span class="hl-k">as </span>$event<span class="hl-k">) {
+                echo </span><span class="hl-s">"subscriber </span>$i<span class="hl-s"> got </span>$event<span class="hl-s">\n"</span><span class="hl-k">;
+            }
+        });
+    }
+    </span>$publisher<span class="hl-k">-&gt;</span>write<span class="hl-k">(</span><span class="hl-s">'deployed'</span><span class="hl-k">);
+    </span>$publisher<span class="hl-k">-&gt;</span>close<span class="hl-k">();
+});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$subscribers</code> <span class="type">?SubscribersInterface</span></dt>
-  <dd></dd>
+  <dd>receives the object to subscribe with</dd>
   <dt><code>$publisher</code> <span class="type">?WriteChannelInterface</span></dt>
-  <dd></dd>
+  <dd>receives the writing end</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -65,8 +82,11 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/channel/"><code>phasync::channel</code></a> when each value goes to one reader</li>
+  <li><a href="/SubscribersInterface/"><code>SubscribersInterface</code></a> The subscription point of a publisher: each call to <code>subscribe()</code> makes a reader that receives every later message.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

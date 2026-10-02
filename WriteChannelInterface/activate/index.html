@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WriteChannelInterface::activate - phasync</title>
-<meta name="description" content="This function can be used to activate the channel so that the deadlock protection does not fail.">
+<meta name="description" content="Switches off the deadlock check of the channel.">
 <link rel="canonical" href="https://phasync.github.io/WriteChannelInterface/activate/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,11 +42,12 @@
   <li aria-current="page">activate</li>
 </ol></nav>
 <h1>WriteChannelInterface::activate <span class="badge kind">Method</span></h1>
-<p class="lead">This function can be used to activate the channel so that the deadlock protection does not fail.</p>
+<p class="lead">Switches off the deadlock check of the channel.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WriteChannelInterface<span class="hl-k">::</span>activate<span class="hl-k">(): </span>void</code></pre></div>
 </div>
+<p>The coroutine that created the channel gets a ChannelException if it waits on the channel and no other coroutine has done so within about 100 ms. Call this when the creator is meant to wait on the channel alone.</p>
 <p class="meta">Defined in <a href="/WriteChannelInterface/"><code>phasync\WriteChannelInterface</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -57,8 +58,10 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/channel/"><code>phasync::channel</code></a> Creates a channel and returns its two ends in <code>$read</code> and <code>$write</code>.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

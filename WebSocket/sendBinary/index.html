@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WebSocket::sendBinary - phasync</title>
-<meta name="description" content="Send a binary message; nothing once the connection is closed.">
+<meta name="description" content="Send a binary message; nothing happens once the connection is closed.">
 <link rel="canonical" href="https://phasync.github.io/WebSocket/sendBinary/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,17 +42,19 @@
   <li aria-current="page">sendBinary</li>
 </ol></nav>
 <h1>WebSocket::sendBinary <span class="badge kind">Method</span></h1>
-<p class="lead">Send a binary message; nothing once the connection is closed.</p>
+<p class="lead">Send a binary message; nothing happens once the connection is closed.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WebSocket<span class="hl-k">::</span>sendBinary<span class="hl-k">(</span>string $data<span class="hl-k">): </span>void</code></pre></div>
 </div>
+<div class="code" data-lang="php"><pre><code>$ws<span class="hl-k">-&gt;</span>sendBinary<span class="hl-k">(</span>pack<span class="hl-k">(</span><span class="hl-s">'N'</span><span class="hl-k">, </span>42<span class="hl-k">));</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/WebSocket/"><code>Swerve\Http\WebSocket</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$data</code> <span class="type">string</span></dt>
-  <dd></dd>
+  <dd>the message</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -60,8 +62,10 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/WebSocket/send/"><code>WebSocket::send</code></a> Send a text message; nothing happens once the connection is closed.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

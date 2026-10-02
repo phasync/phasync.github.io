@@ -44,27 +44,74 @@
 <p>One page per class and per method, at <code>/Class/</code> and <code>/Class/method</code>: the signature is read from the code, so it cannot drift. Type <code>Swerve::publish</code> in the search box above to go straight there.</p>
 <h2>Swerve <small><code>phasync/swerve</code></small></h2>
 <ul class="index">
-  <li><a href="/Swerve/"><code>Swerve</code></a> What swerve gives the application: its log, the cache and the messages shared by every worker (see the methods), and the state of the worker.</li>
-  <li><a href="/Subscription/"><code>Subscription</code></a> Messages published to a topic, from Swerve::subscribe(): iterate over it to receive them.</li>
-  <li><a href="/Claim/"><code>Claim</code></a> A handle on a name that one holder at a time can hold across the whole server, from Swerve::claim().</li>
-  <li><a href="/OrderedChannel/"><code>OrderedChannel</code></a> A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher&#039;s own messages keep theirs: $ledger = new OrderedChannel(&#039;ledger&#039;); $ledger-&gt;write([&#039;debit&#039;, 12]); foreach ($ledger as $entry) { ...</li>
-  <li><a href="/SubscriberLagException/"><code>SubscriberLagException</code></a> A subscription fell further behind its topic than its maxLag, see Subscription.</li>
+  <li><a href="/Cache/"><code>Cache</code></a> The cache every worker shares, from Swerve::cache(): a PSR-16 cache held by the master process, the least recently used entries evicted past --cache-size.</li>
+  <li><a href="/CacheKeyException/"><code>CacheKeyException</code></a> A key <a href="/Swerve/cache/"><code>Swerve::cache</code></a> can't take: PSR-16 keys are non-empty strings without <code>{}()/\@:</code>.</li>
+  <li><a href="/Claim/"><code>Claim</code></a> A handle on a name that one holder at a time can hold across the whole server, from <a href="/Swerve/claim/"><code>Swerve::claim</code></a>.</li>
+  <li><a href="/Dispatcher/"><code>Dispatcher</code></a> Where a request meets the application, whatever protocol it came in.</li>
+  <li><a href="/ProtocolUpgrade/"><code>ProtocolUpgrade</code></a> A connection that switches from HTTP to another protocol (RFC 9110, section 7.8): the base of <a href="/WebSocket/"><code>WebSocket</code></a>, and of any protocol of your own.</li>
+  <li><a href="/Swerve/Http/ServerRequest/"><code>Swerve\Http\ServerRequest</code></a> The PSR-7 request a server gives the application, the same for every protocol.</li>
   <li><a href="/WebSocket/"><code>WebSocket</code></a> A WebSocket connection (RFC 6455), server side.</li>
+  <li><a href="/OrderedChannel/"><code>OrderedChannel</code></a> A topic where every subscriber, in every worker, receives the messages in one and the same order, and each publisher's own messages keep theirs.</li>
+  <li><a href="/ProtocolErrorException/"><code>ProtocolErrorException</code></a> A peer broke its protocol.</li>
+  <li><a href="/ResponderInterface/"><code>ResponderInterface</code></a> What sends the application's response in the protocol the request arrived in.</li>
+  <li><a href="/ServerInterface/"><code>ServerInterface</code></a> A protocol server, such as HTTP/1.1 (<code>--http</code>) or FastCGI (<code>--fastcgi</code>).</li>
+  <li><a href="/StaticFiles/"><code>StaticFiles</code></a> PSR-15 middleware that serves the files of a directory and passes every other request on.</li>
+  <li><a href="/SubscriberLagException/"><code>SubscriberLagException</code></a> A subscription fell further behind its topic than its <code>$maxLag</code> seconds, see <a href="/Subscription/"><code>Subscription</code></a>.</li>
+  <li><a href="/Subscription/"><code>Subscription</code></a> The messages published to a topic, from <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a>: iterate over it to receive them.</li>
+  <li><a href="/Swerve/"><code>Swerve</code></a> What swerve gives the application: its log, the cache and the messages shared by every worker, and the state of the worker.</li>
+  <li><a href="/SealedObject/"><code>SealedObject</code></a> A decoded JSON object that nobody can change: what a subscriber of <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> gets for a published object.</li>
 </ul>
 <h2>phasync <small><code>phasync/phasync</code></small></h2>
 <ul class="index">
-  <li><a href="/phasync/"><code>phasync</code></a> This class defines the essential API for all coroutine based applications.</li>
-  <li><a href="/ReadChannelInterface/"><code>ReadChannelInterface</code></a> A readable channel provides messages asynchronously from various sources.</li>
-  <li><a href="/WriteChannelInterface/"><code>WriteChannelInterface</code></a> </li>
-  <li><a href="/TimeoutException/"><code>TimeoutException</code></a> </li>
-  <li><a href="/CancelledException/"><code>CancelledException</code></a> The operation that was being awaited has been cancelled.</li>
-  <li><a href="/WaitGroup/"><code>WaitGroup</code></a> This class provides an efficient tool for waiting until multiple coroutines have completed their task.</li>
-  <li><a href="/RateLimiter/"><code>RateLimiter</code></a> This class provides an efficient tool for limiting the rate at which events happen, potentially across coroutines.</li>
-  <li><a href="/ProcessRunner/"><code>ProcessRunner</code></a> Launches and manages a child process on POSIX and Windows alike.</li>
+  <li><a href="/phasync/"><code>phasync</code></a> The static API of phasync: start coroutines, wait for them, cancel them, and wait for streams, flags and contexts.</li>
+  <li><a href="/AggregateException/"><code>AggregateException</code></a> Several coroutines failed in one <code>run()</code>, and none of the failures is more important than the others.</li>
+  <li><a href="/CancelledException/"><code>CancelledException</code></a> Thrown in a coroutine whose wait was cancelled with <code>phasync::cancel()</code>, or whose scope failed.</li>
+  <li><a href="/ChannelException/"><code>ChannelException</code></a> A channel operation failed: it was written to after it was closed, or the wait looked like a deadlock.</li>
+  <li><a href="/ContextUsedException/"><code>ContextUsedException</code></a> A context object was used twice: it was given to <code>run()</code>, <code>go()</code> or <code>withContext()</code> before.</li>
+  <li><a href="/ContextFactoryInterface/"><code>ContextFactoryInterface</code></a> Creates the context of a <code>phasync::withContext()</code> call when the closure first needs it.</li>
+  <li><a href="/ExceptionHandlerInterface/"><code>ExceptionHandlerInterface</code></a> A context that takes the failures of its coroutines that nobody awaited.</li>
+  <li><a href="/SwitchAwareInterface/"><code>SwitchAwareInterface</code></a> A context that is told when it becomes live and when another does, to swap per-request state in and out.</li>
+  <li><a href="/IOException/"><code>IOException</code></a> A stream wait failed: the value was no stream, the stream was closed while waited for, or polling failed.</li>
+  <li><a href="/PollerInterface/"><code>PollerInterface</code></a> Waits for streams on behalf of the event loop.</li>
+  <li><a href="/BufferedStream/"><code>BufferedStream</code></a> A seekable PSR-7 stream for a body that is still being produced, kept in memory and then in a temporary file.</li>
+  <li><a href="/Request/"><code>Request</code></a> A PSR-7 outgoing, client-side request.</li>
+  <li><a href="/Response/"><code>Response</code></a> A PSR-7 response.</li>
+  <li><a href="/phasync/Psr/ServerRequest/"><code>phasync\Psr\ServerRequest</code></a> A PSR-7 request as a server received it.</li>
+  <li><a href="/StreamFactory/"><code>StreamFactory</code></a> Builds a PSR-7 stream from the kinds of value a response or request body is given as.</li>
+  <li><a href="/StringStream/"><code>StringStream</code></a> A readable, seekable PSR-7 stream over a string that is known in full.</li>
+  <li><a href="/UnbufferedStream/"><code>UnbufferedStream</code></a> A PSR-7 stream for a body that is still being produced, read once and in order.</li>
+  <li><a href="/UploadedFile/"><code>UploadedFile</code></a> A PSR-7 file uploaded with a request.</li>
+  <li><a href="/Uri/"><code>Uri</code></a> A PSR-7 URI.</li>
+  <li><a href="/ReadChannelInterface/"><code>ReadChannelInterface</code></a> The reading end of a channel: values written to the channel arrive here in the order they were written.</li>
+  <li><a href="/RethrowExceptionInterface/"><code>RethrowExceptionInterface</code></a> Marks the exceptions that phasync rethrows with a stack trace that begins in the code that called phasync, not inside it.</li>
+  <li><a href="/SelectableInterface/"><code>SelectableInterface</code></a> An object that can be asked whether using it would block, and waited for until it would not.</li>
+  <li><a href="/SubscriberInterface/"><code>SubscriberInterface</code></a> A subscription to a publisher: a reading end that receives every message published after it was made.</li>
+  <li><a href="/SubscribersInterface/"><code>SubscribersInterface</code></a> The subscription point of a publisher: each call to <code>subscribe()</code> makes a reader that receives every later message.</li>
+  <li><a href="/TimeoutException/"><code>TimeoutException</code></a> A wait with a timeout ran out before it was satisfied.</li>
+  <li><a href="/Console/"><code>Console</code></a> Terminal output from markup: styled on a terminal, plain text when piped to a file, and laid out the same way in both.</li>
+  <li><a href="/ConsoleLogger/"><code>ConsoleLogger</code></a> A PSR-3 logger writing Console::log() lines: to a terminal styled, piped plain.</li>
+  <li><a href="/Event/"><code>Event</code></a> A list of listeners that are called when the event is triggered.</li>
+  <li><a href="/LockInterface/"><code>LockInterface</code></a> An object that runs a closure while holding a lock that other coroutines wait for.</li>
+  <li><a href="/LockTrait/"><code>LockTrait</code></a> Implements LockInterface: a lock that is reentrant for the coroutine holding it and fair for the others.</li>
+  <li><a href="/LruCache/"><code>LruCache</code></a> A bounded in-memory cache that forgets the least recently used entries first.</li>
+  <li><a href="/Pool/"><code>Pool</code></a> A pool of interchangeable resources, of which only so many may exist at once.</li>
+  <li><a href="/Process/"><code>Process</code></a> Starts a child process whose standard streams are used from coroutines without blocking the others.</li>
+  <li><a href="/ProcessInterface/"><code>ProcessInterface</code></a> A child process started with <code>Process::run()</code>, with its standard streams usable from coroutines.</li>
+  <li><a href="/ProcessRunner/"><code>ProcessRunner</code></a> The implementation behind <code>Process::run()</code>: starts a child process and controls it.</li>
+  <li><a href="/Queue/"><code>Queue</code></a> A first-in first-out queue whose operations take a lock, so coroutines may share it.</li>
+  <li><a href="/QueueInterface/"><code>QueueInterface</code></a> A first-in first-out queue that coroutines may share.</li>
+  <li><a href="/RateLimiter/"><code>RateLimiter</code></a> Lets events pass at a fixed rate, shared by every coroutine that calls <code>wait()</code>.</li>
+  <li><a href="/StringBuffer/"><code>StringBuffer</code></a> A buffer of streamed bytes that one coroutine fills and another reads, for parsing protocols that arrive in frames.</li>
+  <li><a href="/Synchronized/"><code>Synchronized</code></a> A mutex for coroutines, identified by a string or an object: only one coroutine at a time runs a closure for the same token.</li>
+  <li><a href="/WaitGroup/"><code>WaitGroup</code></a> Waits until a counted amount of work has been done, like Go's <code>sync.WaitGroup</code>.</li>
+  <li><a href="/WriteChannelInterface/"><code>WriteChannelInterface</code></a> The writing end of a channel: <code>write()</code> sends a value to the readers of the channel.</li>
+  <li><a href="/file_get_contents/"><code>file_get_contents</code></a> Reads a whole file, letting other coroutines run while it waits.</li>
+  <li><a href="/file_put_contents/"><code>file_put_contents</code></a> Writes a file, letting other coroutines run while it waits.</li>
+  <li><a href="/flock/"><code>flock</code></a> Locks a file, letting other coroutines run while it waits for the lock.</li>
+  <li><a href="/sleep/"><code>sleep</code></a> Suspends the current coroutine for <code>$seconds</code> seconds, letting the others run.</li>
 </ul>
 <h2>Other packages</h2>
 <ul class="index">
-  <li><a href="/HttpClient/"><code>HttpClient</code></a> An asynchronous PSR-18 HTTP client, in the package phasync/http-client.</li>
   <li><a href="/Channel/"><code>Channel</code></a> Pass values between coroutines with phasync::channel(): a read waits for a writer, a write into a full channel waits for a reader.</li>
 </ul>
 <h2>Advanced</h2>

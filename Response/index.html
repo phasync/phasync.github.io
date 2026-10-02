@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Response - phasync</title>
+<meta name="description" content="A PSR-7 response.">
+<link rel="canonical" href="https://phasync.github.io/Response/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">Response</li>
+</ol></nav>
+<h1>Response <span class="badge kind">Class</span></h1>
+<p class="lead">A PSR-7 response.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">class </span>Response <span class="hl-k">implements </span>ResponseInterface<span class="hl-k">, </span>MessageInterface</code></pre></div>
+</div>
+<p>Immutable, as PSR-7 requires: the <code>with...()</code> methods return a modified copy. The reason phrase
+defaults to the standard one for the status code (<code>Response::PHRASES</code>). The body is made with
+<a href="/StreamFactory/create/"><code>StreamFactory::create</code></a>.</p>
+<div class="code" data-lang="php"><pre><code>$response <span class="hl-k">= new </span>Response<span class="hl-k">(</span>404<span class="hl-k">, [</span><span class="hl-s">'Content-Type' </span><span class="hl-k">=&gt; </span><span class="hl-s">'text/plain'</span><span class="hl-k">], </span><span class="hl-s">'Not found'</span><span class="hl-k">);
+</span>$response<span class="hl-k">-&gt;</span>getStatusCode<span class="hl-k">();       </span><span class="hl-c">// 404
+</span>$response<span class="hl-k">-&gt;</span>getReasonPhrase<span class="hl-k">();     </span><span class="hl-c">// "Not Found"
+</span>$stream <span class="hl-k">= new </span>UnbufferedStream<span class="hl-k">();
+</span>$response <span class="hl-k">= </span>$response<span class="hl-k">-&gt;</span>withBody<span class="hl-k">(</span>$stream<span class="hl-k">);</span></code></pre></div>
+
+<p class="meta">Defined in <code>phasync\Psr\Response</code>, package <code>phasync/phasync</code>.</p>
+
+
+<h2 id="constants">Constants</h2>
+<dl class="params">
+  <dt><code>PHRASES</code> <span class="default">= <code>array ( 100 =&gt; &#039;Continue&#039;, 101 =&gt; &#039;Switching Protocols&#039;, 102 =&gt; &#039;Processing&#039;, 200 =&gt; &#039;OK&#039;, 201 =&gt; &#039;Created&#039;, 202 =&gt; &#039;Accepted&#039;, 203 =&gt; &#039;Non-Authoritative Information&#039;, 204 =&gt; &#039;No Content&#039;, 205 =&gt; &#039;Reset Content&#039;, 206 =&gt; &#039;Partial Content&#039;, 207 =&gt; &#039;Multi-status&#039;, 208 =&gt; &#039;Already Reported&#039;, 300 =&gt; &#039;Multiple Choices&#039;, 301 =&gt; &#039;Moved Permanently&#039;, 302 =&gt; &#039;Found&#039;, 303 =&gt; &#039;See Other&#039;, 304 =&gt; &#039;Not Modified&#039;, 305 =&gt; &#039;Use Proxy&#039;, 306 =&gt; &#039;Switch Proxy&#039;, 307 =&gt; &#039;Temporary Redirect&#039;, 400 =&gt; &#039;Bad Request&#039;, 401 =&gt; &#039;Unauthorized&#039;, 402 =&gt; &#039;Payment Required&#039;, 403 =&gt; &#039;Forbidden&#039;, 404 =&gt; &#039;Not Found&#039;, 405 =&gt; &#039;Method Not Allowed&#039;, 406 =&gt; &#039;Not Acceptable&#039;, 407 =&gt; &#039;Proxy Authentication Required&#039;, 408 =&gt; &#039;Request Time-out&#039;, 409 =&gt; &#039;Conflict&#039;, 410 =&gt; &#039;Gone&#039;, 411 =&gt; &#039;Length Required&#039;, 412 =&gt; &#039;Precondition Failed&#039;, 413 =&gt; &#039;Request Entity Too Large&#039;, 414 =&gt; &#039;Request-URI Too Large&#039;, 415 =&gt; &#039;Unsupported Media Type&#039;, 416 =&gt; &#039;Requested range not satisfiable&#039;, 417 =&gt; &#039;Expectation Failed&#039;, 418 =&gt; &#039;I\&#039;m a teapot&#039;, 422 =&gt; &#039;Unprocessable Entity&#039;, 423 =&gt; &#039;Locked&#039;, 424 =&gt; &#039;Failed Dependency&#039;, 425 =&gt; &#039;Unordered Collection&#039;, 426 =&gt; &#039;Upgrade Required&#039;, 428 =&gt; &#039;Precondition Required&#039;, 429 =&gt; &#039;Too Many Requests&#039;, 431 =&gt; &#039;Request Header Fields Too Large&#039;, 451 =&gt; &#039;Unavailable For Legal Reasons&#039;, 500 =&gt; &#039;Internal Server Error&#039;, 501 =&gt; &#039;Not Implemented&#039;, 502 =&gt; &#039;Bad Gateway&#039;, 503 =&gt; &#039;Service Unavailable&#039;, 504 =&gt; &#039;Gateway Time-out&#039;, 505 =&gt; &#039;HTTP Version not supported&#039;, 506 =&gt; &#039;Variant Also Negotiates&#039;, 507 =&gt; &#039;Insufficient Storage&#039;, 508 =&gt; &#039;Loop Detected&#039;, 511 =&gt; &#039;Network Authentication Required&#039;, )</code></span></dt>
+  <dd>Standard HTTP status code/reason phrases.</dd>
+</dl>
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/Response/__construct/"><code>Response::__construct</code></a> Creates a response.</li>
+  <li><a href="/Response/getStatusCode/"><code>Response::getStatusCode</code></a> Gets the response status code.</li>
+  <li><a href="/Response/withStatus/"><code>Response::withStatus</code></a> Return an instance with the specified status code and, optionally, reason phrase.</li>
+  <li><a href="/Response/getReasonPhrase/"><code>Response::getReasonPhrase</code></a> Gets the response reason phrase associated with the status code.</li>
+  <li><a href="/Response/getProtocolVersion/"><code>Response::getProtocolVersion</code></a> Retrieves the HTTP protocol version as a string.</li>
+  <li><a href="/Response/withProtocolVersion/"><code>Response::withProtocolVersion</code></a> Return an instance with the specified HTTP protocol version.</li>
+  <li><a href="/Response/getHeaders/"><code>Response::getHeaders</code></a> Returns the message headers.</li>
+  <li><a href="/Response/hasHeader/"><code>Response::hasHeader</code></a> Checks if a header exists by the given case-insensitive name.</li>
+  <li><a href="/Response/getHeader/"><code>Response::getHeader</code></a> Retrieves a message header value by the given case-insensitive name.</li>
+  <li><a href="/Response/getHeaderLine/"><code>Response::getHeaderLine</code></a> Retrieves a comma-separated string of the values for a single header.</li>
+  <li><a href="/Response/withHeader/"><code>Response::withHeader</code></a> Return an instance with the provided value replacing the specified header.</li>
+  <li><a href="/Response/withAddedHeader/"><code>Response::withAddedHeader</code></a> Return an instance with the specified header appended with the given value.</li>
+  <li><a href="/Response/withoutHeader/"><code>Response::withoutHeader</code></a> Return an instance without the specified header.</li>
+  <li><a href="/Response/getBody/"><code>Response::getBody</code></a> Gets the body of the message.</li>
+  <li><a href="/Response/withBody/"><code>Response::withBody</code></a> Return an instance with the specified message body.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Request/"><code>Request</code></a> A PSR-7 outgoing, client-side request.</li>
+  <li><a href="/UnbufferedStream/"><code>UnbufferedStream</code></a> A PSR-7 stream for a body that is still being produced, read once and in order.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

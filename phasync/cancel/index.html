@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::cancel - phasync</title>
-<meta name="description" content="Cancel a coroutine, or every coroutine of a context.">
+<meta name="description" content="Cancels a coroutine, or every coroutine of a context, with a CancelledException.">
 <link rel="canonical" href="https://phasync.github.io/phasync/cancel/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">cancel</li>
 </ol></nav>
 <h1>phasync::cancel <span class="badge kind">Method</span></h1>
-<p class="lead">Cancel a coroutine, or every coroutine of a context.</p>
+<p class="lead">Cancels a coroutine, or every coroutine of a context, with a CancelledException.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>cancel<span class="hl-k">(
@@ -52,25 +52,40 @@
     ?</span>Throwable $previous <span class="hl-k">= </span>null
 <span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>The cancellation is sticky: the
-coroutine's waits throw a <code>CancelledException</code> until it ends (or leaves the context),
-so that a coroutine which catches it and waits again is cancelled again. It is a teardown,
-not a signal: to interrupt a wait once with an exception of your own, use
-<code>phasync::throw()</code>.</p>
-<p>Given a context, cancels every waiting coroutine of it and of the contexts nested in it,
-the deepest first, except the calling coroutine.</p>
+<p>The cancellation is sticky: every wait of the coroutine throws the CancelledException from then on, so a coroutine that catches it and waits again is cancelled again. A coroutine that is not waiting meets it at its next wait; one that cancels itself gets it at once. A coroutine that ends with the exception it was cancelled with is no failure of the run, but awaiting it throws it. <code>finally()</code> callbacks are not cancelled.</p>
+<p>It is a teardown, not a signal: to interrupt a wait once with an exception of your own, use <a href="/phasync/throw/"><code>phasync::throw</code></a>. Given a context, it cancels every coroutine of it and of the contexts nested in it, the deepest first, and cancels the coroutines that join it until it has none left; the calling coroutine, if it is in the context, gets the exception thrown. A coroutine that is running, and not waiting, meets it at its next wait.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$worker <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () {
+        try {
+            while (</span>true<span class="hl-k">) {
+                </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>1<span class="hl-k">);
+            }
+        } finally {
+            echo </span><span class="hl-s">"cleaned up\n"</span><span class="hl-k">;
+        }
+    });
+    </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">);
+    </span>phasync<span class="hl-k">::</span>cancel<span class="hl-k">(</span>$worker<span class="hl-k">);
+
+    try {
+        </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$worker<span class="hl-k">);
+    } catch (</span>phasync\CancelledException<span class="hl-k">) {
+        echo </span><span class="hl-s">"cancelled\n"</span><span class="hl-k">;
+    }
+});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$fiber</code> <span class="type">object</span></dt>
-  <dd></dd>
+  <dd>a coroutine, or a context</dd>
   <dt><code>$message</code> <span class="type">Stringable|string</span> <span class="default">default <code>&#039;Operation cancelled&#039;</code></span></dt>
-  <dd>The message of the CancelledException; a Throwable is refused, see {@see phasync::throw()}</dd>
+  <dd>the message of the CancelledException; a Throwable is refused, see <a href="/phasync/throw/"><code>phasync::throw</code></a></dd>
   <dt><code>$code</code> <span class="type">int</span> <span class="default">default <code>0</code></span></dt>
-  <dd>The code of the CancelledException</dd>
+  <dd>the code of the CancelledException</dd>
   <dt><code>$previous</code> <span class="type">?Throwable</span> <span class="default">default <code>null</code></span></dt>
-  <dd>What caused the cancellation, such as the failure that tears a context down</dd>
+  <dd>what caused the cancellation, such as the failure that tears a context down</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -79,12 +94,18 @@ the deepest first, except the calling coroutine.</p>
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code>InvalidArgumentException</code></dt>
-  <dd>If the fiber is terminated, or the message is a Throwable</dd>
+  <dd>If the coroutine has ended, or the message is a Throwable</dd>
+  <dt><code>LogicException</code></dt>
+  <dd>If the coroutine was not started by phasync</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/throw/"><code>phasync::throw</code></a> interrupts one wait</li>
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> Starts <code>$fn</code> as a coroutine in the current context and returns it, without waiting for it.</li>
+  <li><a href="/phasync/awaitContext/"><code>phasync::awaitContext</code></a> Waits until every coroutine of <code>$context</code>, and of the contexts nested in it, has ended.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

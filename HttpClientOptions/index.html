@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HttpClientOptions - phasync</title>
+<meta name="description" content="The options of an HTTP request, as public properties that map to cURL options.">
+<link rel="canonical" href="https://phasync.github.io/HttpClientOptions/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">HttpClientOptions</li>
+</ol></nav>
+<h1>HttpClientOptions <span class="badge kind">Class</span></h1>
+<p class="lead">The options of an HTTP request, as public properties that map to cURL options.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">class </span>HttpClientOptions</code></pre></div>
+</div>
+<p>Every option defaults to <code>null</code>, meaning &quot;not set&quot;: cURL's own default applies. The exception is
+<code>followLocation</code>, which defaults to <code>true</code>. Give an instance, or an array keyed by property
+name, to the <a href="/HttpClient/"><code>HttpClient</code></a> constructor for defaults, or to a request method for one request.</p>
+<div class="code" data-lang="php"><pre><code>$options <span class="hl-k">= new </span>HttpClientOptions<span class="hl-k">([</span><span class="hl-s">'timeoutMs' </span><span class="hl-k">=&gt; </span>3000<span class="hl-k">, </span><span class="hl-s">'userAgent' </span><span class="hl-k">=&gt; </span><span class="hl-s">'my-app/1.0'</span><span class="hl-k">]);
+</span>$client  <span class="hl-k">= new </span>HttpClient<span class="hl-k">(</span>$options<span class="hl-k">);
+
+</span>$client<span class="hl-k">-&gt;</span>get<span class="hl-k">(</span><span class="hl-s">'https://example.com/slow'</span><span class="hl-k">, [</span><span class="hl-s">'timeoutMs' </span><span class="hl-k">=&gt; </span>30000<span class="hl-k">]);</span></code></pre></div>
+
+<p class="meta">Defined in <code>phasync\HttpClient\HttpClientOptions</code>, package <code>phasync/http-client</code>.</p>
+
+
+<h2 id="properties">Properties</h2>
+<dl class="params">
+  <dt><code>$userAgent</code> <span class="type">?string</span></dt>
+  <dd>The contents of the &quot;User-Agent: &quot; header to be used in a HTTP request.</dd>
+  <dt><code>$resumeFrom</code> <span class="type">?int</span></dt>
+  <dd>The offset, in bytes, to resume a transfer from.</dd>
+  <dt><code>$ipResolve</code> <span class="type">?int</span></dt>
+  <dd>Allows an application to select what kind of IP addresses to use when resolving host names. This is only interesting when using host names that resolve addresses using more than one version of IP, possible values are CURL_IPRESOLVE_WHATEVER, CURL_IPRESOLVE_V4, CURL_IPRESOLVE_V6, by default CURL_IPRESOLVE_WHATEVER.</dd>
+  <dt><code>$autoReferer</code> <span class="type">?bool</span></dt>
+  <dd>true to automatically set the Referer: field in requests where it follows a Location: redirect.</dd>
+  <dt><code>$crlf</code> <span class="type">?bool</span></dt>
+  <dd>true to convert Unix newlines to CRLF newlines on transfers.</dd>
+  <dt><code>$disallowUsernameInUrl</code> <span class="type">?bool</span></dt>
+  <dd>true to not allow URLs that include a username. Usernames are allowed by default (0).</dd>
+  <dt><code>$dnsShuffleAddresses</code> <span class="type">?bool</span></dt>
+  <dd>true to shuffle the order of all returned addresses so that they will be used in a random order, when a name is resolved and more than one IP address is returned. This may cause IPv4 to be used before IPv6 or vice versa.</dd>
+  <dt><code>$haProxyProtocol</code> <span class="type">?bool</span></dt>
+  <dd>true to send an HAProxy PROXY protocol v1 header at the start of the connection. The default action is not to send this header.</dd>
+  <dt><code>$followLocation</code> <span class="type">?bool</span></dt>
+  <dd>true to follow any &quot;Location: &quot; header that the server sends as part of the HTTP header. See also {@see self::$maxRedirs}.</dd>
+  <dt><code>$forbidReuse</code> <span class="type">?bool</span></dt>
+  <dd>true to force the connection to explicitly close when it has finished processing, and not be pooled for reuse.</dd>
+  <dt><code>$freshConnect</code> <span class="type">?bool</span></dt>
+  <dd>true to force the use of a new connection instead of a cached one.</dd>
+  <dt><code>$tcpNoDelay</code> <span class="type">?bool</span></dt>
+  <dd>true to disable TCP's Nagle algorithm, which tries to minimize the number of small packets on the network.</dd>
+  <dt><code>$httpProxyTunnel</code> <span class="type">?bool</span></dt>
+  <dd>true to tunnel through a given HTTP proxy.</dd>
+  <dt><code>$httpContentDecoding</code> <span class="type">?bool</span></dt>
+  <dd>false to get the raw HTTP response body.</dd>
+  <dt><code>$sslEnableAlpn</code> <span class="type">?bool</span></dt>
+  <dd>false to disable ALPN in the SSL handshake (if the SSL backend libcurl is built to use supports it), which can be used to negotiate http2.</dd>
+  <dt><code>$sslEnableNpn</code> <span class="type">?bool</span></dt>
+  <dd>false to disable NPN in the SSL handshake (if the SSL backend libcurl is built to use supports it), which can be used to negotiate http2.</dd>
+  <dt><code>$sslVerifyPeer</code> <span class="type">?bool</span></dt>
+  <dd>false to stop cURL from verifying the peer's certificate. Alternate certificates to verify against can be specified with the CURLOPT_CAINFO option or a certificate directory can be specified with the CURLOPT_CAPATH option.</dd>
+  <dt><code>$proxySslVerifyPeer</code> <span class="type">?bool</span></dt>
+  <dd>false to stop cURL from verifying the HTTPS proxy's certificate. When false, the verification succeeds regardless.</dd>
+  <dt><code>$proxySslVerifyHost</code> <span class="type">?bool</span></dt>
+  <dd>false to accept the HTTPS proxy's certificate whatever names it holds; by default cURL verifies them against the proxy name. Use with caution.</dd>
+  <dt><code>$proxy</code> <span class="type">?string</span></dt>
+  <dd>The HTTP proxy to tunnel requests through.</dd>
+  <dt><code>$proxyAuth</code> <span class="type">?int</span></dt>
+  <dd>The HTTP authentication method(s) to use for the proxy connection. Use the same bitmasks as described in CURLOPT_HTTPAUTH. For proxy authentication, only CURLAUTH_BASIC and CURLAUTH_NTLM are currently supported.</dd>
+  <dt><code>$proxyPort</code> <span class="type">?int</span></dt>
+  <dd>The port number of the proxy to connect to. This port number can also be set in CURLOPT_PROXY.</dd>
+  <dt><code>$proxyType</code> <span class="type">?int</span></dt>
+  <dd>Either CURLPROXY_HTTP (default), CURLPROXY_SOCKS4, CURLPROXY_SOCKS5, CURLPROXY_SOCKS4A or CURLPROXY_SOCKS5_HOSTNAME.</dd>
+  <dt><code>$pathAsIs</code> <span class="type">?bool</span></dt>
+  <dd>true to not handle dot dot sequences.</dd>
+  <dt><code>$netRc</code> <span class="type">?bool</span></dt>
+  <dd>true to scan the ~/.netrc file to find a username and password for the remote site that a connection is being established with.</dd>
+  <dt><code>$timeoutMs</code> <span class="type">?int</span></dt>
+  <dd>The maximum number of milliseconds to allow cURL functions to execute. If libcurl is built to use the standard system name resolver, that portion of the connect will still use full-second resolution for timeouts with a minimum timeout allowed of one second. A transfer that exceeds it fails with a <code>\RuntimeException</code> when the response is read.</dd>
+  <dt><code>$connectTimeoutMs</code> <span class="type">?int</span></dt>
+  <dd>The number of milliseconds to wait while trying to connect. Use 0 to wait indefinitely. If libcurl is built to use the standard system name resolver, that portion of the connect will still use full-second resolution for timeouts with a minimum timeout allowed of one second.</dd>
+  <dt><code>$maxRedirs</code> <span class="type">?int</span></dt>
+  <dd>The maximum amount of HTTP redirections to follow. Use this option alongside CURLOPT_FOLLOWLOCATION. Default value of 20 is set to prevent infinite redirects. Setting to -1 allows infinite redirects, and 0 refuses all redirects.</dd>
+  <dt><code>$cookie</code> <span class="type">?string</span></dt>
+  <dd>The contents of the &quot;Cookie: &quot; header to be used in the HTTP request. Note that multiple cookies are separated with a semicolon followed by a space (e.g., &quot;fruit=apple; colour=red&quot;)</dd>
+  <dt><code>$cookieFile</code> <span class="type">?string</span></dt>
+  <dd>The name of the file containing the cookie data. The cookie file can be in Netscape format, or just plain HTTP-style headers dumped into a file. If the name is an empty string, no cookies are loaded, but cookie handling is still enabled.</dd>
+  <dt><code>$cookieJar</code> <span class="type">?string</span></dt>
+  <dd>The name of a file to save all internal cookies to when the handle is closed, e.g. after a call to curl_close.</dd>
+  <dt><code>$encoding</code> <span class="type">?string</span></dt>
+  <dd>The contents of the &quot;Accept-Encoding: &quot; header. This enables decoding of the response. Supported encodings are &quot;identity&quot;, &quot;deflate&quot;, and &quot;gzip&quot;. If an empty string, &quot;&quot;, is set, a header containing all supported encoding types is sent.</dd>
+  <dt><code>$postFields</code> <span class="type">array|string|null</span></dt>
+  <dd>The full data to post in a HTTP &quot;POST&quot; operation. This parameter can either be passed as a urlencoded string like 'para1=val1&amp;para2=val2&amp;...' or as an array with the field name as key and field data as value. If value is an array, the Content-Type header will be set to multipart/form-data. Files can be sent using CURLFile or CURLStringFile, in which case value must be an array.</dd>
+  <dt><code>$referer</code> <span class="type">?string</span></dt>
+  <dd>The contents of the &quot;Referer: &quot; header to be used in a HTTP request.</dd>
+  <dt><code>$range</code> <span class="type">?string</span></dt>
+  <dd>Range(s) of data to retrieve in the format &quot;X-Y&quot; where X or Y are optional. HTTP transfers also support several intervals, separated with commas in the format &quot;X-Y,N-M&quot;.</dd>
+  <dt><code>$username</code> <span class="type">?string</span></dt>
+  <dd>The user name to use in authentication.</dd>
+  <dt><code>$password</code> <span class="type">?string</span></dt>
+  <dd>The password to use in authentication.</dd>
+  <dt><code>$headers</code> <span class="type">?array</span></dt>
+  <dd>An array of HTTP header fields to set, in the format array('Content-type: text/plain', 'Content-length: 100')</dd>
+  <dt><code>$resolve</code> <span class="type">?array</span></dt>
+  <dd>Provide a custom address for a specific host and port pair. An array of hostname, port, and IP address strings, each element separated by a colon. In the format: array(&quot;example.com:80:127.0.0.1&quot;)</dd>
+</dl>
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/HttpClientOptions/__construct/"><code>HttpClientOptions::__construct</code></a> Create the options from an array of values keyed by property name.</li>
+  <li><a href="/HttpClientOptions/overrideFrom/"><code>HttpClientOptions::overrideFrom</code></a> Return a copy of this instance with the non-null values of <code>$options</code> applied on top.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/HttpClient/"><code>HttpClient</code></a> A PSR-18 HTTP client that runs concurrent requests on <code>curl_multi</code>.</li>
+  <li><a href="/HttpClientOptions/overrideFrom/"><code>HttpClientOptions::overrideFrom</code></a> Return a copy of this instance with the non-null values of <code>$options</code> applied on top.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::throw - phasync</title>
-<meta name="description" content="Interrupt the wait of a suspended coroutine with an exception, once.">
+<meta name="description" content="Interrupts the wait of a suspended coroutine with $exception, once.">
 <link rel="canonical" href="https://phasync.github.io/phasync/throw/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,18 +42,26 @@
   <li aria-current="page">throw</li>
 </ol></nav>
 <h1>phasync::throw <span class="badge kind">Method</span></h1>
-<p class="lead">Interrupt the wait of a suspended coroutine with an exception, once.</p>
+<p class="lead">Interrupts the wait of a suspended coroutine with <code>$exception</code>, once.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::throw(</span>Fiber $fiber<span class="hl-k">, </span>Throwable $exception<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>The coroutine can
-catch it and carry on: nothing is remembered, its next wait is an ordinary wait. A
-coroutine that ends with the exception is no failure of the run, as with
-<code>phasync::cancel()</code>.</p>
-<p>The coroutine MUST be waiting (see <code>phasync::await()</code>, <code>phasync::sleep()</code>,
-<code>phasync::readable()</code>, <code>phasync::awaitFlag()</code>) and not shielded; throwing into
-the calling coroutine itself throws at once.</p>
+<p>The coroutine can catch it and carry on: nothing is remembered, and its next wait is an ordinary wait. A coroutine that ends with the exception is no failure of the run, as with <a href="/phasync/cancel/"><code>phasync::cancel</code></a>. The coroutine must be waiting (in <code>await()</code>, <code>sleep()</code>, <code>readable()</code>, <code>awaitFlag()</code> and the like) and not be shielded, such as inside a <code>finally()</code> callback. Throwing into the calling coroutine throws at once.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$fiber <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () {
+        try {
+            </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>10<span class="hl-k">);
+        } catch (</span>RuntimeException $e<span class="hl-k">) {
+            echo </span><span class="hl-s">"interrupted: "</span><span class="hl-k">, </span>$e<span class="hl-k">-&gt;</span>getMessage<span class="hl-k">(), </span><span class="hl-s">"\n"</span><span class="hl-k">;
+        }
+        </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.01<span class="hl-k">);   </span><span class="hl-c">// an ordinary wait again
+        </span><span class="hl-k">return </span><span class="hl-s">'carried on'</span><span class="hl-k">;
+    });
+    </span>phasync<span class="hl-k">::throw(</span>$fiber<span class="hl-k">, new </span>RuntimeException<span class="hl-k">(</span><span class="hl-s">'wake up'</span><span class="hl-k">));
+    echo </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$fiber<span class="hl-k">), </span><span class="hl-s">"\n"</span><span class="hl-k">;
+});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -70,14 +78,16 @@ the calling coroutine itself throws at once.</p>
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code>InvalidArgumentException</code></dt>
-  <dd>If the fiber is terminated</dd>
+  <dd>If the coroutine has ended</dd>
   <dt><code>LogicException</code></dt>
   <dd>If the coroutine is not waiting</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/cancel/"><code>phasync::cancel</code></a> a sticky cancellation</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

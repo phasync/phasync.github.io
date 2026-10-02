@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::finally - phasync</title>
-<meta name="description" content="Schedule a closure to run when the current coroutine completes, or, when called inside `phasync::withContext()`, as that call returns, whichever comes first.">
+<meta name="description" content="Registers $fn to run when the current coroutine ends, or when the withContext() call it is in returns.">
 <link rel="canonical" href="https://phasync.github.io/phasync/finally/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,20 +42,21 @@
   <li aria-current="page">finally</li>
 </ol></nav>
 <h1>phasync::finally <span class="badge kind">Method</span></h1>
-<p class="lead">Schedule a closure to run when the current coroutine completes, or, when called inside `phasync::withContext()`, as that call returns, whichever comes first.</p>
+<p class="lead">Registers <code>$fn</code> to run when the current coroutine ends, or when the <code>withContext()</code> call it is in returns.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::finally(</span>Closure $fn<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>Callbacks run
-last registered first. This function is intended to be used when a coroutine uses a
-resource that must be cleaned up when the coroutine finishes. Note that it may be more
-efficient to use a try {} finally {} statement.</p>
-<p>Inside withContext() the callbacks run in the calling coroutine, still in the context, also
-when the closure threw, and may suspend; no coroutine is started for them. They run before
-withContext() waits for the coroutines the closure started. A server that runs each
-request in withContext() and sends the response inside it thereby runs them after the
-response, as fastcgi_finish_request() allows under PHP-FPM.</p>
+<p>The callbacks run last registered first, and each runs even when another threw. They are for releasing what a coroutine acquired, where a <code>try {} finally {}</code> does not fit. Their waits are not cancelled, so cleanup that does I/O completes even when the coroutine was cancelled.</p>
+<p>Which callbacks run when depends on where <code>finally()</code> is called. Inside a <code>withContext()</code> call, they run as it returns, in the calling coroutine and still in the context, also when the closure threw, and before <code>withContext()</code> waits for the coroutines the closure started. Otherwise they run when the coroutine ends, in a coroutine of their own.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () {
+        </span>phasync<span class="hl-k">::finally(fn () =&gt; print(</span><span class="hl-s">"registered first\n"</span><span class="hl-k">));
+        </span>phasync<span class="hl-k">::finally(fn () =&gt; print(</span><span class="hl-s">"registered second\n"</span><span class="hl-k">));   </span><span class="hl-c">// prints first
+        </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">);
+    });
+});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -67,10 +68,18 @@ response, as fastcgi_finish_request() allows under PHP-FPM.</p>
 <h2 id="return-values">Return values</h2>
 <p>No value is returned.</p>
 
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>LogicException</code></dt>
+  <dd>Outside a coroutine</dd>
+</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/withContext/"><code>phasync::withContext</code></a> Runs <code>$fn</code> in the current coroutine as the main coroutine of a <code>run()</code> of <code>$context</code>, without starting a coroutine.</li>
+  <li><a href="/phasync/cancel/"><code>phasync::cancel</code></a> Cancels a coroutine, or every coroutine of a context, with a CancelledException.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

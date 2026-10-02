@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Claim - phasync</title>
-<meta name="description" content="A name that one holder at a time can hold across the whole server.">
+<meta name="description" content="A handle on a name that one holder at a time can hold across the whole server, from Swerve::claim.">
 <link rel="canonical" href="https://phasync.github.io/Claim/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -40,13 +40,13 @@
   <li><a href="/reference/">Reference</a></li>
   <li aria-current="page">Claim</li>
 </ol></nav>
-<h1>Claim <span class="badge kind">Class</span> <span class="badge draft">Draft</span></h1>
-<p class="lead">A handle on a name that one holder at a time can hold across the whole server, from Swerve::claim().</p>
+<h1>Claim <span class="badge kind">Class</span></h1>
+<p class="lead">A handle on a name that one holder at a time can hold across the whole server, from <a href="/Swerve/claim/"><code>Swerve::claim</code></a>.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>Claim</code></pre></div>
 </div>
-<p>The handle claims nothing until acquire().</p>
+<p>The handle claims nothing until <code>acquire()</code>.</p>
 <div class="code" data-lang="php"><pre><code><span class="hl-k">if (</span>$claim <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>claim<span class="hl-k">(</span><span class="hl-s">'nightly-report'</span><span class="hl-k">)-&gt;</span>acquire<span class="hl-k">()) {
     ...
 }                                     </span><span class="hl-c">// released when $claim goes out of scope</span></code></pre></div>
@@ -61,6 +61,12 @@ a claim: a long-lived holder should release it itself when Swerve::draining(), s
 is not held up. Names are a namespace of their own, apart from the cache's keys. Without a
 master it works the same, in a directory of the process that dies with it: two handles
 conflict, also in one process.</p>
+<div class="code" data-lang="php"><pre><code>$claim <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>claim<span class="hl-k">(</span><span class="hl-s">'import'</span><span class="hl-k">);
+if (</span>$claim<span class="hl-k">-&gt;</span>acquire<span class="hl-k">(</span>timeout<span class="hl-k">: </span>5.0<span class="hl-k">)) {      </span><span class="hl-c">// tries every 20 ms for up to 5 s
+    </span>import_feed<span class="hl-k">();
+    </span>$claim<span class="hl-k">-&gt;</span>release<span class="hl-k">();
+}</span></code></pre></div>
+
 <p class="meta">Defined in <code>Swerve\Claim</code>, package <code>phasync/swerve</code>.</p>
 
 
@@ -71,30 +77,19 @@ conflict, also in one process.</p>
 </dl>
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/Claim/__construct/"><code>Claim::__construct</code></a> </li>
+  <li><a href="/Claim/__construct/"><code>Claim::__construct</code></a> A handle on <code>$name</code>; <a href="/Swerve/claim/"><code>Swerve::claim</code></a> is how an application gets one.</li>
   <li><a href="/Claim/available/"><code>Claim::available</code></a> Whether nobody holds the name now; nothing is claimed.</li>
-  <li><a href="/Claim/acquire/"><code>Claim::acquire</code></a> Take the name, trying every 20 ms for up to $timeout seconds when another holds it: whoever tries first when it frees gets it, in no order.</li>
-  <li><a href="/Claim/held/"><code>Claim::held</code></a> Whether this handle holds the name.</li>
+  <li><a href="/Claim/acquire/"><code>Claim::acquire</code></a> Take the name, trying every 20 ms for up to <code>$timeout</code> seconds when another holds it.</li>
+  <li><a href="/Claim/held/"><code>Claim::held</code></a> Whether this handle holds the name: it was acquired and not released.</li>
   <li><a href="/Claim/release/"><code>Claim::release</code></a> Give the claim up, so that another can take it.</li>
   <li><a href="/Claim/__destruct/"><code>Claim::__destruct</code></a> Releases: synchronous, so it cannot suspend.</li>
 </ul>
 
-<h2>Examples<a id="examples" href="#examples" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\Swerve<span class="hl-k">;
-
-if (</span>$claim <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>claim<span class="hl-k">(</span><span class="hl-s">'nightly-report'</span><span class="hl-k">)-&gt;</span>acquire<span class="hl-k">()) {
-    </span>run_report<span class="hl-k">();
-}                                    </span><span class="hl-c">// released when $claim goes out of scope</span></code></pre></div>
-
-<h2>Notes<a id="notes" href="#notes" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<ul>
-<li>A claim is held until it is released, its handle is destroyed, or its worker exits or dies.</li>
-<li>Draining does not release a claim: a long-lived holder should release it itself when <code>Swerve::draining()</code> is true, so that a reload is not held up.</li>
-<li>A waiting <code>acquire()</code> tries again every 20 ms. There is no queue.</li>
-</ul>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/Swerve/claim/"><code>Swerve::claim</code></a> A handle on the name $name, one holder at a time across the workers; claims nothing until acquire() is called: `Swerve::claim(&#039;name&#039;)-&gt;acquire()` is null, or the held handle.</li>
+  <li><a href="/Swerve/claim/"><code>Swerve::claim</code></a> A handle on the name <code>$name</code>, which one holder at a time can hold across the workers.</li>
+  <li><a href="/Swerve/cache/"><code>Swerve::cache</code></a> The cache every worker shares, held by the master process.</li>
+  <li><a href="/Swerve/draining/"><code>Swerve::draining</code></a> Whether this worker drains: it is shutting down, reloading or being recycled, and finishes the requests in flight.</li>
 </ul>
 </article>
 </main>

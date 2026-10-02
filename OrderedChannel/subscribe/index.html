@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OrderedChannel::subscribe - phasync</title>
-<meta name="description" content="Receive what is written from now on, as Swerve::subscribe() does: the subscription exists once this returns.">
+<meta name="description" content="Receive what is written from now on, as Swerve::subscribe does.">
 <link rel="canonical" href="https://phasync.github.io/OrderedChannel/subscribe/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,7 +42,7 @@
   <li aria-current="page">subscribe</li>
 </ol></nav>
 <h1>OrderedChannel::subscribe <span class="badge kind">Method</span></h1>
-<p class="lead">Receive what is written from now on, as Swerve::subscribe() does: the subscription exists once this returns.</p>
+<p class="lead">Receive what is written from now on, as <a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> does.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>OrderedChannel<span class="hl-k">::</span>subscribe<span class="hl-k">(
@@ -50,14 +50,18 @@
     ?</span>float $heartbeat <span class="hl-k">= </span>null
 <span class="hl-k">): </span>Subscription</code></pre></div>
 </div>
+<p>The subscription exists once this returns.</p>
+<div class="code" data-lang="php"><pre><code>$subscription <span class="hl-k">= (new </span>OrderedChannel<span class="hl-k">(</span><span class="hl-s">'ledger'</span><span class="hl-k">))-&gt;</span>subscribe<span class="hl-k">(</span>maxLag<span class="hl-k">: </span>10.0<span class="hl-k">);
+foreach (</span>$subscription <span class="hl-k">as </span>$entry<span class="hl-k">) { ... }</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/OrderedChannel/"><code>Swerve\OrderedChannel</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$maxLag</code> <span class="type">float</span> <span class="default">default <code>30.0</code></span></dt>
-  <dd></dd>
+  <dd>seconds a message may wait before this subscriber reads it</dd>
   <dt><code>$heartbeat</code> <span class="type">?float</span> <span class="default">default <code>null</code></span></dt>
-  <dd></dd>
+  <dd>seconds without a message after which the loop yields null; null for never</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -72,8 +76,10 @@
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/OrderedChannel/write/"><code>OrderedChannel::write</code></a> Append <code>$message</code> to the channel, where every subscriber receives it in the channel's one order.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::awaitFlag - phasync</title>
-<meta name="description" content="Pause execution of the current coroutine until an event is signalled represented by the object $signal.">
+<meta name="description" content="Suspends the current coroutine until $signal is raised with phasync::raiseFlag.">
 <link rel="canonical" href="https://phasync.github.io/phasync/awaitFlag/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,21 +42,27 @@
   <li aria-current="page">awaitFlag</li>
 </ol></nav>
 <h1>phasync::awaitFlag <span class="badge kind">Method</span></h1>
-<p class="lead">Pause execution of the current coroutine until an event is signalled represented by the object $signal.</p>
+<p class="lead">Suspends the current coroutine until <code>$signal</code> is raised with <a href="/phasync/raiseFlag/"><code>phasync::raiseFlag</code></a>.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>awaitFlag<span class="hl-k">(</span>object $signal<span class="hl-k">, </span>float $timeout <span class="hl-k">= </span>PHP_FLOAT_MAX<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>If the timeout is reached, this function
-throws TimeoutException.</p>
+<p>The wait does not keep <code>$signal</code> alive: hold a reference to it elsewhere for as long as the coroutine waits. When the last other reference goes, the coroutine is woken with a CancelledException, because nothing can raise the flag any more. Waiting on an object nothing else references is undefined.</p>
+<div class="code" data-lang="php"><pre><code>$done <span class="hl-k">= new </span>stdClass<span class="hl-k">();
+</span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () use (</span>$done<span class="hl-k">) {
+    </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">);
+    </span>phasync<span class="hl-k">::</span>raiseFlag<span class="hl-k">(</span>$done<span class="hl-k">);
+});
+</span>phasync<span class="hl-k">::</span>awaitFlag<span class="hl-k">(</span>$done<span class="hl-k">, </span>1.0<span class="hl-k">);   </span><span class="hl-c">// returns after 0.1 seconds</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$signal</code> <span class="type">object</span></dt>
-  <dd></dd>
+  <dd>the object a raiser will pass to <code>raiseFlag()</code></dd>
   <dt><code>$timeout</code> <span class="type">float</span> <span class="default">default <code>PHP_FLOAT_MAX</code></span></dt>
-  <dd></dd>
+  <dd>seconds to wait at most</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -65,14 +71,18 @@ throws TimeoutException.</p>
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code><a href="/TimeoutException/">TimeoutException</a></code></dt>
-  <dd>If the timeout is reached</dd>
-  <dt><code>Throwable</code></dt>
-  <dd></dd>
+  <dd>If the flag is not raised in time</dd>
+  <dt><code><a href="/CancelledException/">CancelledException</a></code></dt>
+  <dd>If the flag was released while waiting</dd>
+  <dt><code>LogicException</code></dt>
+  <dd>Outside a coroutine</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/raiseFlag/"><code>phasync::raiseFlag</code></a> Wakes every coroutine waiting for <code>$signal</code> in <a href="/phasync/awaitFlag/"><code>phasync::awaitFlag</code></a>, and returns how many it woke.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner::sigint - phasync</title>
-<meta name="description" content="This signal is typically sent when the user types the interrupt character (usually Ctrl+C).">
+<meta name="description" content="Sends SIGINT, the signal of Ctrl+C.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/sigint/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,16 +42,12 @@
   <li aria-current="page">sigint</li>
 </ol></nav>
 <h1>ProcessRunner::sigint <span class="badge kind">Method</span></h1>
-<p class="lead">This signal is typically sent when the user types the interrupt character (usually Ctrl+C).</p>
+<p class="lead">Sends SIGINT, the signal of Ctrl+C.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>ProcessRunner<span class="hl-k">::</span>sigint<span class="hl-k">(): </span>bool</code></pre></div>
 </div>
-<p>It tells the process to interrupt
-its current activity. SIGINT allows the process to clean up
-nicely, releasing resources and saving state if necessary before
-exiting.</p>
-<p>On Windows this hard-kills the process instead; see sendSignal().</p>
+<p>On Windows it ends the process at once.</p>
 <p class="meta">Defined in <a href="/ProcessRunner/"><code>phasync\Util\ProcessRunner</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -60,15 +56,12 @@ exiting.</p>
 <h2 id="return-values">Return values</h2>
 <p>Returns <code>bool</code>.</p>
 
-<h2 id="errors">Errors / Exceptions</h2>
-<dl class="params">
-  <dt><code>LogicException</code></dt>
-  <dd></dd>
-</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/ProcessRunner/sendSignal/"><code>ProcessRunner::sendSignal</code></a> Sends a signal to the process, and returns false without sending it if the process is not running.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

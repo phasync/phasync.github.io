@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uri - phasync</title>
+<meta name="description" content="A PSR-7 URI.">
+<link rel="canonical" href="https://phasync.github.io/Uri/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">Uri</li>
+</ol></nav>
+<h1>Uri <span class="badge kind">Class</span></h1>
+<p class="lead">A PSR-7 URI.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">class </span>Uri <span class="hl-k">implements </span>UriInterface<span class="hl-k">, </span>\Stringable</code></pre></div>
+</div>
+<p>Built from a string or another <code>UriInterface</code>. Immutable: the <code>with...()</code> methods return a modified copy.</p>
+<div class="code" data-lang="php"><pre><code>$uri <span class="hl-k">= new </span>Uri<span class="hl-k">(</span><span class="hl-s">'https://example.com/search?q=phasync'</span><span class="hl-k">);
+</span>$uri<span class="hl-k">-&gt;</span>getHost<span class="hl-k">();                      </span><span class="hl-c">// "example.com"
+</span><span class="hl-k">(string) </span>$uri<span class="hl-k">-&gt;</span>withPath<span class="hl-k">(</span><span class="hl-s">'/docs'</span><span class="hl-k">);     </span><span class="hl-c">// "https://example.com/docs?q=phasync"</span></code></pre></div>
+
+<p class="meta">Defined in <code>phasync\Psr\Uri</code>, package <code>phasync/phasync</code>.</p>
+
+
+<h2 id="constants">Constants</h2>
+<dl class="params">
+  <dt><code>SCHEME_PORTS</code> <span class="default">= <code>array ( &#039;ftp&#039; =&gt; 21, &#039;ssh&#039; =&gt; 22, &#039;telnet&#039; =&gt; 23, &#039;smtp&#039; =&gt; 25, &#039;gopher&#039; =&gt; 70, &#039;finger&#039; =&gt; 79, &#039;http&#039; =&gt; 80, &#039;rtelnet&#039; =&gt; 107, &#039;pop3&#039; =&gt; 110, &#039;sftp&#039; =&gt; 115, &#039;nntp&#039; =&gt; 119, &#039;ntp&#039; =&gt; 123, &#039;imap&#039; =&gt; 143, &#039;snmp&#039; =&gt; 161, &#039;irc&#039; =&gt; 194, &#039;ldap&#039; =&gt; 389, &#039;smtpe&#039; =&gt; 420, &#039;https&#039; =&gt; 443, &#039;ftps&#039; =&gt; 990, &#039;imaps&#039; =&gt; 993, &#039;pop3s&#039; =&gt; 995, &#039;wins&#039; =&gt; 1512, &#039;rtmp&#039; =&gt; 1935, )</code></span></dt>
+  <dd></dd>
+</dl>
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/Uri/__construct/"><code>Uri::__construct</code></a> Creates a URI from <code>$uri</code>.</li>
+  <li><a href="/Uri/getScheme/"><code>Uri::getScheme</code></a> Returns the scheme of the URI, lower case.</li>
+  <li><a href="/Uri/getHost/"><code>Uri::getHost</code></a> Returns the host of the URI, lower case.</li>
+  <li><a href="/Uri/getUser/"><code>Uri::getUser</code></a> Returns the user of the URI.</li>
+  <li><a href="/Uri/getPassword/"><code>Uri::getPassword</code></a> Returns the password of the URI.</li>
+  <li><a href="/Uri/getParam/"><code>Uri::getParam</code></a> Parse out the value from the query string and return it.</li>
+  <li><a href="/Uri/getAuthority/"><code>Uri::getAuthority</code></a> Retrieve the authority component of the URI.</li>
+  <li><a href="/Uri/getUserInfo/"><code>Uri::getUserInfo</code></a> Retrieve the user information component of the URI.</li>
+  <li><a href="/Uri/getPort/"><code>Uri::getPort</code></a> Retrieve the port component of the URI.</li>
+  <li><a href="/Uri/getPath/"><code>Uri::getPath</code></a> Returns the path of the URI, up to the query and fragment.</li>
+  <li><a href="/Uri/getQuery/"><code>Uri::getQuery</code></a> Returns the query of the URI: what follows the &quot;?&quot;, up to the fragment.</li>
+  <li><a href="/Uri/getFragment/"><code>Uri::getFragment</code></a> Get the url fragment.</li>
+  <li><a href="/Uri/withScheme/"><code>Uri::withScheme</code></a> Get the url fragment.</li>
+  <li><a href="/Uri/withUserInfo/"><code>Uri::withUserInfo</code></a> Get the url fragment.</li>
+  <li><a href="/Uri/withHost/"><code>Uri::withHost</code></a> Get the url fragment.</li>
+  <li><a href="/Uri/withPort/"><code>Uri::withPort</code></a> Get the url fragment.</li>
+  <li><a href="/Uri/withPath/"><code>Uri::withPath</code></a> Returns a copy of the URI with the path replaced.</li>
+  <li><a href="/Uri/withQuery/"><code>Uri::withQuery</code></a> Get the url fragment.</li>
+  <li><a href="/Uri/withFragment/"><code>Uri::withFragment</code></a> Get the url fragment.</li>
+  <li><a href="/Uri/__toString/"><code>Uri::__toString</code></a> When echoing this class, the URL will be displayed.</li>
+  <li><a href="/Uri/jsonSerialize/"><code>Uri::jsonSerialize</code></a> Returns the URI as a string, like <code>__toString()</code>.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Request/getUri/"><code>Request::getUri</code></a> Returns the attached URI override, or a URI derived from the request-target plus the Host header.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

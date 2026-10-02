@@ -67,9 +67,9 @@
 <p>A buffer size of 0 is an unbuffered channel: a write waits until a reader takes the value. Pass values that serialize, so that the channel can be handed to a worker process.</p>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/ReadChannelInterface/"><code>ReadChannelInterface</code></a> A readable channel provides messages asynchronously from various sources.</li>
-  <li><a href="/WriteChannelInterface/"><code>WriteChannelInterface</code></a> </li>
-  <li><a href="/phasync/go/"><code>phasync::go</code></a> Creates a normal coroutine and starts running it.</li>
+  <li><a href="/ReadChannelInterface/"><code>ReadChannelInterface</code></a> The reading end of a channel: values written to the channel arrive here in the order they were written.</li>
+  <li><a href="/WriteChannelInterface/"><code>WriteChannelInterface</code></a> The writing end of a channel: <code>write()</code> sends a value to the readers of the channel.</li>
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> Starts <code>$fn</code> as a coroutine in the current context and returns it, without waiting for it.</li>
 </ul>
 </article>
 </main>

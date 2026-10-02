@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::go - phasync</title>
-<meta name="description" content="Creates a normal coroutine and starts running it.">
+<meta name="description" content="Starts $fn as a coroutine in the current context and returns it, without waiting for it.">
 <link rel="canonical" href="https://phasync.github.io/phasync/go/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,38 +42,54 @@
   <li aria-current="page">go</li>
 </ol></nav>
 <h1>phasync::go <span class="badge kind">Method</span></h1>
-<p class="lead">Creates a normal coroutine and starts running it.</p>
+<p class="lead">Starts <code>$fn</code> as a coroutine in the current context and returns it, without waiting for it.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(</span>Closure $fn<span class="hl-k">, array </span>$args <span class="hl-k">= [], ?</span>object $context <span class="hl-k">= </span>null<span class="hl-k">): </span>Fiber</code></pre></div>
 </div>
-<p>The coroutine will be associated
-with the current context, and will block the current coroutine from completing
-until it is done by returning or throwing.</p>
+<p>The coroutine runs at once, up to its first wait, and then <code>go()</code> returns it: the caller's next statement sees what the coroutine did before it waited. The run (or <code>withContext()</code> call) the caller is in does not end before the coroutine has. Pass the result to <code>await()</code> for the return value or the exception; an exception nobody awaits fails the run, see <a href="/phasync/run/"><code>phasync::run</code></a>.</p>
+<p>With <code>$context</code> the coroutine gets a context of its own, nested in the caller's: <code>getContext()</code> returns it inside, and <code>cancel($context)</code> cancels it. A context can be used once.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$fiber <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () {
+        echo </span><span class="hl-s">"child\n"</span><span class="hl-k">;
+        </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">);
+        return </span>42<span class="hl-k">;
+    });
+    echo </span><span class="hl-s">"parent\n"</span><span class="hl-k">;                </span><span class="hl-c">// after "child": it ran up to its first wait
+    </span><span class="hl-k">echo </span>phasync<span class="hl-k">::</span>await<span class="hl-k">(</span>$fiber<span class="hl-k">), </span><span class="hl-s">"\n"</span><span class="hl-k">;   </span><span class="hl-c">// 42
+</span><span class="hl-k">});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$fn</code> <span class="type">Closure</span></dt>
-  <dd>The function to run as a coroutine</dd>
+  <dd>the coroutine</dd>
   <dt><code>$args</code> <span class="type">array</span> <span class="default">default <code>[]</code></span></dt>
-  <dd>The arguments to pass to the function</dd>
+  <dd>passed to <code>$fn</code></dd>
   <dt><code>$context</code> <span class="type">?object</span> <span class="default">default <code>null</code></span></dt>
-  <dd>A context of its own: any object, used once</dd>
+  <dd>a context of its own</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>Fiber</code>.</p>
+<p>The coroutine, for <code>await()</code>, <code>cancel()</code> and <code>throw()</code> <span class="type">Fiber</span></p>
 
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
   <dt><code>LogicException</code></dt>
-  <dd></dd>
+  <dd>Outside a coroutine</dd>
+  <dt><code><a href="/ContextUsedException/">ContextUsedException</a></code></dt>
+  <dd>If <code>$context</code> was used before</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/run/"><code>phasync::run</code></a> Runs <code>$fn</code> as a coroutine and returns its result once it and every coroutine started inside it have ended.</li>
+  <li><a href="/phasync/await/"><code>phasync::await</code></a> Waits for a coroutine or a promise, and returns its result or throws the exception it ended with.</li>
+  <li><a href="/phasync/service/"><code>phasync::service</code></a> Starts <code>$coroutine</code> as a service: a coroutine that belongs to no context, so that it outlives the scope that started it.</li>
+  <li><a href="/WaitGroup/"><code>WaitGroup</code></a> to wait for many</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

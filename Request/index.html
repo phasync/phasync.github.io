@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Request - phasync</title>
+<meta name="description" content="A PSR-7 outgoing, client-side request.">
+<link rel="canonical" href="https://phasync.github.io/Request/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li aria-current="page">Request</li>
+</ol></nav>
+<h1>Request <span class="badge kind">Class</span></h1>
+<p class="lead">A PSR-7 outgoing, client-side request.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">class </span>Request <span class="hl-k">implements </span>RequestInterface<span class="hl-k">, </span>MessageInterface</code></pre></div>
+</div>
+<p>The request-target and the URI are independent, as PSR-7 has them: the request-target is the
+source of truth, and <a href="/Request/getUri/"><code>Request::getUri</code></a> derives a URI from it and the Host header, unless one
+was set with <a href="/Request/withUri/"><code>Request::withUri</code></a>.</p>
+<div class="code" data-lang="php"><pre><code>$request <span class="hl-k">= new </span>Request<span class="hl-k">(</span><span class="hl-s">'POST'</span><span class="hl-k">, </span><span class="hl-s">'/search?q=phasync'</span><span class="hl-k">, </span><span class="hl-s">'{"limit":10}'</span><span class="hl-k">, [
+    </span><span class="hl-s">'Host'         </span><span class="hl-k">=&gt; </span><span class="hl-s">'example.com'</span><span class="hl-k">,
+    </span><span class="hl-s">'Content-Type' </span><span class="hl-k">=&gt; </span><span class="hl-s">'application/json'</span><span class="hl-k">,
+]);
+(string) </span>$request<span class="hl-k">-&gt;</span>getUri<span class="hl-k">();   </span><span class="hl-c">// "http://example.com/search?q=phasync"</span></code></pre></div>
+
+<p class="meta">Defined in <code>phasync\Psr\Request</code>, package <code>phasync/phasync</code>.</p>
+
+
+<h2 id="methods">Methods</h2>
+<ul class="index">
+  <li><a href="/Request/__construct/"><code>Request::__construct</code></a> Creates a request.</li>
+  <li><a href="/Request/__clone/"><code>Request::__clone</code></a> Clones the URI set with <code>withUri()</code>, so a copy does not share it.</li>
+  <li><a href="/Request/create/"><code>Request::create</code></a> Creates a request from a URI, deriving the request-target and Host header from it.</li>
+  <li><a href="/Request/getRequestTarget/"><code>Request::getRequestTarget</code></a> Returns the request target of the message.</li>
+  <li><a href="/Request/withRequestTarget/"><code>Request::withRequestTarget</code></a> Return an instance with the specific request-target.</li>
+  <li><a href="/Request/getMethod/"><code>Request::getMethod</code></a> Retrieves the HTTP method of the request.</li>
+  <li><a href="/Request/withMethod/"><code>Request::withMethod</code></a> Return an instance with the provided HTTP method.</li>
+  <li><a href="/Request/getUri/"><code>Request::getUri</code></a> Returns the attached URI override, or a URI derived from the request-target plus the Host header.</li>
+  <li><a href="/Request/withUri/"><code>Request::withUri</code></a> Returns an instance with the provided URI.</li>
+  <li><a href="/Request/getQuery/"><code>Request::getQuery</code></a> The query string from the request target, or from the URI override when one is attached.</li>
+  <li><a href="/Request/getProtocolVersion/"><code>Request::getProtocolVersion</code></a> Retrieves the HTTP protocol version as a string.</li>
+  <li><a href="/Request/withProtocolVersion/"><code>Request::withProtocolVersion</code></a> Return an instance with the specified HTTP protocol version.</li>
+  <li><a href="/Request/getHeaders/"><code>Request::getHeaders</code></a> Returns the message headers.</li>
+  <li><a href="/Request/hasHeader/"><code>Request::hasHeader</code></a> Checks if a header exists by the given case-insensitive name.</li>
+  <li><a href="/Request/getHeader/"><code>Request::getHeader</code></a> Retrieves a message header value by the given case-insensitive name.</li>
+  <li><a href="/Request/getHeaderLine/"><code>Request::getHeaderLine</code></a> Retrieves a comma-separated string of the values for a single header.</li>
+  <li><a href="/Request/withHeader/"><code>Request::withHeader</code></a> Return an instance with the provided value replacing the specified header.</li>
+  <li><a href="/Request/withAddedHeader/"><code>Request::withAddedHeader</code></a> Return an instance with the specified header appended with the given value.</li>
+  <li><a href="/Request/withoutHeader/"><code>Request::withoutHeader</code></a> Return an instance without the specified header.</li>
+  <li><a href="/Request/getBody/"><code>Request::getBody</code></a> Gets the body of the message.</li>
+  <li><a href="/Request/withBody/"><code>Request::withBody</code></a> Return an instance with the specified message body.</li>
+</ul>
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/Psr/ServerRequest/"><code>phasync\Psr\ServerRequest</code></a> A PSR-7 request as a server received it.</li>
+  <li><a href="/Response/"><code>Response</code></a> A PSR-7 response.</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

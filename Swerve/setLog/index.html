@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swerve::setLog - phasync</title>
+<meta name="description" content="Replace the logger that Swerve::log returns.">
+<link rel="canonical" href="https://phasync.github.io/Swerve/setLog/">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="/theme/phasync.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23031a30'/%3E%3Cpath d='M5 21c4-10 9-10 11-5s7 5 11-5' fill='none' stroke='%237fb0e0' stroke-width='3'/%3E%3C/svg%3E">
+<script src="/theme/phasync.js" defer></script>
+<script src="/theme/search.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container">
+    <!-- LOGO SLOT: a text wordmark until the logo is redone; replace the contents of this link -->
+    <a class="wordmark" href="/" aria-label="phasync, home"><span class="wm-name">phasync</span><span class="wm-sub">Swerve</span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/get-started/">Get started</a>
+      <a href="/frameworks/">Frameworks</a>
+      <a href="/guides/">Guides</a>
+      <a href="/library/">Library</a>
+      <a href="/performance/">Performance</a>
+      <a href="/reference/">Reference</a>
+    </nav>
+    <form class="search" role="search" action="/404.html" hidden>
+      <input type="search" name="q" placeholder="Swerve::publish" aria-label="Search the reference" autocomplete="off" spellcheck="false">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </form>
+    <button class="theme-toggle" type="button" aria-label="Switch between light and dark" title="Light / dark"></button>
+  </div>
+</header>
+<main id="main" class="container">
+<article class="reference">
+<nav class="crumbs" aria-label="Breadcrumb"><ol>
+  <li><a href="/">Home</a></li>
+  <li><a href="/reference/">Reference</a></li>
+  <li><a href="/Swerve/">Swerve</a></li>
+  <li aria-current="page">setLog</li>
+</ol></nav>
+<h1>Swerve::setLog <span class="badge kind">Method</span></h1>
+<p class="lead">Replace the logger that <a href="/Swerve/log/"><code>Swerve::log</code></a> returns.</p>
+
+<h2 id="description">Description</h2>
+<div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>Swerve<span class="hl-k">::</span>setLog<span class="hl-k">(</span>LoggerInterface $log<span class="hl-k">): </span>void</code></pre></div>
+</div>
+<p><code>bin/swerve</code> calls it when a worker starts. An application that embeds swerve without its
+command line can call it to have <code>log()</code> return its own logger.</p>
+<div class="code" data-lang="php"><pre><code>Swerve<span class="hl-k">::</span>setLog<span class="hl-k">(new </span>Monolog\Logger<span class="hl-k">(</span><span class="hl-s">'app'</span><span class="hl-k">));</span></code></pre></div>
+
+<p class="meta">Defined in <a href="/Swerve/"><code>Swerve\Swerve</code></a>.</p>
+
+<h2 id="parameters">Parameters</h2>
+<dl class="params">
+  <dt><code>$log</code> <span class="type">LoggerInterface</span></dt>
+  <dd>returned by every later call of <code>Swerve::log()</code></dd>
+</dl>
+
+<h2 id="return-values">Return values</h2>
+<p>No value is returned.</p>
+
+
+
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Swerve/log/"><code>Swerve::log</code></a> The log of this process: swerve's own PSR-3 logger, in its format (the time, this worker's slot).</li>
+</ul>
+</article>
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      <a href="https://github.com/phasync/phasync">phasync/phasync</a>
+      <a href="https://github.com/phasync/swerve">phasync/swerve</a>
+      <a href="https://github.com/phasync/phasync-ext">phasync/phasync-ext</a>
+      <a href="https://github.com/phasync/http-client">phasync/http-client</a>
+      <a href="https://github.com/phasync/tether">phasync/tether</a>
+    </p>
+    <p><a href="/advanced/">Advanced</a> <a href="/reference/">Reference</a> <span>MIT licensed</span></p>
+  </div>
+</footer>
+</body>
+</html>

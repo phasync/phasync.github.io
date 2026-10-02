@@ -88,37 +88,33 @@ fetch('/', {method: 'POST', body: 'hello'});</code></pre></div>
 
 <ul>
 <li><code>subscribe()</code> is called before the response is returned: a message published after that is not missed.</li>
+<li>Subscribe before you read the current state, so that no change falls between the two. A message may then be older than the state you read: give state a version and let the client ignore an older one.</li>
 <li><code>heartbeat: 15</code> yields <code>null</code> after 15 seconds without a message. The keep-alive comment keeps proxies from closing the connection, and is how the write notices a client that left.</li>
 <li>An SSE event is <code>data: &lt;one line&gt;</code>: JSON-encode messages so that they stay on one line.</li>
 <li>There is no history. A client that reconnects catches up from your storage.</li>
 </ul>
 <h2>WebSockets<a id="websockets" href="#websockets" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
-<p><code>WebSocket::from()</code> answers the upgrade and runs the callback once the connection is open. The callback returns when the browser leaves.</p>
+<p><code>WebSocket::from()</code> answers the upgrade and runs the callback once the connection is open. Messages from the browser are events; what goes back is plain sequential code in the callback. The connection closes when the callback returns (1000) or throws (1011, logged).</p>
 <div class="code" data-lang="php"><pre><code><span class="hl-k">use </span>Swerve\Http\WebSocket<span class="hl-k">;
-use </span>Swerve\SubscriberLagException<span class="hl-k">;
 
 return </span>WebSocket<span class="hl-k">::</span>from<span class="hl-k">(</span>$request<span class="hl-k">, static function (</span>WebSocket $ws<span class="hl-k">) {
-    </span>$subscription <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">);
-    </span>$forward      <span class="hl-k">= </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(static function () use (</span>$ws<span class="hl-k">, </span>$subscription<span class="hl-k">) {
-        try {
-            foreach (</span>$subscription <span class="hl-k">as </span>$message<span class="hl-k">) {
-                </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);
-            }
-        } catch (</span>SubscriberLagException<span class="hl-k">) {
-            </span>$ws<span class="hl-k">-&gt;</span>close<span class="hl-k">(</span>1008<span class="hl-k">);
-        } catch (</span>phasync\CancelledException<span class="hl-k">) {
-        }
-    });
+    </span>$ws<span class="hl-k">-&gt;</span>onMessage<span class="hl-k">-&gt;</span>listen<span class="hl-k">(static function (</span>string $data<span class="hl-k">, </span>bool $binary<span class="hl-k">) {
+        </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>$data<span class="hl-k">);                </span><span class="hl-c">// validate it first, see examples/websocket-chat
+    </span><span class="hl-k">});
 
-    foreach (</span>$ws <span class="hl-k">as </span>$message<span class="hl-k">) {                   </span><span class="hl-c">// ends when the browser leaves
-        </span>Swerve<span class="hl-k">::</span>publish<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">, </span>$message<span class="hl-k">);        </span><span class="hl-c">// validate it first, see examples/websocket-chat
-    </span><span class="hl-k">}
-
-    if (!</span>$forward<span class="hl-k">-&gt;</span>isTerminated<span class="hl-k">()) {
-        </span>phasync<span class="hl-k">::</span>cancel<span class="hl-k">(</span>$forward<span class="hl-k">);
+    foreach (</span>Swerve<span class="hl-k">::</span>subscribe<span class="hl-k">(</span><span class="hl-s">'chat'</span><span class="hl-k">) as </span>$message<span class="hl-k">) {  </span><span class="hl-c">// ends when the browser leaves
+        </span>$ws<span class="hl-k">-&gt;</span>send<span class="hl-k">(</span>$message<span class="hl-k">);
     }
 });</span></code></pre></div>
 
+<ul>
+<li>The connection is read all the time: pings are answered, and when the browser leaves the callback is cancelled, so the loop above ends with it.</li>
+<li><code>onMessage</code> listeners get <code>(string $data, bool $binary)</code> one at a time, in the order the messages arrived, so a slow listener holds back the reading.</li>
+<li><code>onClose</code> listeners get <code>(int $code, string $reason)</code> once, whichever side ended the connection: the browser's code (1005 when it sent none), the one given to <code>end()</code>, 1011 after an exception, or 1006 when no close frame came.</li>
+<li><code>$ws-&gt;end(int $code = 1000, string $reason = '')</code> closes the connection early; <code>send()</code> and <code>end()</code> may be called from any coroutine. <code>sendBinary()</code> sends a binary message.</li>
+<li>A subscriber that falls too far behind makes the loop throw <code>SubscriberLagException</code>, which closes the socket with 1011. Catch it and call <code>$ws-&gt;end(1008)</code> to choose the code; the browser reconnects.</li>
+<li><code>$ws-&gt;receive()</code>, or <code>foreach ($ws as $message)</code>, is the pull alternative to <code>onMessage</code>. It throws a <code>LogicException</code> while <code>onMessage</code> has listeners.</li>
+</ul>
 <p>Write the callback as a <code>static</code> function. A plain closure keeps <code>$this</code>, and with it the controller and often the whole application, in memory for as long as the socket is open.</p>
 <h2>How a message travels<a id="how-a-message-travels" href="#how-a-message-travels" class="anchor" aria-hidden="true" tabindex="-1" title="Permalink">#</a></h2>
 <p>Workers share no memory. Say 1000 browsers are subscribed in worker 1 and a request in worker 2 calls <code>Swerve::publish('chat', $message)</code>:</p>
@@ -136,8 +132,8 @@ return </span>WebSocket<span class="hl-k">::</span>from<span class="hl-k">(</spa
 </ul>
 <h2 id="see-also">See also</h2>
 <ul class="see-also">
-  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of $topic, in every worker process of this swerve, this one included.</li>
-  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to $topic from now on: foreach (Swerve::subscribe(&#039;chat&#039;) as $message) { ...</li>
+  <li><a href="/Swerve/publish/"><code>Swerve::publish</code></a> Send a message to every subscriber of <code>$topic</code>, in every worker process of this swerve, this one included.</li>
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to <code>$topic</code> from now on.</li>
   <li><a href="/WebSocket/"><code>WebSocket</code></a> A WebSocket connection (RFC 6455), server side.</li>
 </ul>
 </article>

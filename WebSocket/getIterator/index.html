@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WebSocket::getIterator - phasync</title>
-<meta name="description" content="The messages received, until the connection closes.">
+<meta name="description" content="The messages received, until the connection closes: foreach ($ws as $message).">
 <link rel="canonical" href="https://phasync.github.io/WebSocket/getIterator/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,11 +42,13 @@
   <li aria-current="page">getIterator</li>
 </ol></nav>
 <h1>WebSocket::getIterator <span class="badge kind">Method</span></h1>
-<p class="lead">The messages received, until the connection closes.</p>
+<p class="lead">The messages received, until the connection closes: <code>foreach ($ws as $message)</code>.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WebSocket<span class="hl-k">::</span>getIterator<span class="hl-k">(): </span>Generator</code></pre></div>
 </div>
+<p>Each step is a <a href="/WebSocket/receive/"><code>WebSocket::receive</code></a>, so it throws the same <code>LogicException</code> while
+<code>$onMessage</code> has listeners.</p>
 <p class="meta">Defined in <a href="/WebSocket/"><code>Swerve\Http\WebSocket</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -57,8 +59,6 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
 </article>
 </main>
 <footer class="site-footer">

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ProcessRunner - phasync</title>
-<meta name="description" content="Launches and manages a child process on POSIX and Windows alike.">
+<meta name="description" content="The implementation behind Process::run(): starts a child process and controls it.">
 <link rel="canonical" href="https://phasync.github.io/ProcessRunner/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -41,56 +41,45 @@
   <li aria-current="page">ProcessRunner</li>
 </ol></nav>
 <h1>ProcessRunner <span class="badge kind">Class</span></h1>
-<p class="lead">Launches and manages a child process on POSIX and Windows alike.</p>
+<p class="lead">The implementation behind <code>Process::run()</code>: starts a child process and controls it.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">final class </span>ProcessRunner <span class="hl-k">implements </span>ProcessInterface</code></pre></div>
 </div>
-<p>STDIN/STDOUT/STDERR are <code>['socket']</code> descriptors (proc_open() has supported these since PHP
-8.0, php-src 547d98b / GH-5777), not <code>['pipe', ...]</code>. A pipe cannot be made non-blocking or
-polled by <code>stream_select()</code>/<code>WaitForMultipleObjects</code> on Windows; a socket can, on every
-platform phasync supports (&gt;= 8.2). Using sockets everywhere, instead of pipes on POSIX and
-something else on Windows, keeps this one implementation and one behaviour: no per-platform
-branch anywhere below this class except command resolution and <code>proc_open()</code>'s own
-Windows-only <code>bypass_shell</code> option.</p>
-<p>Measured/considered behaviour differences of a socketpair vs. a pipe, for the child:</p>
-<ul>
-<li>EOF on close: identical. Closing the parent's end of either a pipe or a socketpair delivers
-EOF (a zero-length read) to the child, and vice versa.</li>
-<li>SIGPIPE/EPIPE: identical on POSIX. A child that writes after the parent has closed its end
-gets SIGPIPE (default action: terminate) exactly as it would writing to a closed pipe; the
-kernel raises SIGPIPE for a broken connection on a stream socket the same way it does for a
-pipe. Nothing here changes a child's signal disposition.</li>
-<li><code>fstat()</code>/<code>isatty()</code> on the child's fd: a socket reports <code>S_ISSOCK</code>, a pipe <code>S_ISFIFO</code> --
-neither is a tty, so libc's default (fully buffered, non-interactive) stdio buffering is the
-same either way. A program that specifically branches on <code>S_ISFIFO</code> (rare; e.g. to decide
-whether <code>splice()</code>/<code>sendfile()</code> applies) would see a difference, but none of phasync's own
-code or tests do this, and it is not a documented assumption of <code>ProcessInterface</code>.</li>
-</ul>
+<p>Standard input, output and error are sockets that are set to non-blocking, so a coroutine waiting for the child does not block the others. Use <code>Process::run()</code> instead of constructing it. The signal methods are shortcuts for <code>sendSignal()</code>.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$process <span class="hl-k">= </span>phasync\Util\Process<span class="hl-k">::</span>run<span class="hl-k">(</span><span class="hl-s">'sleep'</span><span class="hl-k">, [</span><span class="hl-s">'10'</span><span class="hl-k">]);
+    </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">);
+    </span>$process<span class="hl-k">-&gt;</span>sigterm<span class="hl-k">();
+});</span></code></pre></div>
+
 <p class="meta">Defined in <code>phasync\Util\ProcessRunner</code>, package <code>phasync/phasync</code>.</p>
 
 
 <h2 id="methods">Methods</h2>
 <ul class="index">
-  <li><a href="/ProcessRunner/__construct/"><code>ProcessRunner::__construct</code></a> Launch a new process.</li>
-  <li><a href="/ProcessRunner/getStream/"><code>ProcessRunner::getStream</code></a> </li>
-  <li><a href="/ProcessRunner/stop/"><code>ProcessRunner::stop</code></a> </li>
-  <li><a href="/ProcessRunner/isRunning/"><code>ProcessRunner::isRunning</code></a> Returns true if the process is still running.</li>
-  <li><a href="/ProcessRunner/isStopped/"><code>ProcessRunner::isStopped</code></a> Returns true if the process is stopped (generally via `Process::sigstop()`).</li>
-  <li><a href="/ProcessRunner/getExitCode/"><code>ProcessRunner::getExitCode</code></a> Return the exitcode of the process, or false if the process is still running.</li>
-  <li><a href="/ProcessRunner/sendSignal/"><code>ProcessRunner::sendSignal</code></a> Send a POSIX signal to the process.</li>
-  <li><a href="/ProcessRunner/sigterm/"><code>ProcessRunner::sigterm</code></a> SIGTERM requests a process to terminate.</li>
-  <li><a href="/ProcessRunner/sigkill/"><code>ProcessRunner::sigkill</code></a> This signal forces a process to terminate immediately.</li>
-  <li><a href="/ProcessRunner/sigint/"><code>ProcessRunner::sigint</code></a> This signal is typically sent when the user types the interrupt character (usually Ctrl+C).</li>
-  <li><a href="/ProcessRunner/sigstop/"><code>ProcessRunner::sigstop</code></a> This signal pauses a process&#039;s execution.</li>
-  <li><a href="/ProcessRunner/sigcont/"><code>ProcessRunner::sigcont</code></a> SIGCONT is used to resume a process previously stopped by SIGSTOP or another stop signal.</li>
-  <li><a href="/ProcessRunner/sighup/"><code>ProcessRunner::sighup</code></a> Originally sent when a terminal was closed, today SIGHUP is often used to instruct background processes to reload their configuration files or to gracefully restart.</li>
-  <li><a href="/ProcessRunner/read/"><code>ProcessRunner::read</code></a> Perform a Fiber-blocking read from the given process pipe.</li>
-  <li><a href="/ProcessRunner/write/"><code>ProcessRunner::write</code></a> Perform a Fiber-blocking write to the given process pipe.</li>
+  <li><a href="/ProcessRunner/__construct/"><code>ProcessRunner::__construct</code></a> Starts the process.</li>
+  <li><a href="/ProcessRunner/getStream/"><code>ProcessRunner::getStream</code></a> Returns the stream of a standard descriptor.</li>
+  <li><a href="/ProcessRunner/stop/"><code>ProcessRunner::stop</code></a> Ends the process: SIGTERM, then SIGKILL after one second, and waits up to five seconds in all.</li>
+  <li><a href="/ProcessRunner/isRunning/"><code>ProcessRunner::isRunning</code></a> Returns true if the process is running.</li>
+  <li><a href="/ProcessRunner/isStopped/"><code>ProcessRunner::isStopped</code></a> Returns true if the process is paused by a stop signal.</li>
+  <li><a href="/ProcessRunner/getExitCode/"><code>ProcessRunner::getExitCode</code></a> Returns the exit code of the process, or false while it runs.</li>
+  <li><a href="/ProcessRunner/sendSignal/"><code>ProcessRunner::sendSignal</code></a> Sends a signal to the process, and returns false without sending it if the process is not running.</li>
+  <li><a href="/ProcessRunner/sigterm/"><code>ProcessRunner::sigterm</code></a> Sends SIGTERM, which a process can catch to shut down.</li>
+  <li><a href="/ProcessRunner/sigkill/"><code>ProcessRunner::sigkill</code></a> Sends SIGKILL, which a process cannot catch or ignore.</li>
+  <li><a href="/ProcessRunner/sigint/"><code>ProcessRunner::sigint</code></a> Sends SIGINT, the signal of Ctrl+C.</li>
+  <li><a href="/ProcessRunner/sigstop/"><code>ProcessRunner::sigstop</code></a> Sends SIGSTOP, which pauses the process until <code>sigcont()</code>.</li>
+  <li><a href="/ProcessRunner/sigcont/"><code>ProcessRunner::sigcont</code></a> Sends SIGCONT, which resumes a process paused by <code>sigstop()</code>.</li>
+  <li><a href="/ProcessRunner/sighup/"><code>ProcessRunner::sighup</code></a> Sends SIGHUP, which many daemons take as a request to reload their configuration.</li>
+  <li><a href="/ProcessRunner/read/"><code>ProcessRunner::read</code></a> Waits until the stream has something to read, and returns what is there; an empty string at the end of the stream.</li>
+  <li><a href="/ProcessRunner/write/"><code>ProcessRunner::write</code></a> Waits until the stream can take data, and writes as much as it takes; false if the process is not running.</li>
 </ul>
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Process/run/"><code>Process::run</code></a> Starts <code>$command</code> in the background and returns the object that controls it.</li>
+  <li><a href="/ProcessInterface/"><code>ProcessInterface</code></a> A child process started with <code>Process::run()</code>, with its standard streams usable from coroutines.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

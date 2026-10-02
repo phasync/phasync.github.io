@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WaitGroup::add - phasync</title>
-<meta name="description" content="Add work to the WaitGroup, like Go&#039;s WaitGroup.Add(delta).">
+<meta name="description" content="Adds $delta to the counter of unfinished work.">
 <link rel="canonical" href="https://phasync.github.io/WaitGroup/add/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,19 +42,18 @@
   <li aria-current="page">add</li>
 </ol></nav>
 <h1>WaitGroup::add <span class="badge kind">Method</span></h1>
-<p class="lead">Add work to the WaitGroup, like Go&#039;s WaitGroup.Add(delta).</p>
+<p class="lead">Adds <code>$delta</code> to the counter of unfinished work.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public </span>WaitGroup<span class="hl-k">::</span>add<span class="hl-k">(</span>int $delta <span class="hl-k">= </span>1<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>A negative delta marks
-work as done. If the counter reaches zero, waiting coroutines are resumed.</p>
+<p>A negative delta marks work as done. When the counter reaches zero, the waiting coroutines resume.</p>
 <p class="meta">Defined in <a href="/WaitGroup/"><code>phasync\Util\WaitGroup</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$delta</code> <span class="type">int</span> <span class="default">default <code>1</code></span></dt>
-  <dd></dd>
+  <dd>the amount of work to add</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -67,8 +66,10 @@ work as done. If the counter reaches zero, waiting coroutines are resumed.</p>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/WaitGroup/done/"><code>WaitGroup::done</code></a> Marks one piece of work as done.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

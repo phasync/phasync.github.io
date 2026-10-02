@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swerve::cache - phasync</title>
-<meta name="description" content="The cache every worker shares, held by the master: see Cache.">
+<meta name="description" content="The cache every worker shares, held by the master process.">
 <link rel="canonical" href="https://phasync.github.io/Swerve/cache/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,23 +42,31 @@
   <li aria-current="page">cache</li>
 </ol></nav>
 <h1>Swerve::cache <span class="badge kind">Method</span></h1>
-<p class="lead">The cache every worker shares, held by the master: see Cache.</p>
+<p class="lead">The cache every worker shares, held by the master process.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>Swerve<span class="hl-k">::</span>cache<span class="hl-k">(): </span>CacheInterface</code></pre></div>
 </div>
+<p>A PSR-16 cache: see <a href="/Cache/"><code>Cache</code></a> for how it is layered and what it keeps.</p>
+<div class="code" data-lang="php"><pre><code>$cache <span class="hl-k">= </span>Swerve<span class="hl-k">::</span>cache<span class="hl-k">();
+</span>$user  <span class="hl-k">= </span>$cache<span class="hl-k">-&gt;</span>get<span class="hl-k">(</span><span class="hl-s">"user:</span>$id<span class="hl-s">"</span><span class="hl-k">) ?? </span>load_user<span class="hl-k">(</span>$id<span class="hl-k">);
+</span>$cache<span class="hl-k">-&gt;</span>set<span class="hl-k">(</span><span class="hl-s">"user:</span>$id<span class="hl-s">"</span><span class="hl-k">, </span>$user<span class="hl-k">, </span>60<span class="hl-k">);</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/Swerve/"><code>Swerve\Swerve</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <p>This method has no parameters.</p>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns <code>CacheInterface</code>.</p>
+<p>The same cache on every call <span class="type">CacheInterface</span></p>
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Cache/"><code>Cache</code></a> The cache every worker shares, from Swerve::cache(): a PSR-16 cache held by the master process, the least recently used entries evicted past --cache-size.</li>
+  <li><a href="/Swerve/claim/"><code>Swerve::claim</code></a> when one worker at a time must do something</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

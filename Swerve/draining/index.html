@@ -47,7 +47,13 @@
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>Swerve<span class="hl-k">::</span>draining<span class="hl-k">(): </span>bool</code></pre></div>
 </div>
-<p>Long responses should end soon: see docs/realtime.md.</p>
+<p>Long responses should end soon: see docs/realtime.md. A <a href="/Subscription/"><code>Subscription</code></a> ends its loop
+when the worker drains.</p>
+<div class="code" data-lang="php"><pre><code><span class="hl-k">while (!</span>Swerve<span class="hl-k">::</span>draining<span class="hl-k">()) {
+    </span>$out<span class="hl-k">-&gt;</span>append<span class="hl-k">(</span><span class="hl-s">": keep-alive\n\n"</span><span class="hl-k">);
+    </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>15<span class="hl-k">);
+}</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/Swerve/"><code>Swerve\Swerve</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -58,8 +64,10 @@
 
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/Swerve/subscribe/"><code>Swerve::subscribe</code></a> Receive what is published to <code>$topic</code> from now on.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

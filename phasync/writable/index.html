@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::writable - phasync</title>
-<meta name="description" content="Suspend the coroutine until the stream can be written without blocking, as `phasync::readable()` does for reading.">
+<meta name="description" content="Suspends the coroutine until the stream can be written without blocking, and returns the stream.">
 <link rel="canonical" href="https://phasync.github.io/phasync/writable/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,37 +42,43 @@
   <li aria-current="page">writable</li>
 </ol></nav>
 <h1>phasync::writable <span class="badge kind">Method</span></h1>
-<p class="lead">Suspend the coroutine until the stream can be written without blocking, as `phasync::readable()` does for reading.</p>
+<p class="lead">Suspends the coroutine until the stream can be written without blocking, and returns the stream.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>writable<span class="hl-k">(</span>mixed $resource<span class="hl-k">, </span>float $timeout <span class="hl-k">= </span>PHP_FLOAT_MAX<span class="hl-k">): </span>mixed</code></pre></div>
 </div>
+<p>As <a href="/phasync/readable/"><code>phasync::readable</code></a> does for reading. One coroutine at a time may wait to write to a stream, while another waits to read from it.</p>
+<div class="code" data-lang="php"><pre><code>stream_set_blocking<span class="hl-k">(</span>$socket<span class="hl-k">, </span>false<span class="hl-k">);
+</span>$written <span class="hl-k">= </span>fwrite<span class="hl-k">(</span>phasync<span class="hl-k">::</span>writable<span class="hl-k">(</span>$socket<span class="hl-k">), </span>$data<span class="hl-k">);   </span><span class="hl-c">// may write less than all of $data</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$resource</code> <span class="type">mixed</span></dt>
-  <dd></dd>
+  <dd>a stream</dd>
   <dt><code>$timeout</code> <span class="type">float</span> <span class="default">default <code>PHP_FLOAT_MAX</code></span></dt>
-  <dd></dd>
+  <dd>seconds to wait at most</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
-<p>Returns the same resource for convenience <span class="type">mixed</span></p>
+<p><code>$resource</code>, for use in the call that writes it <span class="type">mixed</span></p>
 
 <h2 id="errors">Errors / Exceptions</h2>
 <dl class="params">
-  <dt><code>IOException</code></dt>
-  <dd>If $resource is not an open stream, or is closed meanwhile</dd>
+  <dt><code><a href="/IOException/">IOException</a></code></dt>
+  <dd>If <code>$resource</code> is not an open stream, or is closed while waiting</dd>
   <dt><code>LogicException</code></dt>
-  <dd>If another coroutine is waiting to write to $resource</dd>
+  <dd>If another coroutine is waiting to write to <code>$resource</code></dd>
   <dt><code><a href="/TimeoutException/">TimeoutException</a></code></dt>
-  <dd></dd>
+  <dd>If the stream is not writable in time</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/readable/"><code>phasync::readable</code></a> Suspends the coroutine until the stream can be read without blocking, and returns the stream.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

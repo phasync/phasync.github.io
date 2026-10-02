@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::awaitContext - phasync</title>
-<meta name="description" content="Wait until every coroutine of $context, and of the contexts nested in it, has ended; a server that lets requests start coroutines of their own waits for them this way before it exits.">
+<meta name="description" content="Waits until every coroutine of $context, and of the contexts nested in it, has ended.">
 <link rel="canonical" href="https://phasync.github.io/phasync/awaitContext/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,22 +42,28 @@
   <li aria-current="page">awaitContext</li>
 </ol></nav>
 <h1>phasync::awaitContext <span class="badge kind">Method</span></h1>
-<p class="lead">Wait until every coroutine of $context, and of the contexts nested in it, has ended; a server that lets requests start coroutines of their own waits for them this way before it exits.</p>
+<p class="lead">Waits until every coroutine of <code>$context</code>, and of the contexts nested in it, has ended.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>awaitContext<span class="hl-k">(</span>object $context<span class="hl-k">, </span>float $timeout <span class="hl-k">= </span>PHP_FLOAT_MAX<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>Coroutines started in the meantime are waited for too. Nothing is thrown for
-their failures: those go where they always go, see <code>phasync::run()</code>. The calling
-coroutine does not wait for itself.</p>
+<p>A server that lets requests start coroutines of their own waits for them this way before it exits. Coroutines started in the meantime are waited for too. Nothing is thrown for their failures: those go where they always go, see <a href="/phasync/run/"><code>phasync::run</code></a>. The calling coroutine does not wait for itself.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>$context <span class="hl-k">= new </span>stdClass<span class="hl-k">();
+    </span>phasync<span class="hl-k">::</span>go<span class="hl-k">(function () { </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">); echo </span><span class="hl-s">"ended\n"</span><span class="hl-k">; }, [], </span>$context<span class="hl-k">);
+
+    </span>phasync<span class="hl-k">::</span>awaitContext<span class="hl-k">(</span>$context<span class="hl-k">);
+    echo </span><span class="hl-s">"all ended\n"</span><span class="hl-k">;
+});</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 <dl class="params">
   <dt><code>$context</code> <span class="type">object</span></dt>
-  <dd></dd>
+  <dd>a context given to <code>run()</code>, <code>go()</code> or <code>withContext()</code></dd>
   <dt><code>$timeout</code> <span class="type">float</span> <span class="default">default <code>PHP_FLOAT_MAX</code></span></dt>
-  <dd></dd>
+  <dd>seconds to wait at most</dd>
 </dl>
 
 <h2 id="return-values">Return values</h2>
@@ -68,12 +74,15 @@ coroutine does not wait for itself.</p>
   <dt><code>LogicException</code></dt>
   <dd>Outside a coroutine</dd>
   <dt><code><a href="/TimeoutException/">TimeoutException</a></code></dt>
-  <dd>If coroutines of the context still run after $timeout seconds</dd>
+  <dd>If coroutines of the context still run after <code>$timeout</code> seconds</dd>
 </dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/cancel/"><code>phasync::cancel</code></a> given a context, cancels its coroutines</li>
+  <li><a href="/phasync/withContext/"><code>phasync::withContext</code></a> Runs <code>$fn</code> in the current coroutine as the main coroutine of a <code>run()</code> of <code>$context</code>, without starting a coroutine.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">

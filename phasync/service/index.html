@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>phasync::service - phasync</title>
-<meta name="description" content="Launches a service coroutine independently of the context scope.">
+<meta name="description" content="Starts $coroutine as a service: a coroutine that belongs to no context, so that it outlives the scope that started it.">
 <link rel="canonical" href="https://phasync.github.io/phasync/service/">
 <script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="/theme/phasync.css">
@@ -42,14 +42,21 @@
   <li aria-current="page">service</li>
 </ol></nav>
 <h1>phasync::service <span class="badge kind">Method</span></h1>
-<p class="lead">Launches a service coroutine independently of the context scope.</p>
+<p class="lead">Starts <code>$coroutine</code> as a service: a coroutine that belongs to no context, so that it outlives the scope that started it.</p>
 
 <h2 id="description">Description</h2>
 <div class="signature"><div class="code" data-lang="php"><pre><code><span class="hl-k">public static </span>phasync<span class="hl-k">::</span>service<span class="hl-k">(</span>Closure $coroutine<span class="hl-k">): </span>void</code></pre></div>
 </div>
-<p>This service will be permitted to continue but MUST stop running
-when it is no longer providing services to other fibers. Failing
-to do so will cause the topmost run() context to keep running.</p>
+<p>A service is for one coroutine that serves many others and is started on first use, such as a connection manager. The scope that started it can end while it runs, but the outermost <code>run()</code> does not return before it has ended: a service that never ends keeps <code>run()</code> waiting. A service that throws fails the outermost <code>run()</code>.</p>
+<div class="code" data-lang="php"><pre><code>phasync<span class="hl-k">::</span>run<span class="hl-k">(function () {
+    </span>phasync<span class="hl-k">::</span>service<span class="hl-k">(function () {
+        </span>phasync<span class="hl-k">::</span>sleep<span class="hl-k">(</span>0.1<span class="hl-k">);
+        echo </span><span class="hl-s">"service ends\n"</span><span class="hl-k">;
+    });
+    echo </span><span class="hl-s">"main ends\n"</span><span class="hl-k">;
+});
+</span><span class="hl-c">// run() returns after "service ends"</span></code></pre></div>
+
 <p class="meta">Defined in <a href="/phasync/"><code>phasync</code></a>.</p>
 
 <h2 id="parameters">Parameters</h2>
@@ -61,10 +68,18 @@ to do so will cause the topmost run() context to keep running.</p>
 <h2 id="return-values">Return values</h2>
 <p>No value is returned.</p>
 
+<h2 id="errors">Errors / Exceptions</h2>
+<dl class="params">
+  <dt><code>LogicException</code></dt>
+  <dd>Outside a coroutine</dd>
+</dl>
 
 
-<h2 id="examples">Examples</h2>
-<p class="callout placeholder"><strong>Examples: placeholder.</strong> This page is generated from the docblock; examples will be added.</p>
+<h2 id="see-also">See also</h2>
+<ul class="see-also">
+  <li><a href="/phasync/go/"><code>phasync::go</code></a> Starts <code>$fn</code> as a coroutine in the current context and returns it, without waiting for it.</li>
+  <li><a href="/phasync/run/"><code>phasync::run</code></a> Runs <code>$fn</code> as a coroutine and returns its result once it and every coroutine started inside it have ended.</li>
+</ul>
 </article>
 </main>
 <footer class="site-footer">
