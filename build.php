@@ -26,7 +26,7 @@ final class BuildFailure extends RuntimeException
 
 const STATUSES = ['placeholder', 'draft', 'stable'];
 /** The header: what a newcomer needs. Advanced is linked from the footer and the reference index. */
-const NAV = ['/get-started/' => 'Get started', '/frameworks/' => 'Frameworks', '/guides/' => 'Guides', '/library/' => 'Library', '/performance/' => 'Performance', '/reference/' => 'Reference'];
+const NAV = ['/get-started/' => 'Get started', '/frameworks/' => 'Frameworks', '/guides/' => 'Guides', '/learn/' => 'Learn', '/library/' => 'Library', '/performance/' => 'Performance', '/reference/' => 'Reference'];
 
 $siteUrl = \rtrim(\getenv('SITE_URL') ?: 'https://phasync.github.io', '/');
 
