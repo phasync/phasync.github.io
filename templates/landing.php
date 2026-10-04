@@ -17,7 +17,7 @@ $ composer config minimum-stability beta    # while swerve is beta
 $ composer config prefer-stable true
 $ composer require phasync/swerve
 $ vendor/bin/swerve --watch
-2026-09-26 17:00:30.12    swerve 0.1.0-beta1 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
+2026-09-26 17:00:30.12    swerve 0.1.0-beta2 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
 2026-09-26 17:00:31.25 3 GET / 200 1.2ms
 T, 'terminal') ?>
   <p><code>swerve.php</code>, next to <code>composer.json</code>, returns a PSR-15 request handler. <code>--watch</code> reloads the workers when a PHP file changes; the other options are in <a href="/get-started/dev-server/">the dev server</a> page and <code>vendor/bin/swerve --help</code>.</p>
