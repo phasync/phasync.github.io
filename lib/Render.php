@@ -192,8 +192,17 @@ final class Render
     public function page(string $url, array $o): void
     {
         $o += ['topic' => null, 'cur' => $url, 'class' => null, 'sub' => 'manual', 'prev' => null, 'next' => null, 'section' => null, 'sidebar' => true, 'rail' => true];
-        $body = \preg_replace_callback('~<h([23])(?: id="([^"]*)")?>(.*?)</h\1>~s', fn ($m) => "<h{$m[1]} id=\"" . ($m[2] ?: \preg_replace('~^(?=\d)~', 'v', \trim(\preg_replace('~[^a-z0-9]+~', '-', \strtolower(\strip_tags($m[3]))), '-'))) . "\">{$m[3]}</h{$m[1]}>", $this->fix($o['body']));
-        \preg_match_all('~<h2 id="([^"]*)">(.*?)</h2>~s', $body, $h2);
+        $h2 = [[], [], []];
+        $body = \preg_replace_callback('~<h([234])(?: id="([^"]*)")?>(.*?)</h\1>~s', function ($m) use (&$h2) {
+            $text = \preg_replace('~<a [^>]*class="anchor"[^>]*>.*?</a>~s', '', $m[3]); // drop the Markdown extension's permalink
+            $id = $m[2] ?: \preg_replace('~^(?=\d)~', 'v', \trim(\preg_replace('~[^a-z0-9]+~', '-', \strtolower(\strip_tags($text))), '-'));
+            if ('2' === $m[1]) {
+                $h2[1][] = $id;
+                $h2[2][] = $text;
+            }
+
+            return "<h{$m[1]} id=\"$id\">$text<a class=\"anchor\" href=\"#$id\" aria-label=\"Link to this section\">#</a></h{$m[1]}>";
+        }, $this->fix($o['body']));
         $this->write($url, render('layout', $o + ['url' => $url, 'bodyHtml' => $body, 'h2' => $h2, 'site' => $this->site, 'r' => $this]));
         $this->search[] = ['n' => $o['title'], 'd' => $o['desc'], 'u' => $url, 's' => self::PROJECTS[$o['project']]];
     }
@@ -228,10 +237,10 @@ final class Render
                     . "<p><a class=\"btn btn-primary\" href=\"/$p/get-started/\">Get started</a> <a class=\"btn btn-secondary\" href=\"/$p/manual/\">Read the manual</a></p>"]);
             $this->count('landing');
             $gs = $proj['getStarted'];
-            $this->page("/$p/get-started/", ['project' => $p, 'title' => 'Get started', 'desc' => 'From install to a running application.', 'crumbs' => [...$base, ['Get started', null]], 'sub' => 'get-started', 'sidebar' => false,
+            $this->page("/$p/get-started/", ['project' => $p, 'title' => 'Get started', 'desc' => 'From install to a running application.', 'crumbs' => [...$base, ['Get started', null]], 'sub' => 'get-started',
                 'body' => "<p class=\"eyebrow\">$N</p><h1>Get started</h1><p class=\"lead\">From install to a running application.</p>" . $this->listing(\array_map(fn ($g) => ["/$p" . $g['url'], $g['title'], $g['summary'], false], $gs))]);
             foreach ($gs as $i => $g) {
-                $this->page("/$p" . $g['url'], ['project' => $p, 'title' => $g['title'], 'desc' => $g['summary'], 'sub' => 'get-started', 'sidebar' => false,
+                $this->page("/$p" . $g['url'], ['project' => $p, 'title' => $g['title'], 'desc' => $g['summary'], 'sub' => 'get-started',
                     'body' => '<p class="eyebrow">Get started</p><h1>' . e($g['title']) . '</h1><p class="lead">' . inline($g['summary']) . '</p>' . $this->pages[$g['url']]['html'],
                     'crumbs' => [...$base, ['Get started', "/$p/get-started/"], [$g['title'], null]],
                     'prev' => $i ? ['url' => "/$p" . $gs[$i - 1]['url'], 'title' => $gs[$i - 1]['title']] : null, 'next' => isset($gs[$i + 1]) ? ['url' => "/$p" . $gs[$i + 1]['url'], 'title' => $gs[$i + 1]['title']] : null]);
@@ -284,7 +293,7 @@ final class Render
             if (!$new || $pg['symbol'] || isset($this->written[$new]) || \str_starts_with($new, '/swerve/manual') || \str_starts_with($new, '/swerve/get-started') || '/' === $url) {
                 continue;
             }
-            $this->page($new, ['project' => 'swerve', 'title' => $pg['title'], 'desc' => $pg['description'], 'sub' => null, 'sidebar' => false, 'crumbs' => [['Swerve', '/swerve/'], [$pg['title'], null]],
+            $this->page($new, ['project' => 'swerve', 'title' => $pg['title'], 'desc' => $pg['description'], 'sub' => null, 'crumbs' => [['Swerve', '/swerve/'], [$pg['title'], null]],
                 'body' => '<h1>' . e($pg['title']) . '</h1><p class="lead">' . inline($pg['description']) . '</p>' . $pg['html']]);
             $this->count('other pages');
         }
@@ -389,10 +398,10 @@ final class Render
             foreach ($proj['manual'] as $t) {
                 $t['examples'] && $b .= "<h2 id=\"{$t['slug']}\"><a href=\"/$p/manual/{$t['slug']}/examples/\">" . e($t['title']) . '</a></h2>' . $this->listing(\array_map(fn ($e) => [$this->map[$e['symbolUrl']] . '#ex-' . $e['n'], $e['symbol'], $e['caption'], true], $t['examples']));
             }
-            $this->page("/$p/examples/", ['project' => $p, 'title' => 'Examples', 'desc' => 'Every example by topic.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Examples', null]], 'sub' => null, 'sidebar' => false]);
+            $this->page("/$p/examples/", ['project' => $p, 'title' => 'Examples', 'desc' => 'Every example by topic.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Examples', null]], 'sub' => null]);
             $f = ['phasync' => '/home/frode/dev/phasync/CHANGELOG.md', 'swerve' => '/home/frode/dev/swerve/CHANGELOG.md'][$p];
             $b = "<p class=\"eyebrow\">$N</p><h1>Changelog</h1>" . (\is_file($f) ? \preg_replace('~^<h1[^>]*>.*?</h1>~s', '', Markdown::html(\file_get_contents($f))) : '<p class="lead">The changelog is not published yet.</p><span class="badge">draft</span>');
-            $this->page("/$p/changelog/", ['project' => $p, 'title' => 'Changelog', 'desc' => 'What changed in each release.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Changelog', null]], 'sub' => 'changelog', 'sidebar' => false]);
+            $this->page("/$p/changelog/", ['project' => $p, 'title' => 'Changelog', 'desc' => 'What changed in each release.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Changelog', null]], 'sub' => 'changelog']);
             $this->count('symbol index'); $this->count('examples index'); $this->count('changelog');
         }
     }
