@@ -16,8 +16,9 @@ Open http://localhost:8000. To see what a missing path does on GitHub Pages (the
 | Path | What |
 | --- | --- |
 | `content/` | The pages: markdown with front matter. See [CONTENT-GUIDE.md](CONTENT-GUIDE.md). |
+| `topics-map.php`, `see-also-groups.php` | The topic of a symbol not yet tagged `@topic`; groups for See also. See [BUILD.md](BUILD.md). |
 | `symbols.php` | The packages whose source docblocks make the reference. |
-| `lib/` | `Symbols` (reflection and docblocks), `Markdown`. |
+| `lib/` | `Symbols` (reflection and docblocks), `Model` (topics, See also, examples; [MODEL.md](MODEL.md)), `Markdown`. |
 | `templates/` | Plain PHP templates. |
 | `theme/` | CSS (Pico v2 and our tokens), fonts, JS, `kitchen-sink.html` with every component. |
 | `build.php` | Writes `public/`. |

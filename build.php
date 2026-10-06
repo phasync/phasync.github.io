@@ -19,6 +19,7 @@ chdir(__DIR__);
 require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/lib/Symbols.php';
 require __DIR__ . '/lib/Markdown.php';
+require __DIR__ . '/lib/Model.php';
 
 final class BuildFailure extends RuntimeException
 {
@@ -70,6 +71,9 @@ function main(string $siteUrl, array $argv): void
 {
     $start   = \microtime(true);
     $lint    = \in_array('--lint', $argv, true);
+    $json    = $lint && \in_array('--json', $argv, true);
+    $json && \ob_start();
+    $gaps    = 0;
     $strict  = \in_array('--strict', $argv, true);
     $symbols = new Symbols(require __DIR__ . '/symbols.php');
     $notices = []; // things the build did on its own, printed at the end
@@ -96,14 +100,18 @@ function main(string $siteUrl, array $argv): void
             continue;
         }
         $rel = \substr($file->getPathname(), \strlen(__DIR__ . '/content/'), -3);
-        [$front, $html] = Markdown::file(\file_get_contents($file->getPathname()));
-        $parsed[$rel]   = [$front, $html];
+        if (\preg_match('~^(?:phasync|swerve)/topics/~', $rel)) {
+            continue; // a topic definition (lib/Model.php), not a page
+        }
+        $raw            = \file_get_contents($file->getPathname());
+        [$front, $html] = Markdown::file($raw);
+        $parsed[$rel]   = [$front, $html, $raw];
         if (!empty($front['symbol'])) { // a page about something that is not in the source of the packages
             $symbols->addTopic($front['symbol'], (string) ($front['description'] ?? throw new BuildFailure("content/$rel.md: a topic needs a description")));
         }
     }
 
-    foreach ($parsed as $rel => [$front, $html]) {
+    foreach ($parsed as $rel => [$front, $html, $raw]) {
         $src      = "content/$rel.md";
         $segments = \explode('/', $rel);
         $leaf     = \array_pop($segments);
@@ -140,7 +148,7 @@ function main(string $siteUrl, array $argv): void
         }
 
         $page = [
-            'url' => $url, 'source' => $src, 'kind' => $kind, 'symbol' => $symbol, 'html' => $html,
+            'url' => $url, 'source' => $src, 'kind' => $kind, 'symbol' => $symbol, 'html' => $html, 'front' => $front, 'raw' => $raw,
             'status' => $front['status'] ?? 'draft', 'see_also' => $front['see_also'] ?? [],
             'order' => (int) ($front['order'] ?? 50), 'template' => $front['template'] ?? null,
             'title' => $symbol['name'] ?? ($front['title'] ?? throw new BuildFailure("$src: front matter needs a title")),
@@ -160,7 +168,7 @@ function main(string $siteUrl, array $argv): void
         }
         $claim($symbol['url'], 'the reflected ' . $symbol['full']);
         $pages[$symbol['url']] = [
-            'url' => $symbol['url'], 'source' => null, 'kind' => $symbol['kind'], 'symbol' => $symbol, 'html' => '',
+            'url' => $symbol['url'], 'source' => null, 'kind' => $symbol['kind'], 'symbol' => $symbol, 'html' => '', 'front' => [], 'raw' => '',
             'status' => 'stable', 'see_also' => [], 'order' => 50, 'template' => null,
             'title' => $symbol['name'], 'description' => $symbol['plain'] ?: \ucfirst($symbol['kind']) . ' ' . $symbol['name'] . '.',
         ];
@@ -174,7 +182,7 @@ function main(string $siteUrl, array $argv): void
                 $list .= '<li><a href="' . $s['url'] . '"><code>' . e($full) . '</code></a> ' . inline($s['desc']) . "</li>\n";
             }
             $pages["/$short/"] = [
-                'url' => "/$short/", 'source' => null, 'kind' => 'page', 'symbol' => null, 'status' => 'stable', 'see_also' => [], 'order' => 50, 'template' => null,
+                'url' => "/$short/", 'source' => null, 'kind' => 'page', 'symbol' => null, 'front' => [], 'raw' => '', 'status' => 'stable', 'see_also' => [], 'order' => 50, 'template' => null,
                 'html' => "<ul class=\"index\">\n$list</ul>\n", 'title' => $short, 'description' => "Several symbols are called $short.",
             ];
         }
@@ -222,6 +230,11 @@ function main(string $siteUrl, array $argv): void
         }, $page['html']);
     }
     unset($page);
+
+    // 4b. The model: topics, Manual, Index, breadcrumbs, See also, examples with output (MODEL.md)
+    $model = new Model($symbols, $pages, !\in_array('--skip-examples', $argv, true));
+    \is_dir(__DIR__ . '/build') || \mkdir(__DIR__ . '/build');
+    \file_put_contents(__DIR__ . '/build/model.json', \json_encode($model->data, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE));
 
     // 5. Write
     $out = __DIR__ . '/public';
@@ -320,9 +333,15 @@ function main(string $siteUrl, array $argv): void
         \printf("  note: %s\n", $notice);
     }
 
-    // The reference, per package: what it holds, and the gaps in its docblocks
-    $gaps = 0;
-    foreach (\array_unique(\array_column($symbols->all, 'package')) as $package) {
+    // The lint: every problem, per package. `no example` is advisory (hundreds): counted, never fails.
+    $problems = [...$symbols->problems, ...$model->problems];
+    $packages = [...\array_unique(\array_column($symbols->all, 'package')), 'site'];
+    $advisory = ['example'];
+    $kinds    = ['summary' => 'without summary', 'example' => 'without example', 'param' => '@param mismatch', 'see' => '@see unresolved', 'example-file' => '@example file missing',
+        'unmapped' => 'unmapped (no topic)', 'untagged' => 'untagged (topic from topics-map.php only)', 'topic-unknown' => 'unknown @topic', 'example-run' => 'example failed',
+        'group' => 'see-also group', 'map' => 'topics-map.php', 'topic-file' => 'topic file', 'page-topic' => 'page topic'];
+    $wrong = \count(\array_filter($problems, static fn ($p) => !\in_array($p[1], $advisory, true)));
+    foreach ($packages as $package) {
         $count = ['class' => 0, 'method' => 0, 'function' => 0];
         foreach ($symbols->all as $s) {
             if (($s['package'] ?? null) === $package) {
@@ -330,28 +349,44 @@ function main(string $siteUrl, array $argv): void
             }
         }
         $by = [];
-        foreach ($symbols->problems as $p) {
+        foreach ($problems as $p) {
             if ($p[0] === $package) {
                 $by[$p[1]][] = $p;
             }
         }
-        $gaps += \count($symbols->problems) ? \array_sum(\array_map('count', $by)) : 0;
-        \printf("  %s: %d classes, %d methods, %d functions; without summary %d, without example %d, @param mismatch %d, @see unresolved %d, @example file missing %d\n",
-            $package, $count['class'], $count['method'], $count['function'],
-            \count($by['summary'] ?? []), \count($by['example'] ?? []), \count($by['param'] ?? []), \count($by['see'] ?? []), \count($by['example-file'] ?? []));
+        $gaps += \array_sum(\array_map('count', \array_diff_key($by, ['example' => 1])));
+        if ($json) {
+            continue;
+        }
+        \printf("  %s: %d classes, %d methods, %d functions; %s\n", $package, $count['class'], $count['method'], $count['function'],
+            \implode(', ', \array_map(static fn ($k) => $kinds[$k] . ' ' . \count($by[$k]), \array_keys($by))) ?: 'no problems');
         if ($lint) {
             foreach ($by as $kind => $list) {
                 if ('example' === $kind) {
                     continue; // hundreds of them: the count above, and the symbols below
                 }
-                \printf("\n%s, %s (%d):\n", $package, $kind, \count($list));
+                \printf("\n%s, %s (%d):\n", $package, $kinds[$kind] ?? $kind, \count($list));
                 foreach ($list as $p) {
-                    \printf("  %s\n", 'summary' === $kind ? $p[2] : $p[3]);
+                    \printf("  %s\n", $p[3]);
                 }
             }
-            \printf("\n%s, no example (%d), classes and functions only:\n  %s\n", $package, \count($by['example'] ?? []),
-                \implode(' ', \array_map(static fn ($p) => $p[2], \array_filter($by['example'] ?? [], static fn ($p) => 'method' !== $symbols->all[$p[2]]['kind'])) ));
+            if ($by['example'] ?? []) {
+                \printf("\n%s, no example (%d), classes and functions only:\n  %s\n", $package, \count($by['example']),
+                    \implode(' ', \array_map(static fn ($p) => $p[2], \array_filter($by['example'], static fn ($p) => 'method' !== $symbols->all[$p[2]]['kind']))));
+            }
         }
+    }
+    $stats = $model->stats();
+    if ($lint && !$json) {
+        \printf("\nSummary: %d symbols (%d need a topic: %d @topic in source, %d via topics-map.php, %d unmapped); examples %d run, %d passed, %d failed; %d See also entries; %d problem(s)\n",
+            \count($symbols->all), $stats['responsible'], $stats['source'], $stats['map'], $stats['none'], $stats['examples'], $stats['passed'], $stats['failed'], $stats['seeAlso'], $wrong);
+    }
+    if ($json) {
+        \ob_end_clean();
+        echo \json_encode(['summary' => $stats + ['symbols' => \count($symbols->all), 'problems' => $wrong], 'problems' => \array_map(static fn ($p) => ['package' => $p[0], 'kind' => $p[1], 'symbol' => $p[2], 'message' => $p[3], 'advisory' => \in_array($p[1], $advisory, true)], $problems)], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES), "\n";
+    }
+    if ($lint && $wrong) {
+        exit(1);
     }
     if (\in_array('--todo', $argv, true)) {
         $files = new RegexIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__, FilesystemIterator::SKIP_DOTS)), '~/(content|templates)/.*\.(md|php)$~');

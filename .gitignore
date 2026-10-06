@@ -2,3 +2,4 @@ public/
 vendor/
 composer.lock
 composer.local.lock
+build/
