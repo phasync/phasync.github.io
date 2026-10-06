@@ -202,6 +202,7 @@ final class Model
                     $this->problem('site', 'group', $slug, "see-also-groups.php: $slug names no symbol $name");
                     continue;
                 }
+                'topic' === $s['kind'] && $this->problem('site', 'see-plain', $slug, "see-also-groups.php: $slug member $name is a topic, not a page: shown as plain text");
                 $byMember[$s['full']][] = $slug;
                 $classes[$s['class'] ?? $s['full']] = 'method' === $s['kind'];
             }
@@ -249,7 +250,7 @@ final class Model
             }
             $list = [];
             $add  = static function (array $e) use (&$list): void {
-                $list[$e['url']] ??= $e;
+                $list[$e['url'] ?? $e['name']] ??= $e;
             };
             foreach ($s['see'] as $e) {
                 $add(['name' => $e['name'], 'url' => $e['url'], 'desc' => $e['desc'], 'source' => '', 'code' => $e['code']]);

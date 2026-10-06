@@ -482,7 +482,7 @@ final class Symbols
             $inline = function ($m) use ($ctx, $ns) {
                 $t = $this->resolve($m[1], $ctx, $ns);
 
-                return isset($t['kind']) ? '[`' . $t['name'] . '`](' . $t['url'] . ')' : '`' . \ltrim($m[1], '\\') . '`';
+                return isset($t['kind']) && 'topic' !== $t['kind'] ? '[`' . $t['name'] . '`](' . $t['url'] . ')' : '`' . \ltrim($m[1], '\\') . '`';
             };
             foreach (['desc', 'rest'] as $field) {
                 $s[$field] = \preg_replace_callback('/\{@(?:see|link)\s+([^}\s]+)[^}]*\}/', $inline, $s[$field]);
@@ -537,6 +537,10 @@ final class Symbols
                 } elseif (null === ($t = $this->resolve($ref, $ctx, $ns))) {
                     $this->problem($s, 'see', "@see $ref does not resolve ($at)");
                 } else {
+                    if ('topic' === ($t['kind'] ?? null)) { // a topic has no page of its own: shown as plain text
+                        $this->problem($s, 'see-plain', "@see $ref names a topic, not a page: shown as plain text ($at)");
+                        $t['url'] = null;
+                    }
                     $s['see'][] = ['name' => $t['name'], 'url' => $t['url'] ?? null, 'desc' => '' !== $text ? $text : ($t['desc'] ?? ''), 'code' => true];
                 }
             }

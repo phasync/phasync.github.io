@@ -35,7 +35,7 @@ $pager = static fn ($x, $c, $l) => $x ? '<a class="' . $c . '" href="' . e($x['u
 <?= $bodyHtml ?>
 <?php if ($prev || $next): ?><nav class="pager" aria-label="Pager"><?= $pager($prev, 'prev', 'Previous') ?><?= $pager($next, 'next', 'Next') ?></nav><?php endif ?>
 </article>
-<?php if (\count($h2[1]) > 1): ?><nav class="rail" aria-label="On this page"><h2>On this page</h2><ul><?php foreach ($h2[1] as $i => $id): ?><li><a href="#<?= $id ?>"><?= \strip_tags($h2[2][$i]) ?></a></li><?php endforeach ?></ul></nav><?php endif ?>
+<?php if ($rail && \count($h2[1]) > 1): ?><nav class="rail" aria-label="On this page"><h2>On this page</h2><ul><?php foreach ($h2[1] as $i => $id): ?><li><a href="#<?= $id ?>"><?= \strip_tags($h2[2][$i]) ?></a></li><?php endforeach ?></ul></nav><?php endif ?>
 </main>
 <footer class="footer"><div class="wrap"><div class="cols">
 <div><h2>Projects</h2><ul><?php foreach ($P as $k => $n): ?><li><a href="/<?= $k ?>/"><?= e($n) ?></a></li><?php endforeach ?></ul></div>

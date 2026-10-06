@@ -60,10 +60,30 @@ final class Render
         return \preg_replace_callback('~href="(/[^"#]*)(#[^"]*)?"~', fn ($m) => 'href="' . ($this->map[\htmlspecialchars_decode($m[1])] ?? $m[1]) . ($m[2] ?? '') . '"', $html);
     }
 
+    /** The package README's first paragraph (as HTML) and first php code block: the landing page's only content. */
+    private function readme(string $p): array
+    {
+        $md = (string) @\file_get_contents(['phasync' => '/home/frode/dev/phasync/README.md', 'swerve' => '/home/frode/dev/swerve/README.md'][$p]);
+        $md = \preg_replace('~^(?:!\[|#|\[!\[|<).*$~m', '', $md);
+        \preg_match('~^(\S[^\n]*(?:\n(?!```|\n)[^\n]+)*)~m', $md, $para);
+        \preg_match('~```php\n(.*?)```~s', $md, $code);
+
+        return [Markdown::html(\trim($para[1] ?? '')), \trim($code[1] ?? '')];
+    }
+
+    /** The installed version of the project's package, from composer's installed.json. */
+    private function version(string $p): string
+    {
+        static $pk = null;
+        $pk ??= \array_column(\json_decode((string) @\file_get_contents(__DIR__ . '/../vendor/composer/installed.json'), true)['packages'] ?? [], 'version', 'name');
+
+        return \preg_replace('~^v~', '', $pk["phasync/$p"] ?? '');
+    }
+
     public function sidebar(string $p, ?string $topic, ?string $cur, ?string $class): string
     {
         $a = static fn (string $u, string $t, string $x = '') => '<a href="' . $u . '"' . $x . '>' . $t . '</a>';
-        $h = '<aside class="sidebar" id="sidebar" aria-label="Manual"><div class="side-head"><b>' . $a("/$p/manual/", e(self::PROJECTS[$p])) . '</b><span class="badge beta">2.0 beta</span></div><nav class="side-body" aria-label="Topics"><ul>';
+        $h = '<aside class="sidebar" id="sidebar" aria-label="Manual"><div class="side-head"><b>' . $a("/$p/manual/", e(self::PROJECTS[$p])) . '</b>' . (($v = $this->version($p)) ? '<span class="badge' . (\str_contains($v, '-') ? ' beta' : '') . '">' . e($v) . '</span>' : '') . '</div><nav class="side-body" aria-label="Topics"><ul>';
         foreach ($this->m['projects'][$p]['manual'] as $t) {
             $u = "/$p/manual/{$t['slug']}/";
             if ($t['slug'] !== $topic) {
@@ -142,7 +162,8 @@ final class Render
                 $group = $x['source'] ?? '';
                 $h .= (null !== $group && $i ? '</ul>' : '') . ($i && '' !== $group ? '<p class="lbl">' . e($group) . '</p>' : '') . ($i ? '' : '') . ($i ? '<ul>' : '<ul>');
             }
-            $h .= '<li><a href="' . ($this->map[$x['url']] ?? $x['url']) . '">' . (($x['code'] ?? false) ? '<code>' . e($x['name']) . '</code>' : e($x['name'])) . '</a><span>' . inline(\ucfirst($x['desc'] ?? '')) . '</span></li>';
+            $label = ($x['code'] ?? false) ? '<code>' . e($x['name']) . '</code>' : e($x['name']);
+            $h .= '<li>' . (($x['url'] ?? null) && (isset($this->map[$x['url']]) || \preg_match('~^(?:https?:|/(?:phasync|swerve)/)~', $x['url'])) ? '<a href="' . ($this->map[$x['url']] ?? $x['url']) . '">' . $label . '</a>' : $label) . '<span>' . inline(\ucfirst($x['desc'] ?? '')) . '</span></li>';
         }
 
         return $h . '</ul></div>';
@@ -170,7 +191,7 @@ final class Render
 
     public function page(string $url, array $o): void
     {
-        $o += ['topic' => null, 'cur' => $url, 'class' => null, 'sub' => 'manual', 'prev' => null, 'next' => null, 'section' => null, 'sidebar' => true];
+        $o += ['topic' => null, 'cur' => $url, 'class' => null, 'sub' => 'manual', 'prev' => null, 'next' => null, 'section' => null, 'sidebar' => true, 'rail' => true];
         $body = \preg_replace_callback('~<h([23])(?: id="([^"]*)")?>(.*?)</h\1>~s', fn ($m) => "<h{$m[1]} id=\"" . ($m[2] ?: \trim(\preg_replace('~[^a-z0-9]+~', '-', \strtolower(\strip_tags($m[3]))), '-')) . "\">{$m[3]}</h{$m[1]}>", $this->fix($o['body']));
         \preg_match_all('~<h2 id="([^"]*)">(.*?)</h2>~s', $body, $h2);
         $this->write($url, render('layout', $o + ['url' => $url, 'bodyHtml' => $body, 'h2' => $h2, 'site' => $this->site, 'r' => $this]));
@@ -201,11 +222,10 @@ final class Render
             $N = self::PROJECTS[$p];
             $base = [[$N, "/$p/"]];
             $manual = $proj['manual'];
-            $first = null;
-            foreach ($manual as $t) { $first ??= $t['examples'][0] ?? null; }
-            $sum = ['phasync' => 'Coroutines, channels, streams and an HTTP client for PHP, with the ordinary blocking functions made non-blocking.', 'swerve' => 'A PHP application server on phasync: many requests at a time in one process, every request isolated.'][$p];
-            $this->page("/$p/", ['project' => $p, 'title' => $N, 'desc' => $sum, 'crumbs' => [[$N, null]], 'sub' => null, 'sidebar' => false,
-                'body' => "<h1>$N</h1><p class=\"lead\">" . e($sum) . '</p>' . ($first ? '<h2 id="example">An example</h2>' . $this->examples([$first]) : '') . "<p><a class=\"btn btn-primary\" href=\"/$p/get-started/\">Get started</a> <a class=\"btn btn-secondary\" href=\"/$p/manual/\">Read the manual</a></p>"]);
+            [$lead, $code] = $this->readme($p);
+            $this->page("/$p/", ['project' => $p, 'title' => $N, 'desc' => \trim(\strip_tags($lead)), 'crumbs' => [[$N, null]], 'sub' => null, 'sidebar' => false,
+                'body' => "<h1>$N</h1>" . \preg_replace('~^<p>~', '<p class="lead">', $lead) . ('' !== $code ? \trim(Markdown::code($code, 'php')) : '')
+                    . "<p><a class=\"btn btn-primary\" href=\"/$p/get-started/\">Get started</a> <a class=\"btn btn-secondary\" href=\"/$p/manual/\">Read the manual</a></p>"]);
             $this->count('landing');
             $gs = $proj['getStarted'];
             $this->page("/$p/get-started/", ['project' => $p, 'title' => 'Get started', 'desc' => 'From install to a running application.', 'crumbs' => [...$base, ['Get started', null]], 'sub' => 'get-started', 'sidebar' => false,
@@ -225,7 +245,7 @@ final class Render
                 foreach ($t['symbols'] as $s) { $rows[] = [$this->symUrl($s['full']), $s['name'], $s['summary'], true]; }
                 $b .= "<section class=\"topic-entry\"><h2><a href=\"/$p/manual/{$t['slug']}/\">" . e($t['title']) . '</a></h2><p class="desc">' . inline($t['summary']) . '</p>' . $this->listing($rows) . '</section>';
             }
-            $this->page("/$p/manual/", ['project' => $p, 'title' => 'Manual', 'desc' => "The $N manual, by topic.", 'body' => $b, 'crumbs' => [...$base, ['Manual', null]], 'cur' => null]);
+            $this->page("/$p/manual/", ['project' => $p, 'title' => 'Manual', 'desc' => "The $N manual, by topic.", 'body' => $b, 'crumbs' => [...$base, ['Manual', null]], 'cur' => null, 'rail' => false]);
             $this->count('manual index');
             foreach ($manual as $ti => $t) {
                 $tu = "/$p/manual/{$t['slug']}/";
@@ -364,7 +384,7 @@ final class Render
             foreach ($by as $l => $list) {
                 $b .= '<section data-letter><h2>' . $l . '</h2><ul class="listing">' . \implode('', \array_map($row, $list)) . \implode('', \array_map(fn ($x) => $row($x, true), $mem[$l] ?? [])) . '</ul></section>';
             }
-            $this->page("/$p/symbols/", ['project' => $p, 'title' => 'Symbol index', 'desc' => 'Every symbol, A to Z.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Manual', "/$p/manual/"], ['Index', null]], 'sub' => 'symbols', 'cur' => null]);
+            $this->page("/$p/symbols/", ['project' => $p, 'title' => 'Symbol index', 'desc' => 'Every symbol, A to Z.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Manual', "/$p/manual/"], ['Index', null]], 'sub' => 'symbols', 'cur' => null, 'rail' => false]);
             $b = "<p class=\"eyebrow\">$N</p><h1>Examples</h1><p class=\"lead\">Every example by topic, with the page it belongs to.</p>";
             foreach ($proj['manual'] as $t) {
                 $t['examples'] && $b .= "<h2 id=\"{$t['slug']}\"><a href=\"/$p/manual/{$t['slug']}/examples/\">" . e($t['title']) . '</a></h2>' . $this->listing(\array_map(fn ($e) => [$this->map[$e['symbolUrl']] . '#ex-' . $e['n'], $e['symbol'], $e['caption'], true], $t['examples']));
@@ -381,7 +401,7 @@ final class Render
     {
         \exec('cp -r ' . \escapeshellarg(self::KIT) . ' ' . \escapeshellarg($this->out . '/assets'));
         \file_put_contents($this->out . '/404.html', render('layout', ['project' => 'phasync', 'title' => 'Not found', 'desc' => 'No such page.', 'bodyHtml' => '<h1>Not found</h1><p class="lead">There is no such page. Try the <a href="/phasync/symbols/">symbol index</a> or the <a href="/phasync/manual/">manual</a>.</p>',
-            'crumbs' => [['Not found', null]], 'sub' => null, 'topic' => null, 'cur' => null, 'class' => null, 'prev' => null, 'next' => null, 'sidebar' => false, 'url' => '/404.html', 'h2' => [[], [], []], 'site' => $this->site, 'r' => $this]));
+            'crumbs' => [['Not found', null]], 'sub' => null, 'topic' => null, 'cur' => null, 'class' => null, 'prev' => null, 'next' => null, 'sidebar' => false, 'rail' => true, 'url' => '/404.html', 'h2' => [[], [], []], 'site' => $this->site, 'r' => $this]));
         \file_put_contents($this->out . '/search.json', \json_encode($this->search, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
         $txt = '';
         \ksort($this->map);

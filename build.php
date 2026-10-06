@@ -257,8 +257,8 @@ function main(string $siteUrl, array $argv): void
     // The lint: every problem, per package. `no example` is advisory (hundreds): counted, never fails.
     $problems = [...$symbols->problems, ...$model->problems];
     $packages = [...\array_unique(\array_column($symbols->all, 'package')), 'site'];
-    $advisory = ['example'];
-    $kinds    = ['summary' => 'without summary', 'example' => 'without example', 'param' => '@param mismatch', 'see' => '@see unresolved', 'example-file' => '@example file missing',
+    $advisory = ['example', 'see-plain'];
+    $kinds    = ['summary' => 'without summary', 'example' => 'without example', 'param' => '@param mismatch', 'see' => '@see unresolved', 'see-plain' => '@see shown as plain text', 'example-file' => '@example file missing',
         'unmapped' => 'unmapped (no topic)', 'untagged' => 'untagged (topic from topics-map.php only)', 'topic-unknown' => 'unknown @topic', 'example-run' => 'example failed',
         'group' => 'see-also group', 'map' => 'topics-map.php', 'topic-file' => 'topic file', 'page-topic' => 'page topic'];
     $wrong = \count(\array_filter($problems, static fn ($p) => !\in_array($p[1], $advisory, true)));
