@@ -119,13 +119,13 @@ final class Render
         return $h . '</ul></nav></aside>';
     }
 
-    private function synopsis(string $sig, ?string $name = null, ?string $url = null, bool $wrap = true): string
+    private function synopsis(string $sig, ?string $name = null, ?string $url = null, bool $wrap = true, int $min = 90): string
     {
         $h = e($sig);
         $h = \preg_replace('~^((?:(?:public|protected|static|abstract|final|readonly|function|class|interface|trait|enum) )*)~', '<span class="hl-k">$1</span>', $h);
         $h = \preg_replace('~(?<=[\s(?|])(int|float|string|bool|array|object|mixed|void|callable|iterable|null|self|never)\b(?![\w(])~', '<span class="hl-k">$1</span>', $h);
         $name && $url && $h = \preg_replace('~' . \preg_quote(e($name), '~') . '(?=\()~', '<a href="' . $url . '">' . e($name) . '</a>', $h, 1);
-        if ($wrap && \strlen($sig) > 90 && \preg_match('~^(.*?\()(.*)(\)(?:: .*)?)$~s', $h, $m)) {
+        if ($wrap && \strlen($sig) > $min && \preg_match('~^(.*?\()(.+)(\)(?:: .*)?)$~s', $h, $m)) {
             $parts = []; $d = 0; $c0 = '';
             foreach (\str_split($m[2]) as $c) {
                 $d += \in_array($c, ['(', '['], true) ? 1 : (\in_array($c, [')', ']'], true) ? -1 : 0);
@@ -310,7 +310,7 @@ final class Render
         $b = '<p class="eyebrow">' . self::LABEL[$kind] . '</p><div class="nameline"><h1>' . e($s['name']) . '</h1>' . ($ms['since'] ? '<span class="badge">since ' . e($ms['since']) . '</span>' : '') . (!empty($ms['deprecated']) ? '<span class="badge">deprecated</span>' : '') . '</div>'
             . ('' !== $s['desc'] ? '<p class="lead">' . inline($s['desc']) . '</p>' : '');
         if ($callable) {
-            $sig = $this->synopsis($method ? \preg_replace('~^(.*?)(\w+)::~', '$1$2::', $s['sig']) : $s['sig'], null, null);
+            $sig = $this->synopsis($method ? \preg_replace('~^(.*?)(\w+)::~', '$1$2::', $s['sig']) : $s['sig'], null, null, true, 0);
             $cu && $sig = \preg_replace('~' . \preg_quote(e($cls), '~') . '(?=::)~', '<a href="' . $cu . '">' . e($cls) . '</a>', $sig, 1);
             $b .= '<h2 id="description">Description</h2><div class="code synopsis"><pre><code>' . $sig . '</code></pre></div>' . $desc . $hand;
             if ($s['params']) {

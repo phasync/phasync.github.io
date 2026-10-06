@@ -4,7 +4,7 @@ $P = Render::PROJECTS;
 $subs = ['get-started' => ['Get started', "/$project/get-started/"], 'manual' => ['Manual', "/$project/manual/"], 'symbols' => ['Index', "/$project/symbols/"], 'changelog' => ['Changelog', "/$project/changelog/"]];
 $mid = $sidebar ? $r->sidebar($project, $topic, $cur, $class) : '';
 $short = \implode(' / ', \array_map(fn ($c) => $c[0], \array_slice($crumbs, -2)));
-$pager = static fn ($x, $c, $l) => $x ? '<a class="' . $c . '" href="' . e($x['url']) . '"><span>' . $l . '</span><b>' . e($x['title']) . '</b></a>' : '';
+$pager = static fn ($x, $c, $l) => $x ? '<a class="' . $c . '" href="' . e($x['url']) . '"><small>' . $l . '</small>' . e($x['title']) . '</a>' : '';
 ?>
 <!doctype html>
 <html lang="en" data-section="<?= e($project) ?>">
