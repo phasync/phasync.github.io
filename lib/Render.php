@@ -192,7 +192,7 @@ final class Render
     public function page(string $url, array $o): void
     {
         $o += ['topic' => null, 'cur' => $url, 'class' => null, 'sub' => 'manual', 'prev' => null, 'next' => null, 'section' => null, 'sidebar' => true, 'rail' => true];
-        $body = \preg_replace_callback('~<h([23])(?: id="([^"]*)")?>(.*?)</h\1>~s', fn ($m) => "<h{$m[1]} id=\"" . ($m[2] ?: \trim(\preg_replace('~[^a-z0-9]+~', '-', \strtolower(\strip_tags($m[3]))), '-')) . "\">{$m[3]}</h{$m[1]}>", $this->fix($o['body']));
+        $body = \preg_replace_callback('~<h([23])(?: id="([^"]*)")?>(.*?)</h\1>~s', fn ($m) => "<h{$m[1]} id=\"" . ($m[2] ?: \preg_replace('~^(?=\d)~', 'v', \trim(\preg_replace('~[^a-z0-9]+~', '-', \strtolower(\strip_tags($m[3]))), '-'))) . "\">{$m[3]}</h{$m[1]}>", $this->fix($o['body']));
         \preg_match_all('~<h2 id="([^"]*)">(.*?)</h2>~s', $body, $h2);
         $this->write($url, render('layout', $o + ['url' => $url, 'bodyHtml' => $body, 'h2' => $h2, 'site' => $this->site, 'r' => $this]));
         $this->search[] = ['n' => $o['title'], 'd' => $o['desc'], 'u' => $url, 's' => self::PROJECTS[$o['project']]];
@@ -374,7 +374,7 @@ final class Render
             $N = self::PROJECTS[$p];
             $topics = \array_column($proj['manual'], null, 'slug');
             $row = fn ($s, $m = false) => '<li' . ($m ? ' class="m" hidden' : '') . '><a href="' . $this->symUrl($s['full']) . '"><code class="t">' . e($s['name']) . '</code></a> – <span class="s">' . inline($s['summary']) . '</span>'
-                . (isset($topics[$s['topic'] ?? '']) ? ' <a class="topic" href="/' . $p . '/manual/' . $s['topic'] . '/">' . e($topics[$s['topic']]['title']) . '</a>' : '') . '</li>';
+                . (isset($topics[$s['topic'] ?? '']) ? ' <a class="topic" href="/' . $p . '/manual/' . $s['topic'] . '/">' . e($topics[$s['topic']]['title']) . '</a>' : '<span class="topic"></span>') . '</li>';
             $by = $mem = [];
             foreach ($proj['index']['symbols'] as $s) { $by[\strtoupper($s['name'][0])][] = $s; }
             foreach ($proj['index']['members'] as $s) { $mem[\strtoupper($s['name'][0])][] = $s; }
