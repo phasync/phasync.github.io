@@ -5,6 +5,9 @@ status: draft
 order: 15
 see_also:
   - phasync\Util\LruCache
+project: swerve
+topic: frameworks
+role: concept
 ---
 
 [Memoization](/learn/memoization/) of a pure function is safe to share between requests, if it is bounded. Laravel has such caches, and its answer is to empty them rather than to bound them.

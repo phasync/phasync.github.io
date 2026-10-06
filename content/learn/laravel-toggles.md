@@ -3,6 +3,9 @@ title: "Laravel: toggles, macros and process settings"
 description: "Gate and macro registrations, static switches like Carbon::setTestNow(), and the settings PHP keeps per process."
 status: draft
 order: 14
+project: swerve
+topic: frameworks
+role: concept
 ---
 
 ## Registrations in a request

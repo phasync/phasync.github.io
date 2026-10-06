@@ -6,6 +6,9 @@ order: 6
 see_also:
   - Claim
   - Swerve::claim
+project: swerve
+topic: resource-management
+role: concept
 ---
 
 This page will cover:

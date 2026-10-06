@@ -3,6 +3,9 @@ title: "Laravel: views, translator, router and paginator"
 description: "Shared view data, translator lines and library pointers: set them at boot, pass the rest with the call."
 status: draft
 order: 13
+project: swerve
+topic: frameworks
+role: concept
 ---
 
 ## Shared registrations

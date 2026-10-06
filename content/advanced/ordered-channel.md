@@ -5,6 +5,9 @@ status: placeholder
 order: 5
 see_also:
   - OrderedChannel
+project: swerve
+topic: publish-and-subscribe
+role: concept
 ---
 
 This page will cover:

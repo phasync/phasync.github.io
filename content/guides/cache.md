@@ -6,6 +6,9 @@ order: 3
 see_also:
   - Swerve::cache
   - Swerve::publish
+project: swerve
+topic: resource-management
+role: guide
 ---
 
 `Swerve::cache()` returns a `Psr\SimpleCache\CacheInterface`. Every worker sees the same entries, so a value cached by one request is a hit for the next, whichever worker serves it.

@@ -6,6 +6,9 @@ order: 1
 see_also:
   - phasync\Util\Pool
   - Swerve::log
+project: swerve
+topic: frameworks
+role: guide
 ---
 
 **Concurrency: concurrent.** A worker serves many requests at once. Each runs in an application of its own, taken from a [[phasync\Util\Pool]] of booted applications. Only Laravel's view engine needs `phasync-ext` for requests to overlap safely (see below).

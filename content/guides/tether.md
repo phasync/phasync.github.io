@@ -5,6 +5,9 @@ status: placeholder
 order: 5
 see_also:
   - WebSocket
+project: swerve
+topic: websockets-and-sse
+role: guide
 ---
 
 This page will cover:

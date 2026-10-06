@@ -39,3 +39,7 @@ Reference pages are generated from the source docblocks of phasync and swerve, b
 ## Checking an example
 
 Before an example is committed, run it. If it cannot be run (it needs a server), mark the place with `<!-- TODO-verify: why -->` in the page, which `--todo` lists, and say what was not checked.
+
+## The Manual
+
+A prose page that belongs to a topic book says so in its front matter: `project: phasync|swerve`, `topic: slug` (a file in `content/<project>/topics/`) and `role: concept|guide`. See BUILD.md.

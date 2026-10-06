@@ -3,6 +3,9 @@ title: "Service lifetimes: Singleton, Scoped, Ephemeral"
 description: "A service lives for the worker, for one request, or for one use. Choose by whose data it holds."
 status: draft
 order: 3
+project: swerve
+topic: context-switching
+role: concept
 ---
 
 Dependency-injection containers name three lifetimes. Under PHP-FPM a singleton lived as long as the request, so the first two were the same. In a worker they are not.

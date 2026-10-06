@@ -354,13 +354,35 @@ final class Symbols
      */
     private function doc(string|false $comment): array
     {
-        $out = ['summary' => '', 'rest' => '', 'params' => [], 'paramOrder' => [], 'return' => '', 'throws' => [], 'see' => [], 'examples' => [], 'since' => '', 'deprecated' => null, 'internal' => false, 'inherit' => true];
+        $out = ['summary' => '', 'rest' => '', 'params' => [], 'paramOrder' => [], 'return' => '', 'throws' => [], 'see' => [], 'examples' => [], 'since' => '', 'deprecated' => null, 'topic' => null, 'changed' => [], 'notes' => [], 'warnings' => [], 'seeNone' => false, 'fences' => [], 'internal' => false, 'inherit' => true];
         if (false === $comment) {
             return $out;
         }
         $d = $this->docs->create($comment);
 
         $out['internal'] = $d->hasTag('internal');
+
+        // The tags of DOCBLOCK-STANDARD.md that phpDocumentor does not know, from the comment: a tag runs to the next tag
+        $raw = \preg_replace(['~^\s*/\*\*~', '~\*/\s*$~', '~^[ \t]*\*[ ]?~m'], '', $comment);
+        \preg_match_all('~^@(topic|changed|note|warning|see)[ \t]+(.*?)(?=^@|\z)~ms', $raw, $tags, \PREG_SET_ORDER);
+        foreach ($tags as [, $tag, $body]) {
+            $body = \trim(\preg_replace('/\s+/', ' ', $body));
+            if ('topic' === $tag) {
+                $out['topic'] = $body;
+            } elseif ('changed' === $tag) {
+                [$version, $what] = \array_pad(\explode(' ', $body, 2), 2, '');
+                $out['changed'][] = ['version' => $version, 'text' => $what];
+            } elseif ('note' === $tag) {
+                $out['notes'][] = $body;
+            } elseif ('warning' === $tag) {
+                $out['warnings'][] = $body;
+            } elseif ('none' === $body) {
+                $out['seeNone'] = true;
+            }
+        }
+        // Fenced php blocks of the description: examples that are written in the docblock (they are shown, not run)
+        \preg_match_all('~^```php[^\n]*\n(.*?)^```~ms', $raw, $fences);
+        $out['fences'] = $fences[1];
 
         // The text is read from the comment itself: the library drops `{}` from a description
         $lines = \preg_split('/\R/', \preg_replace(['~^\s*/\*\*[ \t]?~', '~\s*\*/\s*$~'], '', $comment));
@@ -384,6 +406,8 @@ final class Symbols
                 $out['return'] = \trim((string) $t->getDescription());
             } elseif ($t instanceof Throws) {
                 $out['throws'][] = [\ltrim((string) $t->getType(), '\\'), \trim((string) $t->getDescription())];
+            } elseif ($t instanceof See && 'none' === \ltrim(\trim((string) $t->getReference()), '\\')) {
+                continue; // `@see none`: read above
             } elseif ($t instanceof See) {
                 $ref          = $t->getReference();
                 $out['see'][] = [$ref instanceof Url ? (string) $ref : \preg_replace('/\(\)$/', '', \ltrim((string) $ref, '\\')), \trim((string) $t->getDescription()), $ref instanceof Url ? 'url' : 'symbol'];
@@ -477,7 +501,7 @@ final class Symbols
             foreach ($doc['examples'] as [$path, $caption]) {
                 $file = $s['root'] . '/' . $path;
                 if (\is_file($file)) {
-                    $s['examples'][] = ['path' => $path, 'caption' => $caption, 'code' => \preg_replace('/^<\?php\s*\n(?:\s*\n)?/', '', \file_get_contents($file))];
+                    $s['examples'][] = ['path' => $path, 'file' => $file, 'caption' => $caption, 'code' => \preg_replace('/^<\?php\s*\n(?:\s*\n)?/', '', \file_get_contents($file))];
                 } else {
                     $this->problem($s, 'example-file', "@example $path: no such file in {$s['package']} ($at)");
                 }

@@ -6,6 +6,9 @@ order: 3
 see_also:
   - phasync\Util\Synchronized
   - Swerve::log
+project: swerve
+topic: frameworks
+role: guide
 ---
 
 > **Low concurrency.** A worker serves one CodeIgniter request at a time. The others wait their turn, and a request that waits for a database or an API holds its worker, also with `phasync-ext`. Size `--workers` for the requests that wait at the same time. See [Frameworks](/frameworks/).

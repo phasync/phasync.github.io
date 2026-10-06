@@ -5,6 +5,9 @@ status: placeholder
 order: 3
 see_also:
   - WaitGroup
+project: phasync
+topic: coordination-and-limits
+role: guide
 ---
 
 This page will cover:

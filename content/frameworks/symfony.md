@@ -6,6 +6,9 @@ order: 2
 see_also:
   - phasync\Util\Pool
   - Swerve::log
+project: swerve
+topic: frameworks
+role: guide
 ---
 
 **Concurrency: concurrent, through `phasync-ext`.** Each request borrows a kernel from a [[phasync\Util\Pool]] and a kernel serves one request at a time. Requests overlap while one waits in a coroutine, which for database queries, curl and `sleep()` means with `phasync-ext` loaded. Without it requests rarely overlap and the pool stays at one kernel.

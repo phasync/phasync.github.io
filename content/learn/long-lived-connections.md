@@ -6,6 +6,9 @@ order: 9
 see_also:
   - phasync\Util\Pool
   - Swerve::subscribe
+project: swerve
+topic: long-lived-connections
+role: concept
 ---
 
 A WebSocket stays open for minutes or hours and sends a message now and then. If its callback holds a database connection for that time, the pool is as large as the number of open sockets. A worker can hold many sockets; a pool cannot.

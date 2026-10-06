@@ -3,6 +3,9 @@ title: Captive dependencies
 description: "A singleton must never hold a scoped object: it keeps the first request's, for every request after it."
 status: draft
 order: 4
+project: swerve
+topic: context-switching
+role: concept
 ---
 
 A service may depend only on services that live at least as long as it does. A singleton that takes a scoped object in its constructor holds the one it was given for the rest of the worker's life.

@@ -5,6 +5,9 @@ status: draft
 order: 8
 see_also:
   - phasync\Util\Pool
+project: swerve
+topic: resource-management
+role: concept
 ---
 
 Each worker is a process with its own connections. The database server sees all of them:

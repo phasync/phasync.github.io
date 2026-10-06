@@ -5,6 +5,9 @@ status: placeholder
 order: 4
 see_also:
   - RateLimiter
+project: phasync
+topic: coordination-and-limits
+role: guide
 ---
 
 This page will cover:

@@ -18,8 +18,14 @@ CommonMark. The first paragraph is the summary: one sentence ending with a perio
 | `@deprecated reason` | Say what to use instead. |
 | `@example path/to/file.php [caption]` | Path relative to the package root. The file is expected to run on its own; CI will run them. |
 | `@internal` | Left out of the reference, entirely. |
+| `@topic slug` | Every public class, interface, trait, enum, function; and each method of a facade class (`phasync`, `Swerve`). The topic book the symbol belongs to. Exactly one. Lint fails on none or unknown. Until the source is tagged, the site repo's `topics-map.php` supplies assignments, and lint lists what is still untagged. Other methods inherit the class's topic. |
+| `@changed version text` | Any symbol. A row in the Changelog section. `@since` gives the first row ("Added"). Several allowed. |
+| `@note text` / `@warning text` | Any symbol. A callout in the Notes section. Markdown allowed, one paragraph each; several allowed. |
+| `@see none` | Any symbol. Opt out of automatic back-references (the symbols whose `@see` names this one). |
 
 `@since`, `@deprecated` and `@example path [caption]` go last. A class docblock has a description, `@see` and `@example`; its methods have their own docblocks. A method with no docblock gets the one of the method it implements or overrides.
+
+A symbol's topic is `@topic` in the source, else its entry in `topics-map.php`, else none (a lint error). The topic books are `content/<project>/topics/<slug>.md` (front matter `title`, `summary`, `order`; the body is the topic's Introduction); see BUILD.md.
 
 ## Rules
 

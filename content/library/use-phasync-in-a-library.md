@@ -6,6 +6,9 @@ order: 1
 see_also:
   - phasync::run
   - phasync::go
+project: phasync
+topic: extension-and-event-loop
+role: guide
 ---
 
 This page will cover:

@@ -3,6 +3,9 @@ title: "Laravel: the container and facades"
 description: "Registrations and fakes made during a request stay on shared objects. Register at boot; fake in tests."
 status: draft
 order: 12
+project: swerve
+topic: frameworks
+role: concept
 ---
 
 ## Runtime container registrations

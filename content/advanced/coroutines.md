@@ -6,6 +6,9 @@ order: 1
 see_also:
   - phasync::go
   - phasync::cancel
+project: phasync
+topic: coroutines
+role: concept
 ---
 
 This page will cover:

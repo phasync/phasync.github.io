@@ -3,6 +3,9 @@ title: "Internals"
 description: "The event loop, the pollers and the scheduler."
 status: placeholder
 order: 8
+project: phasync
+topic: extension-and-event-loop
+role: concept
 ---
 
 This page will cover:

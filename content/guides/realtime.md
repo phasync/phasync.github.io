@@ -7,6 +7,9 @@ see_also:
   - Swerve::publish
   - Swerve::subscribe
   - WebSocket
+project: swerve
+topic: websockets-and-sse
+role: guide
 ---
 
 A request may stay open as long as it likes, and a message published in any worker reaches the subscribers in every worker. Both examples are complete chat rooms, taken from `examples/` in the Swerve repository, where the tests run them.

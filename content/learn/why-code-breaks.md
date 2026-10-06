@@ -5,6 +5,9 @@ status: draft
 order: 1
 see_also:
   - /learn/per-request-state/
+project: swerve
+topic: context-switching
+role: concept
 ---
 
 Under PHP-FPM a process serves one request and starts it with nothing in memory. Code written for that keeps request data wherever it is convenient: a global, a static property, a `static` variable in a function, a singleton that a service locator hands out. None of it is shared with another request, because the process belongs to one.

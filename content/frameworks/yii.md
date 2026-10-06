@@ -6,6 +6,9 @@ order: 5
 see_also:
   - phasync\Util\Synchronized
   - Swerve::log
+project: swerve
+topic: frameworks
+role: guide
 ---
 
 > **Low concurrency.** A worker serves one Yii request at a time, as a PHP-FPM child does. A request that waits for a database or an API holds its worker, also with `phasync-ext`. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/).

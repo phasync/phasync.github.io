@@ -6,6 +6,9 @@ order: 2
 see_also:
   - phasync::getContext
   - phasync::withContext
+project: swerve
+topic: context-switching
+role: concept
 ---
 
 [[phasync::getContext]] returns the context of the running coroutine: an object that Swerve creates for each request, and that every coroutine the request starts inherits. Use it as the key of a `WeakMap`.

@@ -3,6 +3,9 @@ title: "Case study: Laravel"
 description: "What Laravel keeps in shared state, how the Swerve adapter handles it, and what the same state needs from your code."
 status: draft
 order: 11
+project: swerve
+topic: frameworks
+role: concept
 ---
 
 Laravel Octane boots one application and serves each request in a sandbox cloned from it, then runs listeners that put the state back. That is sound when requests are served one after another, and Laravel was built for it. The pages in this case study look at what changes when requests overlap, which they do in a Swerve worker whenever one waits.

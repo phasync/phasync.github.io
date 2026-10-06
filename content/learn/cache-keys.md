@@ -5,6 +5,9 @@ status: draft
 order: 7
 see_also:
   - phasync\Util\LruCache
+project: swerve
+topic: resource-management
+role: concept
 ---
 
 A cache that several requests share is safe only if its key contains everything the value depends on. In-memory caches in application code often assume one user, tenant or locale: the key is `'menu'` or `'settings'`, and the value was computed for whoever was logged in. Under PHP-FPM that was request-scoped by accident.

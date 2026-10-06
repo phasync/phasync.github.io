@@ -6,6 +6,9 @@ order: 2
 see_also:
   - Channel
   - phasync::channel
+project: phasync
+topic: channels-and-messaging
+role: guide
 ---
 
 This page will cover:

@@ -3,6 +3,9 @@ title: Services that can be shared
 description: "A service the whole worker uses is stateless after boot. Request data travels with the request, and per-request variants come from a factory."
 status: draft
 order: 5
+project: swerve
+topic: context-switching
+role: concept
 ---
 
 A service is safe to share when no request can change it. Build it at boot, and from then on only read it.

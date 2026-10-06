@@ -5,6 +5,9 @@ status: draft
 order: 6
 see_also:
   - phasync\Util\LruCache
+project: phasync
+topic: resource-management
+role: concept
 ---
 
 A pure function returns the same value for the same arguments and reads nothing else. Its results can be cached in memory and shared by all requests: whichever request computes a value, every other gets the same.

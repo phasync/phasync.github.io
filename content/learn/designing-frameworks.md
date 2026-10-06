@@ -3,6 +3,9 @@ title: Designing a framework for concurrent requests
 description: "A boot phase that ends, a container that closes, a scope per request, and reset hooks only as a last resort."
 status: draft
 order: 10
+project: swerve
+topic: frameworks
+role: concept
 ---
 
 A framework that serves many requests in one process needs four things. They follow from the pages before this one.

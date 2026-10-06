@@ -6,6 +6,9 @@ order: 7
 see_also:
   - Swerve::log
   - phasync::getContext
+project: swerve
+topic: frameworks
+role: guide
 ---
 
 **Concurrency: concurrent.** `swerve.php` returns the handler and Swerve calls it for every request in a coroutine, so requests that wait overlap in one worker. What the handler keeps between requests is yours, and it is the first thing to check.

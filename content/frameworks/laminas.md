@@ -6,6 +6,9 @@ order: 6
 see_also:
   - phasync\Util\Synchronized
   - Swerve::log
+project: swerve
+topic: frameworks
+role: guide
 ---
 
 > **Low concurrency (Laminas MVC).** A worker serves one Laminas MVC request at a time, as a PHP-FPM child does. A request holds its worker until its action returns, also with `phasync-ext`. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/). For Mezzio, which is concurrent, see [Mezzio](#mezzio).

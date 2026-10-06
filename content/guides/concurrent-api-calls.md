@@ -6,6 +6,9 @@ order: 3
 see_also:
   - HttpClient
   - phasync::go
+project: phasync
+topic: http-client
+role: guide
 ---
 
 This page will cover:
