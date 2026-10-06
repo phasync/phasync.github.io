@@ -20,6 +20,7 @@ require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/lib/Symbols.php';
 require __DIR__ . '/lib/Markdown.php';
 require __DIR__ . '/lib/Model.php';
+require __DIR__ . '/lib/Render.php';
 
 final class BuildFailure extends RuntimeException
 {
@@ -236,97 +237,17 @@ function main(string $siteUrl, array $argv): void
     \is_dir(__DIR__ . '/build') || \mkdir(__DIR__ . '/build');
     \file_put_contents(__DIR__ . '/build/model.json', \json_encode($model->data, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE));
 
-    // 5. Write
+    // 5. Render (lib/Render.php, templates/layout.php)
     $out = __DIR__ . '/public';
-    if (\is_dir($out)) {
-        \exec('rm -rf ' . \escapeshellarg($out));
-    }
+    \is_dir($out) && \exec('rm -rf ' . \escapeshellarg($out));
     \mkdir($out, 0777, true);
-    $nav      = NAV;
-    $write    = static function (string $path, string $content) use ($out): void {
-        $file = $out . $path;
-        @\mkdir(\dirname($file), 0777, true);
-        \file_put_contents($file, $content);
-    };
-    $children = static fn (string $url) => \array_values(\array_filter($pages, static fn ($p) => !$p['symbol'] && $p['url'] !== $url
-        && \str_starts_with($p['url'], $url) && 1 === \substr_count(\substr($p['url'], \strlen($url)), '/')));
-
+    $render = new Render($symbols, $pages, $model->data, $out, $siteUrl);
+    $render->build();
+    \printf("Pages written: %s\n", \json_encode($render->counts));
     $placeholders = $withoutExamples = 0;
-    $built        = [];
-    foreach ($pages as $page) {
-        $isSymbol = null !== $page['symbol'];
-        $vars     = ['page' => $page, 'symbols' => $symbols, 'nav' => $nav, 'siteUrl' => $siteUrl];
-        if ('landing' === $page['kind']) {
-            $main = render('landing', $vars);
-        } elseif ($isSymbol) {
-            $s        = $page['symbol'];
-            $examples = !empty($s['examples']) || \str_contains($s['rest'] ?? '', '```php') || \str_contains($page['html'], 'id="examples"');
-            $withoutExamples += $examples || 'topic' === $s['kind'] ? 0 : 1;
-            $main = render('reference', $vars + ['hasExamples' => $examples]);
-        } elseif ('section' === $page['kind']) {
-            $main = render('section', $vars + ['children' => '/reference/' === $page['url'] ? [] : $children($page['url'])]);
-        } else {
-            $main = render('page', $vars);
-        }
-        $placeholders += 'placeholder' === $page['status'] ? 1 : 0;
-        // Working notes (<!-- TODO-verify: ... -->) stay in the sources and never reach public/; `--todo` lists them
-        $main = \preg_replace('~[ \t]*<!--\s*TODO.*?-->\R?~s', '', $main);
-        $html = render('layout', $vars + ['main' => $main]);
-        $write($page['url'] . 'index.html', $html);
-        $built[$page['url']] = $main . $html;
-    }
+    $files = [];
 
-    // Redirects, as directories because GitHub Pages cannot redirect: /Swerve::publish and the namespace path of every symbol
-    $index = [];
-    foreach ($symbols->all as $s) {
-        $index[] = ['n' => $s['name'], 'f' => $s['full'], 'd' => $s['plain'], 'u' => $s['url'], 'k' => $s['kind']];
-        if ($s['alias']) {
-            if (isset($files[$s['alias']]) && 'function' === $s['kind']) {
-                $notices[] = "alias {$s['alias']} of the function {$s['full']} is not written: {$files[$s['alias']]} is there";
-            } else {
-                $claim($s['alias'], "the alias of {$s['full']}");
-                $write($s['alias'] . 'index.html', stub($s['full'], $s['alias'], $s['url'], $siteUrl));
-            }
-        }
-        if ('method' === $s['kind']) {
-            $colon = '/' . \str_replace('\\', '/', $s['name']) . '/';
-            $claim($colon, "the redirect for {$s['name']}");
-            $write($colon . 'index.html', stub($s['name'], $colon, $s['url'], $siteUrl));
-        }
-    }
-    foreach ($pages as $page) {
-        if (!$page['symbol'] && 'landing' !== $page['kind']) {
-            $index[] = ['n' => $page['title'], 'f' => '', 'd' => $page['description'], 'u' => $page['url'], 'k' => 'page'];
-        }
-    }
-    $write('/search.json', \json_encode($index, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
-    $write('/404.html', render('layout', ['page' => ['url' => '/404.html', 'title' => 'Not found', 'description' => 'No such page.', 'kind' => 'notfound', 'status' => 'stable'], 'main' => render('notfound', []), 'nav' => $nav, 'siteUrl' => $siteUrl, 'symbols' => $symbols]));
-    $write('/.nojekyll', '');
-    \exec('cp -r ' . \escapeshellarg(__DIR__ . '/theme') . ' ' . \escapeshellarg($out . '/theme'));
-
-    // 6. Links: every root-relative link must land on a file we wrote; relative links are not allowed
-    $broken = [];
-    foreach ($built as $url => $html) {
-        \preg_match_all('~\b(?:href|src)="([^"]*)"~', $html, $m);
-        foreach (\array_unique($m[1]) as $link) {
-            if (\preg_match('~^(?:https?:|mailto:|#|data:)~', $link)) {
-                continue;
-            }
-            if (!\str_starts_with($link, '/')) {
-                $broken[] = "$url: relative link '$link' (use /root-relative links)";
-                continue;
-            }
-            $path = \rawurldecode(\preg_replace('~[?#].*$~', '', $link));
-            if (!(\str_ends_with($path, '/') ? \is_file("$out{$path}index.html") : (\is_file($out . $path) || \is_file("$out$path/index.html")))) {
-                $broken[] = "$url: broken link '$link'";
-            }
-        }
-    }
-    if ($broken) {
-        throw new BuildFailure(\count($broken) . " broken link(s):\n  " . \implode("\n  ", $broken));
-    }
-
-    \printf("Built %d pages (%d reference symbols) in %.1f s -> public/\n", \count($pages), \count($symbols->all), \microtime(true) - $start);
+    \printf("Built %d pages (%d reference symbols) in %.1f s -> public/\n", \count($render->written), \count($symbols->all), \microtime(true) - $start);
     \printf("  placeholder pages:                    %d\n", $placeholders);
     \printf("  reference pages without examples:     %d\n", $withoutExamples);
     foreach ($notices as $notice) {
