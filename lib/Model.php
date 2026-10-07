@@ -290,7 +290,7 @@ final class Model
 
     /**
      * The Changelog sub-section of a project, from the package repos: the changelog itself, one release per `## ` heading,
-     * and the pages Upgrading (the breaking entries), Planned changes (docs/roadmap-*.md) and Development process
+     * and the pages Upgrading (the breaking entries), Planned changes (content/<project>/changelog/planned.md, curated; never a package roadmap note) and Development process
      * (CONTRIBUTING.md, SECURITY.md). A page with no source is left out.
      *
      * @return array{html: ?string, releases: list<array{title: string, id: string}>, pages: list<array{slug: string, title: string, html: string}>}
@@ -333,8 +333,11 @@ final class Model
                 $out['pages'][] = ['slug' => 'upgrading', 'title' => 'Upgrading and breaking changes', 'html' => Markdown::html($b)];
             }
         }
-        if (null !== ($r = $read('docs/roadmap-2.0.md'))) {
-            $out['pages'][] = ['slug' => 'planned', 'title' => 'Planned changes', 'html' => \preg_replace('~^<h1[^>]*>.*?</h1>~s', '', Markdown::html($r))];
+        // Planned changes come from a curated page in this repo, never from a package's working notes
+        // (docs/roadmap-*.md are internal notes and must not ship: see CONTENT-GUIDE.md).
+        $planned = __DIR__ . "/../content/$project/changelog/planned.md";
+        if (\is_file($planned)) {
+            $out['pages'][] = ['slug' => 'planned', 'title' => 'Planned changes', 'html' => \preg_replace('~^<h1[^>]*>.*?</h1>~s', '', Markdown::html(\file_get_contents($planned)))];
         }
         $proc = '';
         foreach (['CONTRIBUTING.md', 'SECURITY.md'] as $f) {
