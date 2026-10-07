@@ -80,10 +80,39 @@ final class Render
         return \preg_replace('~^v~', '', $pk["phasync/$p"] ?? '');
     }
 
-    public function sidebar(string $p, ?string $topic, ?string $cur, ?string $class): string
+    /** The first page of the Get started path: what the sub-navigation links to. */
+    public function startUrl(string $p): string
+    {
+        $g = $this->m['projects'][$p]['getStarted'][0] ?? null;
+
+        return $g ? "/$p" . $g['url'] : "/$p/get-started/";
+    }
+
+    /** A sub-section's own tree from the model (`sidebars`): see MODEL.md. */
+    private function tree(array $tree, string $cur): string
+    {
+        $h = '<' . ($tree['ordered'] ? 'ol class="steps"' : 'ul') . '>';
+        foreach ($tree['items'] as $i => $it) {
+            if (isset($it['label'])) {
+                $h .= '<li class="lbl">' . e($it['label']) . '</li>';
+            } elseif (isset($it['jump'])) {
+                $h .= '<li class="jump">' . \implode('', \array_map(fn ($j) => '<a href="' . $j['url'] . '">' . e($j['title']) . '</a>', $it['jump'])) . '</li>';
+            } else {
+                $h .= '<li><a href="' . $it['url'] . '"' . ($cur === $it['url'] ? ' aria-current="page"' : '') . '>' . ($tree['ordered'] ? '<span class="n">' . ($i + 1) . '</span>' : '') . '<span>' . e($it['title']) . '</span></a></li>';
+            }
+        }
+
+        return $h . '</' . ($tree['ordered'] ? 'ol' : 'ul') . '>';
+    }
+
+    public function sidebar(string $p, ?string $topic, ?string $cur, ?string $class, ?array $tree = null): string
     {
         $a = static fn (string $u, string $t, string $x = '') => '<a href="' . $u . '"' . $x . '>' . $t . '</a>';
-        $h = '<aside class="sidebar" id="sidebar" aria-label="Manual"><div class="side-head"><b>' . $a("/$p/manual/", e(self::PROJECTS[$p])) . '</b>' . (($v = $this->version($p)) ? '<span class="badge' . (\str_contains($v, '-') ? ' beta' : '') . '">' . e($v) . '</span>' : '') . '</div><nav class="side-body" aria-label="Topics"><ul>';
+        $h = '<aside class="sidebar" id="sidebar" aria-label="' . ($tree ? e($tree['title']) : 'Manual') . '"><div class="side-head"><b>' . $a("/$p/manual/", e(self::PROJECTS[$p])) . '</b>' . (($v = $this->version($p)) ? '<span class="badge' . (\str_contains($v, '-') ? ' beta' : '') . '">' . e($v) . '</span>' : '') . '</div><nav class="side-body" aria-label="' . ($tree ? e($tree['title']) : 'Topics') . '">';
+        if ($tree) {
+            return $h . $this->tree($tree, (string) $cur) . '</nav></aside>';
+        }
+        $h .= '<ul>';
         foreach ($this->m['projects'][$p]['manual'] as $t) {
             $u = "/$p/manual/{$t['slug']}/";
             if ($t['slug'] !== $topic) {
@@ -191,11 +220,12 @@ final class Render
 
     public function page(string $url, array $o): void
     {
-        $o += ['topic' => null, 'cur' => $url, 'class' => null, 'sub' => 'manual', 'prev' => null, 'next' => null, 'section' => null, 'sidebar' => true, 'rail' => true];
+        $o += ['topic' => null, 'cur' => $url, 'class' => null, 'sub' => 'manual', 'prev' => null, 'next' => null, 'section' => null, 'sidebar' => true, 'rail' => true, 'tree' => null];
+        $o['tree'] ??= $this->m['projects'][$o['project']]['sidebars'][$o['sub'] ?? ''] ?? null;
         $h2 = [[], [], []];
         $body = \preg_replace_callback('~<h([234])(?: id="([^"]*)")?>(.*?)</h\1>~s', function ($m) use (&$h2) {
             $text = \preg_replace('~<a [^>]*class="anchor"[^>]*>.*?</a>~s', '', $m[3]); // drop the Markdown extension's permalink
-            $id = $m[2] ?: \preg_replace('~^(?=\d)~', 'v', \trim(\preg_replace('~[^a-z0-9]+~', '-', \strtolower(\strip_tags($text))), '-'));
+            $id = $m[2] ?: Model::headingId($text);
             if ('2' === $m[1]) {
                 $h2[1][] = $id;
                 $h2[2][] = $text;
@@ -216,6 +246,9 @@ final class Render
 
     public function crumbs(array $c): string
     {
+        if (\count($c) < 2) {
+            return ''; // a one-item trail is only a stray word
+        }
         $h = '<nav class="crumbs" aria-label="Breadcrumb"><ol>';
         foreach ($c as $i => [$t, $u]) {
             $h .= $i === \count($c) - 1 || !$u ? '<li aria-current="page">' . e($t) . '</li>' : '<li><a href="' . $u . '">' . e($t) . '</a></li>';
@@ -232,7 +265,7 @@ final class Render
             $base = [[$N, "/$p/"]];
             $manual = $proj['manual'];
             [$lead, $code] = $this->readme($p);
-            $this->page("/$p/", ['project' => $p, 'title' => $N, 'desc' => \trim(\strip_tags($lead)), 'crumbs' => [[$N, null]], 'sub' => null, 'sidebar' => false,
+            $this->page("/$p/", ['project' => $p, 'title' => $N, 'desc' => \trim(\strip_tags($lead)), 'crumbs' => [], 'sub' => null, 'sidebar' => false,
                 'body' => "<h1>$N</h1>" . \preg_replace('~^<p>~', '<p class="lead">', $lead) . ('' !== $code ? \trim(Markdown::code($code, 'php')) : '')
                     . "<p><a class=\"btn btn-primary\" href=\"/$p/get-started/\">Get started</a> <a class=\"btn btn-secondary\" href=\"/$p/manual/\">Read the manual</a></p>"]);
             $this->count('landing');
@@ -384,24 +417,36 @@ final class Render
             $topics = \array_column($proj['manual'], null, 'slug');
             $row = fn ($s, $m = false) => '<li' . ($m ? ' class="m" hidden' : '') . '><a href="' . $this->symUrl($s['full']) . '"><code class="t">' . e($s['name']) . '</code></a> – <span class="s">' . inline($s['summary']) . '</span>'
                 . (isset($topics[$s['topic'] ?? '']) ? ' <a class="topic" href="/' . $p . '/manual/' . $s['topic'] . '/">' . e($topics[$s['topic']]['title']) . '</a>' : '<span class="topic"></span>') . '</li>';
-            $by = $mem = [];
-            foreach ($proj['index']['symbols'] as $s) { $by[\strtoupper($s['name'][0])][] = $s; }
-            foreach ($proj['index']['members'] as $s) { $mem[\strtoupper($s['name'][0])][] = $s; }
-            \ksort($by);
-            $b = '<p class="eyebrow">Index</p><h1>Symbol index</h1><p class="lead">Every class, interface, exception and function, A to Z, with the topic it belongs to. Type to filter; methods appear when you filter.</p>'
-                . '<div class="listing-filter" data-filter><input type="search" placeholder="Filter symbols" aria-label="Filter symbols" autocomplete="off" spellcheck="false"><span class="count" aria-live="polite">' . \count($proj['index']['symbols']) . ' symbols</span></div>';
-            foreach ($by as $l => $list) {
-                $b .= '<section data-letter><h2>' . $l . '</h2><ul class="listing">' . \implode('', \array_map($row, $list)) . \implode('', \array_map(fn ($x) => $row($x, true), $mem[$l] ?? [])) . '</ul></section>';
+            foreach ([['', 'Symbol index', 'Every class, interface, exception and function', fn () => true], ['classes/', 'Classes', 'Every class, interface, exception, trait and enum', fn ($s) => 'function' !== $s['kind']], ['functions/', 'Functions', 'Every function', fn ($s) => 'function' === $s['kind']]] as [$seg, $title, $what, $keep]) {
+                $by = $mem = [];
+                $syms = \array_filter($proj['index']['symbols'], $keep);
+                if (!$syms) {
+                    continue;
+                }
+                foreach ($syms as $s) { $by[\strtoupper($s['name'][0])][] = $s; }
+                foreach ($proj['index']['members'] as $s) { $mem[\strtoupper($s['name'][0])][] = $s; }
+                \ksort($by);
+                $b = "<p class=\"eyebrow\">Index</p><h1>$title</h1><p class=\"lead\">$what, A to Z, with the topic it belongs to. Type to filter; methods appear when you filter.</p>"
+                    . '<div class="listing-filter" data-filter><input type="search" placeholder="Filter symbols" aria-label="Filter symbols" autocomplete="off" spellcheck="false"><span class="count" aria-live="polite">' . \count($syms) . ' symbols</span></div>';
+                foreach ($by as $l => $list) {
+                    $b .= '<section data-letter><h2>' . $l . '</h2><ul class="listing">' . \implode('', \array_map($row, $list)) . \implode('', \array_map(fn ($x) => $row($x, true), $mem[$l] ?? [])) . '</ul></section>';
+                }
+                $this->page("/$p/symbols/$seg", ['project' => $p, 'title' => $title, 'desc' => "$what, A to Z.", 'body' => $b, 'sub' => 'symbols', 'rail' => false,
+                    'tree' => $proj['sidebars']['' === $seg ? 'symbols' : 'symbols/' . \rtrim($seg, '/')],
+                    'crumbs' => '' === $seg ? [[$N, "/$p/"], ['Index', null]] : [[$N, "/$p/"], ['Index', "/$p/symbols/"], [$title, null]]]);
             }
-            $this->page("/$p/symbols/", ['project' => $p, 'title' => 'Symbol index', 'desc' => 'Every symbol, A to Z.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Manual', "/$p/manual/"], ['Index', null]], 'sub' => 'symbols', 'cur' => null, 'rail' => false]);
             $b = "<p class=\"eyebrow\">$N</p><h1>Examples</h1><p class=\"lead\">Every example by topic, with the page it belongs to.</p>";
             foreach ($proj['manual'] as $t) {
                 $t['examples'] && $b .= "<h2 id=\"{$t['slug']}\"><a href=\"/$p/manual/{$t['slug']}/examples/\">" . e($t['title']) . '</a></h2>' . $this->listing(\array_map(fn ($e) => [$this->map[$e['symbolUrl']] . '#ex-' . $e['n'], $e['symbol'], $e['caption'], true], $t['examples']));
             }
-            $this->page("/$p/examples/", ['project' => $p, 'title' => 'Examples', 'desc' => 'Every example by topic.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Examples', null]], 'sub' => null]);
-            $f = ['phasync' => '/home/frode/dev/phasync/CHANGELOG.md', 'swerve' => '/home/frode/dev/swerve/CHANGELOG.md'][$p];
-            $b = "<p class=\"eyebrow\">$N</p><h1>Changelog</h1>" . (\is_file($f) ? \preg_replace('~^<h1[^>]*>.*?</h1>~s', '', Markdown::html(\file_get_contents($f))) : '<p class="lead">The changelog is not published yet.</p><span class="badge">draft</span>');
-            $this->page("/$p/changelog/", ['project' => $p, 'title' => 'Changelog', 'desc' => 'What changed in each release.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Changelog', null]], 'sub' => 'changelog']);
+            $this->page("/$p/examples/", ['project' => $p, 'title' => 'Examples', 'desc' => 'Every example by topic.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Examples', null]], 'sub' => 'symbols']);
+            $cl = $proj['changelog'];
+            $b = "<p class=\"eyebrow\">$N</p><h1>Changelog</h1>" . ($cl['html'] ?? '<p class="lead">The changelog is not published yet.</p><span class="badge">draft</span>');
+            $this->page("/$p/changelog/", ['project' => $p, 'title' => 'Changelog', 'desc' => 'What changed in each release.', 'body' => $b, 'crumbs' => [[$N, "/$p/"], ['Changelog', null]], 'sub' => 'changelog', 'rail' => false]); // the sidebar lists the releases
+            foreach ($cl['pages'] as $pg) {
+                $this->page("/$p/changelog/{$pg['slug']}/", ['project' => $p, 'title' => $pg['title'], 'desc' => $pg['title'] . " of $N.", 'sub' => 'changelog', 'crumbs' => [[$N, "/$p/"], ['Changelog', "/$p/changelog/"], [$pg['title'], null]],
+                    'body' => "<p class=\"eyebrow\">Changelog</p><h1>" . e($pg['title']) . '</h1>' . $pg['html']]);
+            }
             $this->count('symbol index'); $this->count('examples index'); $this->count('changelog');
         }
     }
@@ -410,7 +455,7 @@ final class Render
     {
         \exec('cp -r ' . \escapeshellarg(self::KIT) . ' ' . \escapeshellarg($this->out . '/assets'));
         \file_put_contents($this->out . '/404.html', render('layout', ['project' => 'phasync', 'title' => 'Not found', 'desc' => 'No such page.', 'bodyHtml' => '<h1>Not found</h1><p class="lead">There is no such page. Try the <a href="/phasync/symbols/">symbol index</a> or the <a href="/phasync/manual/">manual</a>.</p>',
-            'crumbs' => [['Not found', null]], 'sub' => null, 'topic' => null, 'cur' => null, 'class' => null, 'prev' => null, 'next' => null, 'sidebar' => false, 'rail' => true, 'url' => '/404.html', 'h2' => [[], [], []], 'site' => $this->site, 'r' => $this]));
+            'crumbs' => [], 'sub' => null, 'topic' => null, 'cur' => null, 'class' => null, 'prev' => null, 'next' => null, 'sidebar' => false, 'rail' => true, 'url' => '/404.html', 'h2' => [[], [], []], 'site' => $this->site, 'r' => $this]));
         \file_put_contents($this->out . '/search.json', \json_encode($this->search, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
         $txt = '';
         \ksort($this->map);

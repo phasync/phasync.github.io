@@ -282,6 +282,113 @@ final class Model
         return ['name' => $s['name'], 'full' => $s['full'], 'kind' => $s['kind'], 'url' => $s['url'], 'summary' => $s['plain'], 'topic' => $s['topic'] ?? null];
     }
 
+    /** The id Render gives a heading (and so the anchor the sidebars link to). */
+    public static function headingId(string $text): string
+    {
+        return \preg_replace('~^(?=\d)~', 'v', \trim(\preg_replace('~[^a-z0-9]+~', '-', \strtolower(\strip_tags($text))), '-'));
+    }
+
+    /**
+     * The Changelog sub-section of a project, from the package repos: the changelog itself, one release per `## ` heading,
+     * and the pages Upgrading (the breaking entries), Planned changes (docs/roadmap-*.md) and Development process
+     * (CONTRIBUTING.md, SECURITY.md). A page with no source is left out.
+     *
+     * @return array{html: ?string, releases: list<array{title: string, id: string}>, pages: list<array{slug: string, title: string, html: string}>}
+     */
+    private function changelog(string $project): array
+    {
+        $root  = ['phasync' => '/home/frode/dev/phasync', 'swerve' => '/home/frode/dev/swerve'][$project];
+        $read  = static fn (string $f): ?string => \is_file("$root/$f") ? (string) \file_get_contents("$root/$f") : null;
+        $md    = $read('CHANGELOG.md');
+        $out   = ['html' => null, 'releases' => [], 'pages' => []];
+        $demote = static fn (string $html) => \preg_replace_callback('~<(/?)h([1-5])>~', static fn ($m) => "<{$m[1]}h" . ($m[2] + 1) . '>', $html);
+        if (null !== $md) {
+            $out['html'] = \preg_replace('~^<h1[^>]*>.*?</h1>~s', '', Markdown::html($md));
+            $version = null;
+            $section = '';
+            $breaking = []; // version => [markdown bullet...]
+            $lines = \preg_split('/\R/', $md);
+            foreach ($lines as $i => $line) {
+                if (\preg_match('~^## (.+)$~', $line, $m)) {
+                    $version = \trim($m[1]);
+                    $section = '';
+                    $out['releases'][] = ['title' => $version, 'id' => self::headingId($version)];
+                } elseif (\preg_match('~^### (.+)$~', $line, $m)) {
+                    $section = $m[1];
+                } elseif (null !== $version && \str_starts_with($line, '- ')) {
+                    $bullet = $line;
+                    for ($j = $i + 1; isset($lines[$j]) && \preg_match('~^\s+\S~', $lines[$j]); $j++) {
+                        $bullet .= "\n" . $lines[$j];
+                    }
+                    if (\stripos($section, 'breaking') !== false || \stripos($bullet, 'breaking') !== false) {
+                        $breaking[$version][] = $bullet;
+                    }
+                }
+            }
+            if ($breaking) {
+                $b = "What changed incompatibly, release by release, collected from the [changelog](/$project/changelog/): entries marked breaking or listed under a Breaking heading. Read this before upgrading across the releases listed.\n\n";
+                foreach ($breaking as $v => $list) {
+                    $b .= "## $v\n\n" . \implode("\n", $list) . "\n\n";
+                }
+                $out['pages'][] = ['slug' => 'upgrading', 'title' => 'Upgrading and breaking changes', 'html' => Markdown::html($b)];
+            }
+        }
+        if (null !== ($r = $read('docs/roadmap-2.0.md'))) {
+            $out['pages'][] = ['slug' => 'planned', 'title' => 'Planned changes', 'html' => \preg_replace('~^<h1[^>]*>.*?</h1>~s', '', Markdown::html($r))];
+        }
+        $proc = '';
+        foreach (['CONTRIBUTING.md', 'SECURITY.md'] as $f) {
+            null !== ($c = $read($f)) && $proc .= $demote(Markdown::html($c));
+        }
+        '' !== $proc && $out['pages'][] = ['slug' => 'process', 'title' => 'Development process', 'html' => $proc];
+
+        return $out;
+    }
+
+    /**
+     * The sidebar of each sub-section other than the Manual (whose tree depends on the page): {title, ordered, items[]}.
+     * An item is {title, url, code?}, {label} (a heading), or {jump: [{title, url}]} (a row of links). The urls are final.
+     */
+    private function sidebars(string $p, array $getStarted, array $index, array $changelog): array
+    {
+        $path = ['title' => 'Get started', 'ordered' => true, 'items' => \array_map(static fn ($g) => ['title' => $g['title'], 'url' => "/$p" . $g['url']], $getStarted)];
+        $views = [['All symbols', "/$p/symbols/", fn () => true], ['Classes', "/$p/symbols/classes/", fn ($s) => 'function' !== $s['kind']], ['Functions', "/$p/symbols/functions/", fn ($s) => 'function' === $s['kind']]];
+        $views = \array_values(\array_filter($views, static fn ($v) => \array_filter($index['symbols'], $v[2]))); // a view with no symbols (Swerve has no functions) is not offered
+        $sidebars = ['get-started' => $path];
+        foreach ($views as [, $viewUrl, $keep]) {
+            $letters = [];
+            foreach (\array_filter($index['symbols'], $keep) as $s) {
+                if (!\ctype_alpha($s['name'][0])) {
+                    continue; // no anchor for a section headed `_`
+                }
+                $letters[\strtoupper($s['name'][0])] = ['title' => \strtoupper($s['name'][0]), 'url' => $viewUrl . '#' . \strtolower($s['name'][0])];
+            }
+            \ksort($letters);
+            $items = [];
+            foreach ($views as [$t, $u]) {
+                $items[] = ['title' => $t, 'url' => $u];
+            }
+            $items[] = ['title' => 'Examples', 'url' => "/$p/examples/"];
+            $items[] = ['label' => 'A to Z'];
+            $items[] = ['jump' => \array_values($letters)];
+            $sidebars[\preg_replace('~^/\w+/~', '', \rtrim($viewUrl, '/'))] = ['title' => 'Index', 'ordered' => false, 'items' => $items];
+        }
+        $items = [];
+        if ($changelog['releases']) {
+            $items[] = ['label' => 'Releases'];
+            foreach ($changelog['releases'] as $r) {
+                $items[] = ['title' => $r['title'], 'url' => "/$p/changelog/#{$r['id']}"];
+            }
+            $items[] = ['label' => 'More'];
+        }
+        foreach ($changelog['pages'] as $pg) {
+            $items[] = ['title' => $pg['title'], 'url' => "/$p/changelog/{$pg['slug']}/"];
+        }
+        $sidebars['changelog'] = ['title' => 'Changelog', 'ordered' => false, 'items' => $items];
+
+        return $sidebars;
+    }
+
     private function assemble(array $topics, array $examples, array $see): array
     {
         $all   = $this->symbols->all;
@@ -289,9 +396,11 @@ final class Model
         $getStarted = [];
         foreach ($this->pages as $p) {
             if (\str_starts_with($p['url'], '/get-started/') && '/get-started/' !== $p['url']) {
-                $getStarted[] = ['title' => $p['title'], 'url' => $p['url'], 'summary' => $p['description']];
+                $getStarted[] = ['title' => $p['title'], 'url' => $p['url'], 'summary' => $p['description'], 'order' => (int) ($p['front']['order'] ?? 50)];
             }
         }
+        \usort($getStarted, static fn ($a, $b) => $a['order'] <=> $b['order']); // stable: ties keep page order
+        $getStarted = \array_map(static fn ($g) => \array_diff_key($g, ['order' => 1]), $getStarted);
         foreach (self::PROJECTS as $project => $title) {
             $manual = [];
             foreach ($topics[$project] ?? [] as $slug => $t) {
@@ -345,7 +454,9 @@ final class Model
                 \usort($list, static fn ($a, $b) => \strcasecmp($a['name'], $b['name']));
             }
             unset($list);
-            $model['projects'][$project] = ['title' => $title, 'url' => "/topics/$project/", 'getStarted' => $getStarted, 'manual' => $manual, 'index' => $index];
+            $model['projects'][$project] = ['title' => $title, 'url' => "/topics/$project/", 'getStarted' => $getStarted, 'manual' => $manual, 'index' => $index,
+                'changelog' => $this->changelog($project), 'sidebars' => []];
+            $model['projects'][$project]['sidebars'] = $this->sidebars($project, $getStarted, $index, $model['projects'][$project]['changelog']);
         }
 
         // Pages: breadcrumbs, previous/next within a topic, See also

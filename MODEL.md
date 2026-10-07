@@ -14,6 +14,12 @@ projects.<phasync|swerve>
                              functions, and the methods of a facade class (kind "method"). `members` are all the methods
                              of the class, except for a facade class, where they are the methods of this topic only.
     examples[]               every example of the topic's symbols and members, an example plus {symbol, symbolUrl}
+  changelog                  {html, releases[{title,id}], pages[{slug,title,html}]}: from the package repos (CHANGELOG.md; pages: upgrading = changelog entries
+                             that mention "breaking" or sit under a Breaking heading, planned = docs/roadmap-2.0.md, process = CONTRIBUTING.md + SECURITY.md).
+                             A page whose source is missing is absent. Pages are /<project>/changelog/<slug>/.
+  sidebars                   the sidebar tree of each sub-section other than the Manual (its tree depends on the page): keys get-started, symbols,
+                             symbols/classes, symbols/functions (a view with no symbols is omitted), changelog. {title, ordered, items[]}; item is
+                             {title, url}, {label}, or {jump:[{title,url}]} (the A to Z row). Urls are final. Render only draws them.
   index
     symbols[], members[]     every symbol A to Z, then every method A to Z: {name, full, kind, url, summary, topic}
 

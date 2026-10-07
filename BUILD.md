@@ -34,3 +34,9 @@ Every `@example path caption` file is run once, from the package root, as `php -
 ## What stage 2 renders from model.json
 
 The Manual page of each project and a page per topic (`/topics/<project>/<slug>/`: introduction, concept pages, guides, symbols with members, the topic's examples); the Index (symbols, members); on every symbol page: breadcrumbs, topic, Changelog (`since` and `changed`), Notes (`notes`, `warnings`), numbered examples with captions and captured output, See also with its source label; on every prose page: breadcrumbs, previous/next, See also; the search index from `symbols` and `pages`.
+
+## Sidebars, width, landing pages
+
+The sidebar is the current sub-section's own tree (`projects.<p>.sidebars` in the model; MODEL.md). Get started: the numbered path, in front-matter `order`; the sub-navigation's "Get started" links to its first page (`Render::startUrl`). Manual: the topic books, drawn by `Render::sidebar`. Index (symbols, examples): All symbols, Classes, Functions (`/<p>/symbols/classes/`, `/functions/`: the same index, filtered by kind), Examples, and an A to Z row linking to the letter anchors. Changelog: Releases (one per `## ` heading) and the pages Upgrading, Planned changes, Development process, each only when its source exists in the package repo.
+
+Width and breakpoints live in the kit's `site.css` (`--maxw` 1560px content; prose 72ch; rail hidden below 1200px). Landing pages and the 404 have no breadcrumb: `Render::crumbs` returns nothing for a trail of fewer than two items.
