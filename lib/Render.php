@@ -187,23 +187,24 @@ final class Render
         return $h;
     }
 
-    private function seeAlso(array $list): string
+    private function seeAlso(array $list, string $title = 'See also', string $id = 'see-also'): string
     {
         if (!$list) {
             return '';
         }
-        $h = '<h2 id="see-also">See also</h2><div class="seealso">';
-        $group = null;
-        foreach ($list as $i => $x) {
-            if (null === $group || ($x['source'] ?? '') !== $group) {
-                $group = $x['source'] ?? '';
-                $h .= (null !== $group && $i ? '</ul>' : '') . ($i && '' !== $group ? '<p class="lbl">' . e($group) . '</p>' : '') . ($i ? '' : '') . ($i ? '<ul>' : '<ul>');
-            }
+        $h = '<h2 id="' . $id . '">' . e($title) . '</h2><div class="seealso"><ul>';
+        foreach ($list as $x) {
             $label = ($x['code'] ?? false) ? '<code>' . e($x['name']) . '</code>' : e($x['name']);
             $h .= '<li>' . (($x['url'] ?? null) && (isset($this->map[$x['url']]) || \preg_match('~^(?:https?:|/(?:phasync|swerve)/)~', $x['url'])) ? '<a href="' . ($this->map[$x['url']] ?? $x['url']) . '">' . $label . '</a>' : $label) . '<span>' . inline(\ucfirst($x['desc'] ?? '')) . '</span></li>';
         }
 
         return $h . '</ul></div>';
+    }
+
+    /** The guide and concept pages that link to the symbol: a fact, so its own section after See also. */
+    private function usedIn(array $list): string
+    {
+        return $this->seeAlso($list, 'Used in', 'used-in');
     }
 
     private function listing(array $rows): string
@@ -408,6 +409,7 @@ final class Render
         ($ex = $this->examples($ms['examples'] ?? [])) && $b .= '<h2 id="examples">Examples</h2>' . $ex;
         ($n = $this->callouts($ms['notes'] ?? [], 'Note') . $this->callouts($ms['warnings'] ?? [], 'Warning')) && $b .= '<h2 id="notes">Notes</h2>' . $n;
         $b .= $this->seeAlso($ms['see_also'] ?? []);
+        $b .= $this->usedIn($ms['used_in'] ?? []);
         $t = null;
         foreach ($this->m['projects'][$p]['manual'] as $mt) { $mt['slug'] === $ms['topic'] && $t = $mt; }
         $c = [[self::PROJECTS[$p], "/$p/"], ['Manual', "/$p/manual/"]];

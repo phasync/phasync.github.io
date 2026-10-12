@@ -260,7 +260,7 @@ function main(string $siteUrl, array $argv): void
     $advisory = ['example', 'see-plain'];
     $kinds    = ['summary' => 'without summary', 'example' => 'without example', 'param' => '@param mismatch', 'see' => '@see unresolved', 'see-plain' => '@see shown as plain text', 'example-file' => '@example file missing',
         'unmapped' => 'unmapped (no topic)', 'untagged' => 'untagged (topic from topics-map.php only)', 'topic-unknown' => 'unknown @topic', 'example-run' => 'example failed',
-        'group' => 'see-also group', 'map' => 'topics-map.php', 'topic-file' => 'topic file', 'page-topic' => 'page topic'];
+        'map' => 'topics-map.php', 'topic-file' => 'topic file', 'page-topic' => 'page topic'];
     $wrong = \count(\array_filter($problems, static fn ($p) => !\in_array($p[1], $advisory, true)));
     foreach ($packages as $package) {
         $count = ['class' => 0, 'method' => 0, 'function' => 0];
@@ -299,6 +299,12 @@ function main(string $siteUrl, array $argv): void
     }
     $stats = $model->stats();
     if ($lint && !$json) {
+        if ($model->info) {
+            \printf("\nINFO, one-way @see (%d; advisory, not a failure):\n", \count($model->info));
+            foreach ($model->info as $line) {
+                echo "  INFO $line\n";
+            }
+        }
         \printf("\nSummary: %d symbols (%d need a topic: %d @topic in source, %d via topics-map.php, %d unmapped); examples %d run, %d passed, %d failed; %d See also entries; %d problem(s)\n",
             \count($symbols->all), $stats['responsible'], $stats['source'], $stats['map'], $stats['none'], $stats['examples'], $stats['passed'], $stats['failed'], $stats['seeAlso'], $wrong);
     }

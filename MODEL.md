@@ -32,7 +32,8 @@ symbols.<full name>          `phasync\Util\WaitGroup`, `Swerve\Swerve::publish`,
                              output/exit/ok are null for inline blocks (they are shown, not run) and when run with --skip-examples
   breadcrumbs[]              {title, url}: Home, project, topic, (class)
   see_also[]                 at most 10: {name, url, desc, source, code}
-                             source is "" (explicit @see or a back-reference), a see-also group's title, or "In the guides"
+                             source is always "" (explicit @see only)
+  used_in                    [{name, url, desc}]: guide/concept pages linking the symbol
 
 pages.<url>                  every prose page (symbol pages are in `symbols`)
   title, breadcrumbs[], prev, next ({title,url} or null: within the topic's reading order, topic page, concepts, guides),

@@ -13,7 +13,6 @@
 | --- | --- |
 | `content/<project>/topics/<slug>.md` | A topic: front matter `title`, `summary`, `order`, `status`; the body is its Introduction. Projects: `phasync` (includes http-client), `swerve`. |
 | `topics-map.php` | `'Symbol' => 'slug'`, `'phasync::go' => 'coroutines'`: the decided topic tables (phasync.dev/TOPICS-DRAFT.md) for every symbol in them. Names as in `@see`. Where the source `@topic` disagrees, the map wins and lint reports it (`topics-map.php`), so the source can be fixed. |
-| `see-also-groups.php` | `'slug' => ['title' => ..., 'members' => [...]]`. At most 8 members; a symbol in at most 2 groups; a group made only of one class's methods is an error. |
 
 ## A symbol's topic
 
@@ -21,7 +20,7 @@
 
 ## See also
 
-Per symbol, in this order, without duplicates, at most 10: its own `@see` lines (author's order, annotation as the description), symbols whose `@see` names it (not when it has `@see none`), the other members of its see-also groups (source = the group's title), prose pages that link it with `[[Symbol]]` or `{@see Symbol}` (source "In the guides"). A description is the annotation, else the target's summary.
+Per symbol: its own `@see` lines in author order, annotation else target summary; nothing added automatically. Lint prints one-way `@see` pairs as INFO (advisory); `@see none` on the target silences them. After See also, **Used in** lists guide/concept pages linking the symbol with `[[Symbol]]` or `{@see}`.
 
 ## Examples
 
@@ -29,7 +28,7 @@ Every `@example path caption` file is run once, from the package root, as `php -
 
 ## Lint
 
-`php build.php --lint` prints, per package and for `site` (topics, map, groups, pages): the problems and counts, then a summary. Exit code 1 when anything is wrong, except "no example" (advisory: hundreds, counted only). `--lint --json` prints `{summary, problems[]}`.
+`php build.php --lint` prints, per package and for `site` (topics, map, pages): the problems and counts, then a summary. Exit code 1 when anything is wrong, except "no example" (advisory: hundreds, counted only). `--lint --json` prints `{summary, problems[]}`.
 
 ## What stage 2 renders from model.json
 

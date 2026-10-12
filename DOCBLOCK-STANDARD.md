@@ -13,7 +13,7 @@ CommonMark. The first paragraph is the summary: one sentence ending with a perio
 | `@param type $name description` | Names and order must match the signature. The type shown is the reflected one. |
 | `@return type description` | What comes back, when the type does not say it. |
 | `@throws Class when thrown` | One line per exception. |
-| `@see Symbol` | One per line: `Swerve::subscribe`, `Swerve\OrderedChannel`, `phasync::run`. Becomes the See also list, in this order. An unknown symbol fails the build. |
+| `@see Target annotation` | One per line, in the order shown: the whole See also mechanism; nothing is derived into it. Targets: symbols (`Swerve::subscribe`, `Swerve\OrderedChannel`), guide pages or topic pages. Without an annotation the target's summary is shown. Unknown target fails the build. Lint lists one-way pairs (A names B, B does not name A) as INFO, not failure. |
 | `@since version` | First release that has it. |
 | `@deprecated reason` | Say what to use instead. |
 | `@example path/to/file.php [caption]` | Path relative to the package root. The file is expected to run on its own; CI will run them. |
@@ -21,7 +21,7 @@ CommonMark. The first paragraph is the summary: one sentence ending with a perio
 | `@topic slug` | Every public class, interface, trait, enum, function; and each method of a facade class (`phasync`, `Swerve`). The topic book the symbol belongs to. Exactly one. Lint fails on none or unknown. Until the source is tagged, the site repo's `topics-map.php` supplies assignments, and lint lists what is still untagged. Other methods inherit the class's topic. |
 | `@changed version text` | Any symbol. A row in the Changelog section. `@since` gives the first row ("Added"). Several allowed. |
 | `@note text` / `@warning text` | Any symbol. A callout in the Notes section. Markdown allowed, one paragraph each; several allowed. |
-| `@see none` | Any symbol. Opt out of automatic back-references (the symbols whose `@see` names this one). |
+| `@see none` | Any symbol. Silences the one-way INFO for this symbol as a target (a hub named by many pages). |
 
 `@since`, `@deprecated` and `@example path [caption]` go last. A class docblock has a description, `@see` and `@example`; its methods have their own docblocks. A method with no docblock gets the one of the method it implements or overrides.
 

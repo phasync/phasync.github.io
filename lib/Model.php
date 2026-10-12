@@ -10,11 +10,12 @@ final class Model
     /** The names of the facade classes: their methods take their own @topic */
     public const FACADES = ['phasync', 'Swerve\Swerve'];
     public const PROJECTS = ['phasync' => 'phasync', 'swerve' => 'Swerve'];
-    public const SEE_ALSO_CAP = 10;
     public const EXAMPLE_TIMEOUT = 20;
 
     /** @var list<array{0: string, 1: string, 2: string, 3: string}> */
     public array $problems = [];
+    /** @var list<string> advisory lint lines (one-way @see pairs); never a failure */
+    public array $info = [];
     public array $data = [];
 
     /** The project a package documents: http-client is part of phasync. */
@@ -39,8 +40,8 @@ final class Model
             }
         }
         $examples = $this->examples($runExamples);
-        $see      = $this->seeAlso();
-        $this->data = $this->assemble($topics, $examples, $see);
+        [$see, $used] = $this->seeAlso();
+        $this->data = $this->assemble($topics, $examples, $see, $used);
     }
 
     private function problem(string $package, string $kind, string $symbol, string $message): void
@@ -193,40 +194,16 @@ final class Model
         return $results;
     }
 
-    /** Explicit @see, back-references, groups, guides: the final list per symbol (url => entries) */
+    /**
+     * See also is the symbol's own @see lines, in the author's order, and nothing else. "Used in" is the guide and concept
+     * pages that link to the symbol with [[Symbol]] or {@see}. One-way @see pairs (A names B, B does not name A) go to
+     * $info, unless the symbol named has `@see none`.
+     *
+     * @return array{0: array<string, list<array>>, 1: array<string, list<array>>} see also, used in: symbol full => entries
+     */
     private function seeAlso(): array
     {
-        $groups = require __DIR__ . '/../see-also-groups.php';
-        $byMember = []; // full => [group slug...]
-        foreach ($groups as $slug => $g) {
-            $classes = [];
-            $count   = \count($g['members']);
-            foreach ($g['members'] as $name) {
-                $s = $this->symbols->find($name);
-                if (null === $s) {
-                    $this->problem('site', 'group', $slug, "see-also-groups.php: $slug names no symbol $name");
-                    continue;
-                }
-                'topic' === $s['kind'] && $this->problem('site', 'see-plain', $slug, "see-also-groups.php: $slug member $name is a topic, not a page: shown as plain text");
-                $byMember[$s['full']][] = $slug;
-                $classes[$s['class'] ?? $s['full']] = 'method' === $s['kind'];
-            }
-            if ($count > 8) {
-                $this->problem('site', 'group', $slug, "see-also group $slug has $count members (at most 8)");
-            }
-            if (1 === \count($classes) && \reset($classes)) {
-                $this->problem('site', 'group', $slug, "see-also group $slug consists only of members of " . \key($classes) . ': add what is around them');
-            }
-        }
-        foreach ($byMember as $full => $in) {
-            if (\count(\array_unique($in)) > 2) {
-                $this->problem('site', 'group', $full, "$full is in " . \count($in) . ' see-also groups (at most 2): ' . \implode(', ', $in));
-            }
-        }
-        $entry = static fn (array $s, string $source, string $desc = '') => ['name' => $s['name'], 'url' => $s['url'], 'desc' => '' !== $desc ? $desc : ($s['plain'] ?? Symbols::plain($s['desc'] ?? '')), 'source' => $source, 'code' => true];
-
-        // [[Symbol]] and {@see Symbol} in the guides: symbol full => pages
-        $linked = [];
+        $used = [];
         foreach ($this->pages as $page) {
             if (!empty($page['raw']) && null === $page['symbol']) {
                 \preg_match_all('~\[\[([\w\\\\]+(?:::\w+)?)\]\]|\{@see\s+([\w\\\\]+(?:::\w+)?)(?:\(\))?[^}]*\}~', $page['raw'], $m, \PREG_SET_ORDER);
@@ -236,15 +213,22 @@ final class Model
                     } catch (BuildFailure) {
                         continue;
                     }
-                    $t && ($linked[$t['full']][$page['url']] = $page);
+                    $t && ($used[$t['full']][$page['url']] = ['name' => $page['title'], 'url' => $page['url'], 'desc' => $page['description'], 'source' => '', 'code' => false]);
                 }
             }
         }
-        $back = []; // target full => [source full => symbol]
+        $names = []; // full => [target full => true]
         foreach ($this->symbols->all as $full => $s) {
             foreach ($s['doc']['see'] ?? [] as [$ref, , $type]) {
-                if ('symbol' === $type && ($t = $this->symbols->find($ref))) {
-                    $back[$t['full']][$full] = $s;
+                if ('symbol' === $type && ($t = $this->symbols->find($ref)) && $t['full'] !== $full) {
+                    $names[$full][$t['full']] = true;
+                }
+            }
+        }
+        foreach ($names as $from => $targets) {
+            foreach ($targets as $to => $_) {
+                if (!isset($names[$to][$from]) && !($this->symbols->all[$to]['doc']['seeNone'] ?? false)) {
+                    $this->info[] = "$from names $to with @see; $to does not name $from (add it, or @see none on $to)";
                 }
             }
         }
@@ -254,32 +238,15 @@ final class Model
                 continue;
             }
             $list = [];
-            $add  = static function (array $e) use (&$list): void {
-                $list[$e['url'] ?? $e['name']] ??= $e;
-            };
             foreach ($s['see'] as $e) {
-                $add(['name' => $e['name'], 'url' => $e['url'], 'desc' => $e['desc'], 'source' => '', 'code' => $e['code']]);
-            }
-            if (!$s['doc']['seeNone']) {
-                foreach ($back[$full] ?? [] as $from) {
-                    $add($entry($from, ''));
-                }
-            }
-            foreach ($byMember[$full] ?? [] as $slug) {
-                foreach ($groups[$slug]['members'] as $name) {
-                    if (($t = $this->symbols->find($name)) && $t['full'] !== $full) {
-                        $add($entry($t, $groups[$slug]['title']));
-                    }
-                }
-            }
-            foreach ($linked[$full] ?? [] as $page) {
-                $add(['name' => $page['title'], 'url' => $page['url'], 'desc' => $page['description'], 'source' => 'In the guides', 'code' => false]);
+                $list[$e['url'] ?? $e['name']] ??= ['name' => $e['name'], 'url' => $e['url'], 'desc' => $e['desc'], 'source' => '', 'code' => $e['code']];
             }
             unset($list[$s['url']]);
-            $see[$full] = \array_slice(\array_values($list), 0, self::SEE_ALSO_CAP);
+            $see[$full] = \array_values($list);
+            $used[$full] = \array_values($used[$full] ?? []);
         }
 
-        return $see;
+        return [$see, $used];
     }
 
     private function item(array $s): array
@@ -397,7 +364,7 @@ final class Model
         return $sidebars;
     }
 
-    private function assemble(array $topics, array $examples, array $see): array
+    private function assemble(array $topics, array $examples, array $see, array $used): array
     {
         $all   = $this->symbols->all;
         $model = ['projects' => [], 'pages' => [], 'symbols' => []];
@@ -505,14 +472,14 @@ final class Model
                 'name' => $s['name'], 'kind' => $s['kind'], 'url' => $s['url'], 'package' => $s['package'], 'project' => $s['project'],
                 'summary' => $s['plain'], 'topic' => $s['topic'], 'topicSource' => $s['topicSource'],
                 'since' => $d['since'], 'deprecated' => $d['deprecated'], 'changed' => $d['changed'], 'notes' => $d['notes'], 'warnings' => $d['warnings'],
-                'examples' => $examples[$full] ?? [], 'see_also' => $see[$full] ?? [],
+                'examples' => $examples[$full] ?? [], 'see_also' => $see[$full] ?? [], 'used_in' => $used[$full] ?? [],
             ];
         }
 
         return $model;
     }
 
-    /** Every symbol and page has at most 10 See also entries; the number generated, for the lint summary. */
+    /** The number of See also entries, for the lint summary. */
     public function seeAlsoCount(): int
     {
         return \array_sum(\array_map(static fn ($s) => \count($s['see_also']), $this->data['symbols'])) + \array_sum(\array_map(static fn ($p) => \count($p['see_also'] ?? []), $this->data['pages']));
