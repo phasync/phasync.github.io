@@ -6,7 +6,7 @@ order: 5
 see_also:
   - OrderedChannel
 project: swerve
-topic: publish-and-subscribe
+topic: coordination-across-workers
 role: concept
 ---
 

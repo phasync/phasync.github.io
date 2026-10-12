@@ -25,7 +25,7 @@ projects.<phasync|swerve>
 
 symbols.<full name>          `phasync\Util\WaitGroup`, `Swerve\Swerve::publish`, `phasync\sleep`
   name, kind, url, package, project, summary
-  topic, topicSource         slug; "source" (@topic) or "map" (topics-map.php); null when none
+  topic, topicSource         slug; "source" (@topic), "map" (topics-map.php, no @topic) or "override" (topics-map.php, @topic disagrees); null when none
   since, deprecated, changed[{version,text}], notes[], warnings[]       markdown
   examples[]                 numbered, in order: @example files, then fenced php blocks of the docblock
                              {n, kind: file|inline, path, caption, code, output, exit, ok, timeout, seconds}

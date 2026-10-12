@@ -1,5 +1,5 @@
 ---
-title: "Code that needs no extension"
+title: "Without the extension"
 summary: "Write sequential PHP that stays concurrent."
 order: 8
 status: draft

@@ -3,7 +3,7 @@ title: "phasync-ext"
 description: "The optional extension: epoll, preemption and cooperative blocking I/O."
 status: placeholder
 project: phasync
-topic: extension-and-event-loop
+topic: blocking-calls-and-the-extension
 role: concept
 order: 2
 ---

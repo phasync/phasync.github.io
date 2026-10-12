@@ -7,7 +7,7 @@ see_also:
   - Claim
   - Swerve::claim
 project: swerve
-topic: resource-management
+topic: coordination-across-workers
 role: concept
 ---
 

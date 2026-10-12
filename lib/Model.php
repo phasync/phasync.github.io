@@ -101,6 +101,11 @@ final class Model
                 $src  = $all[$s['class']]['topicSource'] ?? null;
             } elseif (null !== $own) {
                 [$slug, $src] = [$own, 'source'];
+                if (isset($map[$full]) && $map[$full] !== $own) {
+                    // The map is the decided table: it wins until the source is fixed
+                    $this->problem($s['package'], 'map', $full, "$full: @topic $own in the source, topics-map.php says {$map[$full]}; change the source to @topic {$map[$full]} ({$s['where']})");
+                    [$slug, $src] = [$map[$full], 'override'];
+                }
             } elseif (isset($map[$full])) {
                 [$slug, $src] = [$map[$full], 'map'];
             }
@@ -523,7 +528,7 @@ final class Model
             }
             if ('method' !== $s['kind'] || \in_array($s['class'], self::FACADES, true)) {
                 $st['responsible']++;
-                $st[$s['topicSource'] ?? 'none']++;
+                $st[match ($s['topicSource']) { null => 'none', 'override' => 'map', default => $s['topicSource'] }]++;
             }
         }
         foreach ($this->data['symbols'] as $s) {

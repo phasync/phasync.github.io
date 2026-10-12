@@ -5,6 +5,11 @@ final class Render
 {
     public const KIT = '/home/frode/dev/phasync.dev/public/assets';
     public const PROJECTS = ['phasync' => 'phasync', 'swerve' => 'Swerve'];
+    /** Topic slugs that changed after publishing: project => old => new; the old URL gets a redirect stub. */
+    public const RENAMED_TOPICS = [
+        'phasync' => ['extension-and-event-loop' => 'blocking-calls-and-the-extension'],
+        'swerve'  => ['publish-and-subscribe' => 'coordination-across-workers', 'code-that-needs-no-extension' => 'without-the-extension'],
+    ];
     public const LABEL = ['class' => 'Class', 'interface' => 'Interface', 'exception' => 'Exception', 'enum' => 'Enum', 'trait' => 'Trait', 'method' => 'Method', 'function' => 'Function'];
 
     public array $map = [];
@@ -36,6 +41,9 @@ final class Render
         }
         foreach ($this->m['projects'] as $p => $proj) {
             $this->map["/topics/$p/"] = "/$p/manual/";
+            foreach (self::RENAMED_TOPICS[$p] ?? [] as $old => $new) {
+                $this->map["/$p/manual/$old/"] = "/$p/manual/$new/";
+            }
             foreach ($proj['manual'] as $t) {
                 $this->map[$t['url']] = "/$p/manual/{$t['slug']}/";
                 $taken = ['examples' => 1];

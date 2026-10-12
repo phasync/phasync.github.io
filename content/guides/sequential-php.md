@@ -4,7 +4,7 @@ description: "Your handler stays sequential: sleep(), and the other requests are
 status: placeholder
 order: 1
 project: swerve
-topic: code-that-needs-no-extension
+topic: without-the-extension
 role: guide
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "Resource management"
-summary: "A few database connections shared among thousands of requests."
+summary: "A few database connections, and one cache, shared among thousands of requests."
 order: 5
 status: draft
 ---

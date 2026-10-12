@@ -7,7 +7,7 @@ see_also:
   - phasync::run
   - phasync::go
 project: phasync
-topic: extension-and-event-loop
+topic: the-event-loop
 role: guide
 ---
 
