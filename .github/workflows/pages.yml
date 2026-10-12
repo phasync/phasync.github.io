@@ -1,7 +1,6 @@
 name: Pages
 
-# Manual until the released phasync/swerve contain every symbol the site documents
-# (the build reflects Swerve\Claim and Swerve\OrderedChannel, newer than 0.1.0-alpha26).
+# Manual: the build reads phasync, swerve and http-client from their released packages.
 on:
   workflow_dispatch:
 
