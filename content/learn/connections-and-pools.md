@@ -63,11 +63,11 @@ echo "100 requests, $made connections made, ", count($db), " open\n";
 
 Borrow for as long as the work needs the connection, and no longer: one query, or one transaction. Do not borrow at the start of the request and hold the connection to the end, through the HTTP call and the template rendering: the pool is then as large as the number of requests in flight, not the number of queries.
 
-Without phasync-ext a query blocks the whole worker while it runs. With it, a query waits as a coroutine, other requests run, and the pool is what limits them.
+Without the phasync extension a query blocks the whole worker while it runs. With it, a query waits as a coroutine, other requests run, and the pool is what limits them.
 
 ## Other clients
 
-- **Redis:** phpredis blocks the worker even with phasync-ext, a client written on PHP's streams waits as a coroutine with it ([how it runs](https://github.com/phasync/swerve/blob/main/docs/how-it-runs.md)). <!-- TODO-verify: a Redis client on PHP's streams with phasync-ext was not run here; the statement is swerve's how-it-runs.md -->
+- **Redis:** phpredis blocks the worker even with the phasync extension, a client written on PHP's streams waits as a coroutine with it ([how it runs](https://github.com/phasync/swerve/blob/main/docs/how-it-runs.md)). <!-- TODO-verify: a Redis client on PHP's streams with the phasync extension was not run here; the statement is swerve's how-it-runs.md -->
 - **HTTP APIs:** a call waits as a coroutine. A service that limits its callers sees each worker as one more, so bound the rate with [[phasync\Util\RateLimiter]].
 
 Previous: [Caching: whose data is it?](/learn/cache-keys/) · Next: [Long-lived connections](/learn/long-lived-connections/)

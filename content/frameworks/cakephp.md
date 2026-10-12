@@ -11,7 +11,7 @@ topic: frameworks
 role: guide
 ---
 
-> **Low concurrency.** A worker serves one CakePHP request at a time, as a PHP-FPM child does. A request that waits for a database or an API holds its worker, also with `phasync-ext`. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/).
+> **Low concurrency.** A worker serves one CakePHP request at a time, as a PHP-FPM child does. A request that waits for a database or an API holds its worker, also with the phasync extension. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/).
 
 The adapter serializes requests with [[phasync\Util\Synchronized]]. Cake keeps the current request, `Configure`, the locale, the global event manager and the table registry in static properties, and `$_SESSION` and the output buffers belong to the process: overlapping requests would see each other's.
 

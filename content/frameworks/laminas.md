@@ -11,7 +11,7 @@ topic: frameworks
 role: guide
 ---
 
-> **Low concurrency (Laminas MVC).** A worker serves one Laminas MVC request at a time, as a PHP-FPM child does. A request holds its worker until its action returns, also with `phasync-ext`. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/). For Mezzio, which is concurrent, see [Mezzio](#mezzio).
+> **Low concurrency (Laminas MVC).** A worker serves one Laminas MVC request at a time, as a PHP-FPM child does. A request holds its worker until its action returns, also with the phasync extension. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/). For Mezzio, which is concurrent, see [Mezzio](#mezzio).
 
 The adapter serializes requests with [[phasync\Util\Synchronized]]. Laminas reads the request from the superglobals, which the handler fills from the PSR-7 request as PHP-FPM would; `RemoteAddress`, the `ServerUrl` helper, laminas-session and `$_SESSION` are all per process. The adapter's tests show each of them leaking between overlapping requests without the lock.
 

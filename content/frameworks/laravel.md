@@ -11,7 +11,7 @@ topic: frameworks
 role: guide
 ---
 
-**Concurrency: concurrent.** A worker serves many requests at once. Each runs in an application of its own, taken from a [[phasync\Util\Pool]] of booted applications. Only Laravel's view engine needs `phasync-ext` for requests to overlap safely (see below).
+**Concurrency: concurrent.** A worker serves many requests at once. Each runs in an application of its own, taken from a [[phasync\Util\Pool]] of booted applications. Only Laravel's view engine needs the phasync extension for requests to overlap safely (see below).
 
 ## Install and run
 
@@ -47,9 +47,9 @@ vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php
 
 ## Concurrency
 
-Requests that wait in a coroutine overlap in one worker. With `phasync-ext`, `sleep()`, PDO and mysqli queries, curl and `flock()` wait that way too. Without it they hold the worker, as under any other server, so size `--workers` like PHP-FPM's `pm.max_children`.
+Requests that wait in a coroutine overlap in one worker. With the phasync extension, `sleep()`, PDO and mysqli queries, curl and `flock()` wait that way too. Without it they hold the worker, as under any other server, so size `--workers` like PHP-FPM's `pm.max_children`.
 
-One thing needs `phasync-ext`: Laravel's view engine buffers output with `ob_start()`, and PHP's output buffers belong to the process. A wait inside a view while it renders, such as a lazily loaded relation, mixes the output of requests that overlap there.
+One thing needs the phasync extension: Laravel's view engine buffers output with `ob_start()`, and PHP's output buffers belong to the process. A wait inside a view while it renders, such as a lazily loaded relation, mixes the output of requests that overlap there.
 
 ## Dangerous under concurrency
 

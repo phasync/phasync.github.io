@@ -12,7 +12,7 @@ role: concept
 
 Under PHP-FPM a process serves one request and starts it with nothing in memory. Code written for that keeps request data wherever it is convenient: a global, a static property, a `static` variable in a function, a singleton that a service locator hands out. None of it is shared with another request, because the process belongs to one.
 
-A Swerve worker keeps its memory between requests and serves several at once. A request that waits (for a query or an HTTP call; with phasync-ext also `sleep()`) lets the worker run another. Whatever both reach through a global is now shared.
+A Swerve worker keeps its memory between requests and serves several at once. A request that waits (for a query or an HTTP call; with the phasync extension also `sleep()`) lets the worker run another. Whatever both reach through a global is now shared.
 
 ```php
 final class CurrentUser

@@ -10,4 +10,4 @@ role: guide
 
 This page will cover:
 
-- What you may write in a handler (`sleep(10);` and then respond), what waits without blocking other requests, and what still blocks a worker. Needs phasync-ext for plain `sleep()`; without it, `phasync::sleep()`.
+- What you may write in a handler (`sleep(10);` and then respond), what waits without blocking other requests, and what still blocks a worker. Needs the phasync extension for plain `sleep()`; without it, `phasync::sleep()`.

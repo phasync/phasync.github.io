@@ -11,7 +11,7 @@ topic: frameworks
 role: guide
 ---
 
-**Concurrency: concurrent, through `phasync-ext`.** Each request borrows a kernel from a [[phasync\Util\Pool]] and a kernel serves one request at a time. Requests overlap while one waits in a coroutine, which for database queries, curl and `sleep()` means with `phasync-ext` loaded. Without it requests rarely overlap and the pool stays at one kernel.
+**Concurrency: concurrent, through the phasync extension.** Each request borrows a kernel from a [[phasync\Util\Pool]] and a kernel serves one request at a time. Requests overlap while one waits in a coroutine, which for database queries, curl and `sleep()` means with the phasync extension loaded. Without it requests rarely overlap and the pool stays at one kernel.
 
 ## Install and run
 

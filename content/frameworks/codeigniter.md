@@ -11,7 +11,7 @@ topic: frameworks
 role: guide
 ---
 
-> **Low concurrency.** A worker serves one CodeIgniter request at a time. The others wait their turn, and a request that waits for a database or an API holds its worker, also with `phasync-ext`. Size `--workers` for the requests that wait at the same time. See [Frameworks](/frameworks/).
+> **Low concurrency.** A worker serves one CodeIgniter request at a time. The others wait their turn, and a request that waits for a database or an API holds its worker, also with the phasync extension. Size `--workers` for the requests that wait at the same time. See [Frameworks](/frameworks/).
 
 The adapter serializes requests with [[phasync\Util\Synchronized]]. CodeIgniter shares its services, `config()` and `model()` instances, the default locale, `$_SESSION` and the database connection among a worker's requests.
 
@@ -57,7 +57,7 @@ One request at a time per worker, with the other connections of the worker (stat
 - **WebSocket callbacks** run after the request. Use what the controller passed in, not `session()` or `$this->request`, which show another visitor's data by then: [Long-lived connections](/learn/long-lived-connections/).
 - **A custom exception handler** must not call `exit()`.
 - **`exit`, `die()` and `dd()`** end the worker.
-- **Every open WebSocket is a connection of one worker.** Without `phasync-ext` a worker holds about 960.
+- **Every open WebSocket is a connection of one worker.** Without the phasync extension a worker holds at most 512.
 
 Run `phasync/doctor` over your code:
 

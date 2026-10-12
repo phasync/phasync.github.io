@@ -59,7 +59,7 @@ There is no adapter. Swerve loads `swerve.php` once per worker, so the applicati
 
 ## Concurrency
 
-Every request runs in its own coroutine. A request waits in a coroutine (`phasync::sleep()`, phasync's HTTP client, sockets) and with `phasync-ext` `sleep()`, PDO, mysqli and curl wait that way too. Without the extension those hold the worker.
+Every request runs in its own coroutine. A request waits in a coroutine (`phasync::sleep()`, phasync's HTTP client, sockets) and with the phasync extension `sleep()`, PDO, mysqli and curl wait that way too. Without the extension those hold the worker.
 
 This was run: two requests to a Slim route that waits 0.2 seconds, each with its own `X-User` header, both answered in about 0.2 seconds, each with its own user.
 

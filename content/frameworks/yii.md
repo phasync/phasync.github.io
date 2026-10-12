@@ -11,7 +11,7 @@ topic: frameworks
 role: guide
 ---
 
-> **Low concurrency.** A worker serves one Yii request at a time, as a PHP-FPM child does. A request that waits for a database or an API holds its worker, also with `phasync-ext`. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/).
+> **Low concurrency.** A worker serves one Yii request at a time, as a PHP-FPM child does. A request that waits for a database or an API holds its worker, also with the phasync extension. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/).
 
 The adapter serializes requests with [[phasync\Util\Synchronized]]. Yii keeps a request's state in shared services of its container, and its session is PHP's native session, one per process: a container per request in flight would still share it.
 
