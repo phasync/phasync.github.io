@@ -161,6 +161,9 @@ final class Symbols
             if ($from->getName() !== $rc->getName() && !self::internalClass($from)) {
                 continue; // inherited from a documented class: it is on that class's page
             }
+            if ($rm->isInternal()) {
+                continue; // the engine's own, such as an enum's cases(): php.net documents it
+            }
             if (null !== ($m = $this->method($package, $root, $rc, $rm))) {
                 $methods[] = $m;
             }
