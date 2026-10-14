@@ -10,10 +10,10 @@
         "phpdocumentor/reflection-docblock": "^5.6"
     },
     "require-dev": {
-        "phasync/phasync": "^2.0.0-beta7",
-        "phasync/swerve": "^0.1.0-beta5",
+        "phasync/phasync": "dev-main",
+        "phasync/swerve": "dev-main",
         "phasync/http-client": "^2.0.0-alpha1"
     },
-    "minimum-stability": "beta",
+    "minimum-stability": "dev",
     "prefer-stable": true
 }

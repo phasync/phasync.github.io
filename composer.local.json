@@ -4,8 +4,8 @@
     "type": "project",
     "license": "MIT",
     "repositories": [
-        {"type": "path", "url": "../phasync", "options": {"symlink": true, "versions": {"phasync/phasync": "2.0.0-beta7"}}},
-        {"type": "path", "url": "../swerve", "options": {"symlink": true, "versions": {"phasync/swerve": "0.1.0-beta5"}}},
+        {"type": "path", "url": "../phasync", "options": {"symlink": true, "versions": {"phasync/phasync": "dev-main"}}},
+        {"type": "path", "url": "../swerve", "options": {"symlink": true, "versions": {"phasync/swerve": "dev-main"}}},
         {"type": "path", "url": "../net", "options": {"symlink": true, "versions": {"phasync/net": "2.0.0-alpha4"}}},
         {"type": "path", "url": "../http-client", "options": {"symlink": true, "versions": {"phasync/http-client": "2.0.0-alpha1"}}}
     ],
@@ -16,11 +16,11 @@
         "phpdocumentor/reflection-docblock": "^5.6"
     },
     "require-dev": {
-        "phasync/phasync": "^2.0.0-beta7",
-        "phasync/swerve": "^0.1.0-beta5",
+        "phasync/phasync": "dev-main",
+        "phasync/swerve": "dev-main",
         "phasync/http-client": "^2.0.0-alpha1",
         "phasync/net": "^2.0.0-alpha4"
     },
-    "minimum-stability": "beta",
+    "minimum-stability": "dev",
     "prefer-stable": true
 }
