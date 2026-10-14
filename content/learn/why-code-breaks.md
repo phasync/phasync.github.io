@@ -28,9 +28,9 @@ function handle(string $name): string
 }
 
 phasync::run(function () {
-    // Two overlapping requests; Swerve gives each one a context like these
-    $ann = phasync::go(fn () => handle('ann'), [], new stdClass());
-    $bob = phasync::go(fn () => handle('bob'), [], new stdClass());
+    // Two overlapping requests; Swerve runs each one in a Scope of its own, like these
+    $ann = (new Scope())->run(fn () => phasync::go(fn () => handle('ann')));
+    $bob = (new Scope())->run(fn () => phasync::go(fn () => handle('bob')));
     echo phasync::await($ann), "\n", phasync::await($bob), "\n";
 });
 ```

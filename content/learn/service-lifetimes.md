@@ -13,7 +13,7 @@ Dependency-injection containers name three lifetimes. Under PHP-FPM a singleton 
 | Lifetime | Lives for | In PHP | Typical services |
 |---|---|---|---|
 | Singleton | the worker | a static, a container singleton, an object built in `swerve.php` | configuration, the router's table, a logger, a template engine, a connection pool |
-| Scoped | one request | a `WeakMap` keyed by `phasync::getContext()` | the current user, the request, the session, a unit of work, a per-request cache |
+| Scoped | one request | a `WeakMap` keyed by `Scope::getCurrent()` | the current user, the request, the session, a unit of work, a per-request cache |
 | Ephemeral | one use | `new`, a factory | value objects, query builders, DTOs |
 
 Choose by whose data the service holds. If it holds nothing but what it was built with, it is a singleton. If it holds anything that belongs to a request, it is scoped.
@@ -32,7 +32,7 @@ final class Scope
     public static function get(string $class, ?Closure $make = null): object
     {
         self::$scopes ??= new WeakMap();
-        $scope          = self::$scopes[phasync::getContext()] ??= new ArrayObject();
+        $scope          = self::$scopes[Scope::getCurrent()] ??= new ArrayObject();
 
         return $scope[$class] ??= ($make ?? throw new LogicException("No $class in this request"))();
     }

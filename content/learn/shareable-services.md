@@ -12,7 +12,7 @@ A service is safe to share when no request can change it. Build it at boot, and 
 
 ## Request data travels with the request
 
-Pass it as an argument, put it in the PSR-7 request's attributes, or keep it in a scoped object that you reach through `phasync::getContext()` ([per-request state](/learn/per-request-state/)). Do not set it on the service.
+Pass it as an argument, put it in the PSR-7 request's attributes, or keep it in a scoped object that you reach through `Scope::getCurrent()` ([per-request state](/learn/per-request-state/)). Do not set it on the service.
 
 ## Per-request variants come from a factory
 
@@ -61,14 +61,14 @@ final class CurrentLocale
     public static function set(string $locale): void
     {
         self::$current ??= new WeakMap();
-        self::$current[phasync::getContext()] = $locale;
+        self::$current[Scope::getCurrent()] = $locale;
     }
 
     public static function get(): string
     {
         self::$current ??= new WeakMap();
 
-        return self::$current[phasync::getContext()] ?? 'en';
+        return self::$current[Scope::getCurrent()] ?? 'en';
     }
 }
 ```

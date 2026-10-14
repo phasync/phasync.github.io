@@ -62,7 +62,7 @@ function menu(): array
     static $menus;
     $menus ??= new WeakMap();
 
-    return $menus[phasync::getContext()] ??= loadMenu(Current::user());
+    return $menus[Scope::getCurrent()] ??= loadMenu(Current::user());
 }
 ```
 

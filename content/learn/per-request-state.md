@@ -1,35 +1,35 @@
 ---
-title: "Per-request state: getContext() and WeakMap"
-description: "Key state by the request's context in a WeakMap: each request sees its own value, and the entry goes when the request ends."
+title: "Per-request state: Scope and WeakMap"
+description: "Key state by the request's Scope in a WeakMap: each request sees its own value, and the entry goes when the request ends."
 status: draft
 order: 2
 see_also:
-  - phasync::getContext
-  - phasync::withContext
+  - phasync::onScopeChange
+  - phasync::go
 project: swerve
 topic: context-switching
 role: concept
 ---
 
-[[phasync::getContext]] returns the context of the running coroutine: an object that Swerve creates for each request, and that every coroutine the request starts inherits. Use it as the key of a `WeakMap`.
+Swerve runs each request in a `Scope` of its own (the class of the Composer package `fiber-interop/scope`, which phasync requires). Every coroutine the request starts runs in that scope too, also after it waits. `Scope::getCurrent()` returns it: use it as the key of a `WeakMap`.
 
 ```php
 final class CurrentUser
 {
-    /** @var WeakMap<object, string> */
+    /** @var WeakMap<Scope, string> */
     private static WeakMap $names;
 
     public static function set(string $name): void
     {
         self::$names ??= new WeakMap();
-        self::$names[phasync::getContext()] = $name;
+        self::$names[Scope::getCurrent()] = $name;
     }
 
     public static function name(): ?string
     {
         self::$names ??= new WeakMap();
 
-        return self::$names[phasync::getContext()] ?? null;
+        return self::$names[Scope::getCurrent()] ?? null;
     }
 }
 ```
@@ -41,23 +41,37 @@ hello ann
 hello bob
 ```
 
+Outside any request, `Scope::getCurrent()` is `Scope::getRootScope()`: the worker's own code has a key as well.
+
 ## The entry goes with the request
 
-phasync keeps no reference to a context once the request's coroutines have finished. A `WeakMap` does not keep its keys alive either, so the entry is freed with the request:
+phasync keeps no reference to a scope once the request's coroutines have finished. A `WeakMap` does not keep its keys alive either, so the entry is freed with the request:
 
 ```php
 $map = new WeakMap();
-phasync::run(function () use ($map) {
-    $map[phasync::getContext()] = 'ann';
+(new Scope())->run(function () use ($map) {
+    $map[Scope::getCurrent()] = 'ann';
     echo count($map), "\n";   // 1
-}, [], new stdClass());
+});
 echo count($map), "\n";       // 0
 ```
 
 An array keyed by `spl_object_id()` does not do this: it keeps the data after the request, and PHP may give a later object the same id.
 
-## `phasync::$contextState`
+## State PHP keeps for the process
 
-phasync also has `phasync::$contextState`, an array that the worker swaps when it switches to a coroutine of another context, so that it reads like a static property and holds the current request's value. It is switched on with [[phasync::enableContextState]]. The Laravel adapter uses one per application; you need it only when code you cannot change reads a static property. Prefer the `WeakMap`.
+Some state is not yours to key: `setlocale()`, `date_default_timezone_set()`, a static of a library you cannot change. [[phasync::onScopeChange]] swaps it. The hook runs before a coroutine of another scope than the last one runs, never between coroutines of one request, so each request keeps using the plain functions:
+
+```php
+$zones = new WeakMap();   // per Scope
+phasync::onScopeChange(function (Scope $new, ?Scope $old) use ($zones) {
+    if (null !== $old) {
+        $zones[$old] = date_default_timezone_get();
+    }
+    date_default_timezone_set($zones[$new] ?? 'UTC');
+});
+```
+
+Register it once, at boot. It runs in the event loop and must not wait. Prefer the `WeakMap` for state of your own: a hook runs at every switch between requests.
 
 Previous: [Why code breaks](/learn/why-code-breaks/) · Next: [Service lifetimes](/learn/service-lifetimes/)

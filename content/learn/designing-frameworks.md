@@ -12,7 +12,7 @@ A framework that serves many requests in one process needs four things. They fol
 
 1. **A boot phase that ends.** Everything shared is registered while the worker starts: services, routes, listeners, macros. After boot, registering is an error, not a way to change the worker.
 2. **An immutable container.** Singletons are built from what boot registered and hold no request data.
-3. **A scope per request.** Request-scoped services live in a store that belongs to the request, found through `phasync::getContext()`, and are freed with it.
+3. **A scope per request.** Request-scoped services live in a store that belongs to the request, found through `Scope::getCurrent()`, and are freed with it.
 4. **Reset hooks as a last resort.** A reset puts state back between requests. It cannot protect a request from another one that runs at the same time, because the state it resets is the other's too.
 
 A container with the first three, in a short class:
@@ -47,7 +47,7 @@ final class Container
         if (!$scoped) {
             return $this->shared[$id] ??= $make($this);
         }
-        $scope = $this->scopes[phasync::getContext()] ??= new ArrayObject();
+        $scope = $this->scopes[Scope::getCurrent()] ??= new ArrayObject();
 
         return $scope[$id] ??= $make($this);
     }

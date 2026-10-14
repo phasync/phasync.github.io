@@ -5,7 +5,7 @@ status: draft
 order: 7
 see_also:
   - Swerve::log
-  - phasync::getContext
+  - phasync::onScopeChange
 project: swerve
 topic: frameworks
 role: guide
@@ -83,7 +83,7 @@ GET /me  X-User: bob  ->  hello bob
 
 ## Dangerous under concurrency
 
-- **Request state belongs in the request's attributes**, as above. A property on a middleware or a service object that holds the user, the tenant or the locale is shared by every request in the worker: [Per-request state](/learn/per-request-state/). When it has to live outside the request, key it by [[phasync::getContext]].
+- **Request state belongs in the request's attributes**, as above. A property on a middleware or a service object that holds the user, the tenant or the locale is shared by every request in the worker: [Per-request state](/learn/per-request-state/). When it has to live outside the request, key it by `Scope::getCurrent()`.
 - **Shared services hold the last request.** Mezzio's `UrlHelper` holds the last route result; called without a route name it returns the URL of another request in flight. Check what any service you inject keeps between calls: [Service lifetimes](/learn/service-lifetimes/).
 - **Singletons that capture scoped state** are captive: [Captive dependencies](/learn/captive-dependencies/).
 - **Connections** are shared by every request in the worker: [Connections and pools](/learn/connections-and-pools/).
