@@ -7,7 +7,7 @@ final class Render
     public const PROJECTS = ['phasync' => 'phasync', 'swerve' => 'Swerve'];
     /** Topic slugs that changed after publishing: project => old => new; the old URL gets a redirect stub. */
     public const RENAMED_TOPICS = [
-        'phasync' => ['extension-and-event-loop' => 'blocking-calls-and-the-extension'],
+        'phasync' => ['extension-and-event-loop' => 'blocking-calls-and-the-extension', 'contexts' => 'scopes-and-frames'],
         'swerve'  => ['publish-and-subscribe' => 'coordination-across-workers', 'code-that-needs-no-extension' => 'without-the-extension'],
     ];
     public const LABEL = ['class' => 'Class', 'interface' => 'Interface', 'exception' => 'Exception', 'enum' => 'Enum', 'trait' => 'Trait', 'method' => 'Method', 'function' => 'Function'];
