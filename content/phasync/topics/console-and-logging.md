@@ -5,4 +5,4 @@ order: 11
 status: draft
 ---
 
-This introduction is a placeholder: it will say what console and logging covers and how its pieces fit together.
+[[Console]] writes styled, width-aware terminal output (columns, padding, colour) without blocking the other coroutines while the terminal catches up. [[ConsoleLogger]] is a PSR-3 `LoggerInterface` built on it, for application code that logs through the standard interface rather than calling `Console` directly.

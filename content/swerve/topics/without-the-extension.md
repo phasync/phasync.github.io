@@ -5,4 +5,4 @@ order: 8
 status: draft
 ---
 
-This introduction is a placeholder: it will say what code that needs no extension covers and how its pieces fit together.
+Everything in Swerve works without the phasync extension: a handler written with `phasync::sleep()`, `phasync::readable()`/`writable()`, channels, and the primitives built on them stays concurrent either way. What changes without the extension is how much of the rest of PHP — plain `sleep()`, PDO, mysqli, curl, files — cooperates on its own, and how many connections a worker can hold. See [Write sequential PHP](/guides/sequential-php/) and [The phasync extension](/library/phasync-ext/).

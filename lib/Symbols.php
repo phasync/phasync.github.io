@@ -82,6 +82,19 @@ final class Symbols
         return null === $top || null === $member ? $top : ($this->all["{$top['full']}::$member"] ?? null);
     }
 
+    /** `[[Symbol]]` in $html to a link to that symbol's page; a `<pre>` block is left alone. $context names the source for a build failure. */
+    public function linkify(string $html, string $context): string
+    {
+        return \preg_replace_callback('~(<pre.*?</pre>)|\[\[([\w\\\\]+(?:::\w+)?)\]\]~s', function ($m) use ($context) {
+            if (!isset($m[2])) {
+                return $m[1];
+            }
+            $target = $this->find($m[2]) ?? throw new BuildFailure("$context: [[{$m[2]}]] is not a documented symbol");
+
+            return '<a href="' . $target['url'] . '"><code>' . e($target['name']) . '</code></a>';
+        }, $html);
+    }
+
     // ---------------------------------------------------------------- discovery
 
     /** @return list<array{0: string, 1: string}> ['class'|'function', full name] for every PHP file under the autoload paths */

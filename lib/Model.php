@@ -57,6 +57,7 @@ final class Model
             foreach (\glob(__DIR__ . "/../content/$project/topics/*.md") ?: [] as $file) {
                 [$front, $html] = Markdown::file(\file_get_contents($file));
                 $slug = \basename($file, '.md');
+                $html = $this->symbols->linkify($html, "content/$project/topics/$slug.md");
                 foreach (['title', 'summary', 'order'] as $key) {
                     if (!isset($front[$key])) {
                         $this->problem('site', 'topic-file', "$project/$slug", "content/$project/topics/$slug.md: front matter needs $key");

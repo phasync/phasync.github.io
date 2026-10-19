@@ -5,4 +5,4 @@ order: 9
 status: draft
 ---
 
-This introduction is a placeholder: it will say what frameworks covers and how its pieces fit together.
+An adapter turns a framework's own request handling into a `Swerve\RequestHandler`, so the application's code, routes and views run unchanged; `swerve.php` becomes the entry point instead of `public/index.php`. See the [frameworks section](/frameworks/) for which ones have an adapter and what each one covers.

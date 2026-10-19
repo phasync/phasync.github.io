@@ -65,6 +65,8 @@ fetch('/', {method: 'POST', body: 'hello'});
 - An SSE event is `data: <one line>`: JSON-encode messages so that they stay on one line.
 - There is no history. A client that reconnects catches up from your storage.
 
+`Swerve\ServerSentEvents` wraps the formatting above (the headers, the `data:`/`event:`/`id:` lines, the keep-alive) for the common case where you don't need the raw stream yourself; see its reference page for the single-class version of this example.
+
 ## WebSockets
 
 `WebSocket::from()` answers the upgrade and runs the callback once the connection is open. Messages from the browser are events; what goes back is plain sequential code in the callback. The connection closes when the callback returns (1000) or throws (1011, logged).

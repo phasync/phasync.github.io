@@ -5,4 +5,4 @@ order: 2
 status: draft
 ---
 
-This introduction is a placeholder: it will say what waiting and timeouts covers and how its pieces fit together.
+[[phasync::sleep]] waits without blocking the process; [[phasync::readable]] and [[phasync::writable]] wait for a stream to be ready for the next read or write. Every wait in phasync takes an optional timeout and throws the same [[TimeoutException]] when it runs out, whether it is a sleep, a stream, a channel, or [[phasync::await]] itself.

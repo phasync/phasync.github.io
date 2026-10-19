@@ -5,4 +5,4 @@ order: 1
 status: draft
 ---
 
-This introduction is a placeholder: it will say what coroutines covers and how its pieces fit together.
+[[phasync::run]] starts the first coroutine and returns once every coroutine it started has ended. [[phasync::go]] starts another one without waiting for it, and [[phasync::await]] waits for one, returning what it returned or throwing what it threw. Every coroutine belongs to a [[Frame]], the `run()` that owns it; see [Scopes and frames](/topics/phasync/scopes-and-frames/) for what that means for cancellation, and [Advanced: Coroutines](/advanced/coroutines/) for how coroutines are scheduled.

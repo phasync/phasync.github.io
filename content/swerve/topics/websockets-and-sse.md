@@ -5,4 +5,4 @@ order: 3
 status: draft
 ---
 
-This introduction is a placeholder: it will say what websockets and sse covers and how its pieces fit together.
+`Swerve::publish()` and `Swerve::subscribe()` move a message between workers; a request that keeps a [[WebSocket]] or a [[ServerSentEvents]] stream open relays what it receives to its own browser. See [Realtime: SSE and WebSockets](/guides/realtime/) for both as complete chat rooms, and [OrderedChannel](/advanced/ordered-channel/) for when the order between publishers also matters.

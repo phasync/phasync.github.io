@@ -5,4 +5,4 @@ order: 8
 status: draft
 ---
 
-This introduction is a placeholder: it will say what streams and files covers and how its pieces fit together.
+phasync's PSR-7 implementation ([[Request]], [[Response]], [[ServerRequest]], [[Uri]]) is the same shape as any other, with [[StringStream]], [[BufferedStream]] and [[UnbufferedStream]] for the body and [[MultipartStream]] for a `multipart/form-data` upload. A file function such as `fread()` or `fwrite()` blocks the process on its own; see [Waiting and timeouts](/topics/phasync/waiting-and-timeouts/) for what lets it wait without doing that instead.
