@@ -5,6 +5,10 @@ status: draft
 order: 1
 ---
 
+This walks through Swerve, the quickest way to see phasync run a whole application. To add
+phasync to code that already runs under PHP-FPM instead, without a server to install, see
+[Use phasync in a library](/library/use-phasync-in-a-library/).
+
 Swerve needs PHP 8.2 or later on Linux, with the `pcntl`, `posix` and `sockets` extensions. These
 ship with most PHP distributions; `php -m | grep -E 'pcntl|posix|sockets'` lists them if you are
 unsure.

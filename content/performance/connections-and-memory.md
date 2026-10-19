@@ -7,7 +7,7 @@ see_also:
   - Swerve::subscribe
 ---
 
-Measured 2026-09-28/29 on `black` (see [Method](/performance/method/)): swerve 0.1.0-alpha19+ with phasync 2.0.0-alpha14, ext-phasync 0.5.0-alpha13, against RoadRunner 2025.1.15, FrankenPHP 1.12.7, Swoole and OpenSwoole 6.2.3/26.2.0 and ReactPHP. Full setup, every raw run and the scripts are in `benchmarks/servers/SUMMARY.md` of the Swerve repository.
+Measured 2026-09-28/29 on `black` (see [Method](/performance/method/)): swerve 0.1.0-alpha19+ with phasync 2.0.0-alpha14, ext-phasync 0.5.0-alpha13, against RoadRunner 2025.1.15, FrankenPHP 1.12.7, Swoole and OpenSwoole 6.2.3/26.2.0 and ReactPHP. Full setup, every raw run and the scripts are in [`benchmarks/servers/SUMMARY.md`](https://github.com/phasync/swerve/blob/main/benchmarks/servers/SUMMARY.md) of the Swerve repository.
 
 ## A plain 10 ms wait, pushed to each server's limit
 
@@ -35,7 +35,7 @@ Without ext-phasync, Swerve falls back to PHP's `stream_select()`, which is limi
 | ReactPHP | 37 | 36 |
 | Swerve + ext-phasync | 52-53 | 49-59 |
 
-Swerve's per-socket cost is higher than Swoole's and OpenSwoole's C-level connection state, and comparable to ReactPHP's. All three delivered the message to every socket at both sizes. Without ext-phasync, Swerve's workers stopped accepting connections at about 1,014 sockets each (the same `stream_select()` limit) and the fan-out was not delivered.
+At 50,000 sockets, that is about 2.6 GB total for Swerve against 250-290 MB for Swoole and OpenSwoole and 1.8 GB for ReactPHP: a real gap, not a rounding difference. The held state is a parked PHP coroutine plus phasync's own subscription bookkeeping, in PHP; Swoole's and OpenSwoole's is a C struct, which costs less per connection by design. All three delivered the message to every socket at both sizes. Without ext-phasync, Swerve's workers stopped accepting connections at about 1,014 sockets each (the same `stream_select()` limit) and the fan-out was not delivered.
 
 ## What this does not show
 
