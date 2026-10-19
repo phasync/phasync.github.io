@@ -94,6 +94,10 @@ Once requests overlap, Laravel's default SQLite session and cache writes start t
 - **A `WebSocketResponse` callback runs with no application and no real request.** `app()`, Eloquent and the facades throw if you call them inside it. Read what you need from `$request` — the user, validated input — before calling `WebSocketResponse::from()`, and reach for `Handler::run()` to touch Laravel from inside the callback. Its application has no real request behind it (no path, no auth, an empty session that only writes to memory), so don't rely on the session there either.
 - **A worker's memory creeps up slowly under sustained load**, mostly from applications booting into and dropping out of the pool. Recycle workers in production the way you would restart PHP-FPM children — `SIGHUP` triggers a rolling reload — and reload on every deploy; `--watch` does that automatically while you develop.
 
+## Your application
+
+Requests overlap in a worker, each in an application of its own from the pool, so container bindings are per request. What the pool does not separate is the process: static properties, globals and anything your code caches outside the container are shared by every application in the worker. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
+
 ## Debugging
 
 - `Log::debug()` and [[Swerve::log]] both land in Swerve's log next to its own request line (method, path, status, duration) — a better habit than `dd()`, which takes the worker down with it.

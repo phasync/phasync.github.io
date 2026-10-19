@@ -131,6 +131,12 @@ Don't use the router, the session or the ORM's connection inside that coroutine:
 
 DebugKit's plugin builds one panel registry at boot; `Handler`'s reset calls `registry()->reset()` on it before each request, so the toolbar reflects that request alone, and `/debug-kit/toolbar/<id>` keeps working. It costs nothing extra to leave DebugKit loaded between requests — it isn't rebuilt — but it still does its usual per-request work (profiling the request, the SQL log), so treat `DEBUG=true` workers the way you'd treat a debug PHP-FPM pool: fine for staging, not for a worker also carrying production traffic.
 
+## Your application
+
+The adapter runs one request at a time, but the worker outlives every request: a static or a table's state set by one request is still there for the next, and WebSocket callbacks and streams fed by `phasync::go()` run outside the lock, overlapping with other requests. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
+
+Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
+
 ## Debugging
 
 - A worker's standard error is where uncaught warnings and the output of a wrongly-placed `echo` land; `headers_sent()` turns true for the rest of that worker's life after one (sessions still work after it — `Session` doesn't check it).

@@ -103,6 +103,12 @@ Requests don't overlap in Yii itself here, so what's dangerous is code that keep
 
 Nothing here is Swerve-specific: `yiisoft/config`'s merge order and `params.php` run once, at container build, the same as under any other runner. An event listener registered in `events-web.php` lives for the worker, not the request — a listener that accumulates into a property of itself (counting something, say) carries that count across every request the worker serves, which is usually not what a request-scoped listener should do.
 
+## Your application
+
+The adapter runs one request at a time, but the worker outlives every request: a static or a service property set by one request is still there for the next, and code you run in a WebSocket or SSE callback, or in `phasync::go()`, does overlap with other requests. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
+
+Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
+
 ## Debugging
 
 `Swerve::log()` is a PSR logger; it and anything your own listeners write go to Swerve's log alongside its own request lines (method, path, status, duration). `yii-debug`'s panels aren't exercised by the adapter's test suite — treat a debug or profiler service the same as any other container service that accumulates request data: give it a `reset`, or expect it to mix requests. The isolation test in `tests/OneWorkerTest.php` is the pattern worth copying for your own services: set a distinct value per request, send several requests at once, read the value back, and run it both without and with ext-phasync.

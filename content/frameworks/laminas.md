@@ -157,6 +157,12 @@ public function handle(ServerRequestInterface $request): ResponseInterface
 
 See [PSR-15](/frameworks/psr-15/) for what else applies to any PSR-15 application running concurrently on Swerve.
 
+## Your application
+
+Laminas MVC runs one request at a time, but the worker outlives every request, and Mezzio runs requests concurrently: in both, a static or a shared service's property set by one request can be seen by another. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
+
+Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
+
 ## Read next
 
 - [Why code breaks when requests overlap](/learn/why-code-breaks/) and [Per-request state](/learn/per-request-state/)

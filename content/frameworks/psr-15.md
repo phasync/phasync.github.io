@@ -142,10 +142,10 @@ engine, a route cache) is fine to build once there; one that isn't (anything hol
 a query builder with state pending between calls) needs to be built per request or kept off the
 container entirely, in favor of a request attribute.
 
-`setlocale()` and `date_default_timezone_set()` are process state, outside the Scope, the same way: a
-framework that needs them request-scoped registers a `phasync::onScopeChange()` hook once at boot
-(see swerve's README) — not something an application built on Slim typically has to do itself, since
-neither Slim nor this adapter calls either.
+`date_default_timezone_set()` and `Locale::setDefault()` follow the request's `Scope`, so a request
+that changes them affects only itself. `setlocale()` does not: it is process state in PHP itself.
+Use `Locale::setDefault()` and `intl` formatters instead; neither Slim nor this adapter calls
+`setlocale()`.
 
 ## Dangerous under concurrency
 
@@ -174,6 +174,10 @@ vendor/bin/phasync-doctor src
 ```
 
 <!-- TODO-verify: phasync/doctor is not published yet; the commands are from its README and were not run here -->
+
+## Your application
+
+Slim, Mezzio and any other PSR-15 stack run requests concurrently in one worker, so your own code decides whether that is safe: middleware and handlers that keep request state in properties, and container definitions that hand every request the same instance (a `PDO`, a "current user" service), are what breaks. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
 
 ## Debugging
 

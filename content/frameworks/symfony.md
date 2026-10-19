@@ -182,6 +182,10 @@ budget for the kernels you expect in flight at once, not for one.
 the one that called them. A plain controller's stray `echo` goes to swerve's log, not the
 response body; only `StreamedResponse`'s callback output reaches the client.
 
+## Your application
+
+Requests overlap in a worker, each in a kernel of its own from the pool, so services are per request. Static properties, globals and process-wide settings are not: they are shared by every kernel in the worker. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
+
 ## Debugging
 
 Run one worker during development (`vendor/bin/swerve -w 1 -v --public=public`): request order
