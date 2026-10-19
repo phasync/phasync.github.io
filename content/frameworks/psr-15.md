@@ -1,6 +1,6 @@
 ---
 title: "PSR-15"
-description: "Run Slim, Mezzio or your own PSR-15 handler on Swerve: no adapter, requests overlap in a worker."
+description: "Run Slim, Mezzio or your own PSR-15 handler on Swerve with the swerve-psr15 adapter: one boot per worker, requests overlap."
 status: draft
 order: 7
 see_also:
@@ -11,33 +11,30 @@ topic: frameworks
 role: guide
 ---
 
-**Concurrency: concurrent.** `swerve.php` returns the handler and Swerve calls it for every request in a coroutine, so requests that wait overlap in one worker. What the handler keeps between requests is yours, and it is the first thing to check.
+**Concurrency: concurrent.** `swerve.psr15.php` returns your `Psr\Http\Server\RequestHandlerInterface`,
+and the adapter runs it once per request in a coroutine of its own, so requests that wait overlap in
+one worker. What your handler, your middleware and your container keep between requests is yours to
+watch — the first thing to check when two requests answer each other's data.
 
 ## Install and run
 
-Swerve serves any file that returns a PSR-15 `RequestHandlerInterface`. For Slim:
-
 ```bash
-composer require phasync/swerve slim/slim slim/psr7
+composer require phasync/swerve-psr15 slim/slim slim/psr7
 ```
 
-<!-- TODO-verify: the package name phasync/swerve and its availability on Packagist were not checked on 2026-10-03; the stability flags needed while Swerve is in beta are in the adapters' READMEs -->
+<!-- TODO-verify: phasync/swerve-psr15's tagged release and Packagist listing were not checked here; swerve itself tagged 0.1.0 today -->
 
 ```php
-<?php // swerve.php
+<?php // swerve.psr15.php
 
-require __DIR__ . '/vendor/autoload.php';
-
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Slim\Factory\AppFactory;
 use Swerve\Swerve;
 
-$app = AppFactory::create();
-$app->addBodyParsingMiddleware();                            // JSON and form bodies
-$app->addErrorMiddleware(true, true, false, Swerve::log());  // error pages; errors in Swerve's log
-$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response) {
-    $response->getBody()->write('Hello, World');
+$app = AppFactory::create();                                  // slim/psr7 installed: its factories build the responses
+$app->addBodyParsingMiddleware();
+$app->addErrorMiddleware(true, true, false, Swerve::log());   // error pages; errors in Swerve's log
+$app->get('/hello/{name}', function ($request, $response, array $args) {
+    $response->getBody()->write("Hello, {$args['name']}");
 
     return $response;
 });
@@ -46,49 +43,128 @@ return $app;
 ```
 
 ```bash
-vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php
+vendor/bin/swerve --http=0.0.0.0:8080 --public=public
 ```
 
-This was run with Slim 4: `GET /` answers 200 `Hello, World`. A plain handler needs no framework: return an object implementing `RequestHandlerInterface` that answers with `new phasync\Psr\Response(200, [], 'Hello')`. <!-- TODO-verify: the plain-handler line was not run here; the constructor is from phasync's source --> [[Swerve::log]] returns the PSR-3 logger that writes to Swerve's log.
+Installing `phasync/swerve-psr15` adds an adapter: with it the only one installed, `vendor/bin/swerve`
+finds it from its own `composer.json` and calls its entry point instead of loading `swerve.php`. The
+entry requires the application's own Composer autoloader, then `swerve.psr15.php`, once per worker,
+and keeps whatever it returns for every request that worker serves. A file that is missing, or returns
+anything but a `RequestHandlerInterface`, stops the worker with exit code 2 and says so in the log —
+`swerve.psr15.php not found`, or `returned stdClass; it must return a Psr\Http\Server\RequestHandlerInterface`.
+A Mezzio `Application` is a request handler too — see the [Laminas page](/frameworks/laminas/#mezzio).
 
-Mezzio works the same way: its `Application` is a request handler. The Laminas page has its `swerve.php`: [Laminas](/frameworks/laminas/#mezzio).
+## What the adapter builds, and what it leaves to you
 
-## What the adapter changes
-
-There is no adapter. Swerve loads `swerve.php` once per worker, so the application, the container and the routes are built once and shared by every request that worker serves.
+- **The request is always `phasync\Psr\ServerRequest`**, not an object your framework's own
+  `ServerRequestFactoryInterface` constructed. Its body is a lazy stream on the connection — nothing
+  is read before your code reads it, and `Expect: 100-continue` is answered by that first read.
+  `getParsedBody()` and `getUploadedFiles()` parse a form body
+  (`application/x-www-form-urlencoded` or `multipart/form-data`) on first call, under PHP's own
+  `post_max_size`, `upload_max_filesize`, `max_file_uploads` and `max_input_vars`, exactly as `$_POST`
+  and `$_FILES` would be filled; anything else stays an unparsed stream. `getServerParams()` has
+  `REQUEST_METHOD`, `REQUEST_URI`, `SERVER_PROTOCOL`, `REMOTE_ADDR`/`REMOTE_PORT`,
+  `SERVER_ADDR`/`SERVER_PORT` and, behind a trusted proxy, `HTTPS`.
+- **The response can be anything implementing `ResponseInterface`.** The bridge sends it by calling
+  `getStatusCode()`, `getHeaders()` and `getBody()` — it never checks which PSR-17 package built it.
+  Composer accepts `psr/http-message` 1 or 2 either way (`^1.0 || ^2.0`); whatever your framework's
+  factory package needs is what gets installed. `slim/psr7`, Nyholm or laminas-diactoros all work the
+  same way here.
+- **The body streams both ways.** A response body is read in chunks and written as they come out, so
+  a stream larger than memory is fine as long as it produces its bytes piecemeal; it gets a
+  `Content-Length` when you set one or `getSize()` knows it, and is chunked otherwise. A `withBody()`
+  in middleware is honoured for the same reason — the bridge reads whatever stream is on the response
+  it was handed, not the one the route originally wrote to.
 
 ## Concurrency
 
-Every request runs in its own coroutine. A request waits in a coroutine (`phasync::sleep()`, phasync's HTTP client, sockets) and with the phasync extension `sleep()`, PDO, mysqli and curl wait that way too. Without the extension those hold the worker.
-
-This was run: two requests to a Slim route that waits 0.2 seconds, each with its own `X-User` header, both answered in about 0.2 seconds, each with its own user.
+Every request runs in its own coroutine. A route that waits (`phasync::sleep()`, phasync's own HTTP
+client, a socket) lets the worker answer other requests meanwhile; with ext-phasync loaded, `sleep()`,
+PDO, mysqli and curl wait that way too, without the application's code changing at all.
 
 ```php
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface {
+$app->add(function ($request, $next) {
     return $next->handle($request->withAttribute('user', $request->getHeaderLine('X-User')));
 });
 
-$app->get('/me', function (ServerRequestInterface $request, ResponseInterface $response) {
-    phasync::sleep(0.2);                                   // another request runs meanwhile
+$app->get('/me', function ($request, $response) {
+    phasync::sleep(0.2);                                        // another request runs meanwhile
     $response->getBody()->write('hello ' . $request->getAttribute('user'));
 
     return $response;
 });
 ```
 
+Two requests to `/me`, one with `X-User: ann` and one with `X-User: bob`, both answer in about 0.2 s,
+each with its own user — because `user` travels on the request's attributes, not on a property.
+
+## Server-Sent Events
+
+A route returns `Swerve\Psr15\EventStreamResponse::stream()` instead of writing a body. The callback
+runs after the route returns, writes with swerve's `ServerSentEvents`, and ends the stream by
+returning; a client that left makes `send()` throw `phasync\IOException` — let it leave the loop.
+
+```php
+use Swerve\Psr15\EventStreamResponse;
+use Swerve\ServerSentEvents;
+use Swerve\Swerve;
+
+$app->get('/news', function ($request, $response) {
+    return EventStreamResponse::stream(function (ServerSentEvents $sse) {
+        foreach (Swerve::subscribe('news', heartbeat: 15) as $message) {
+            null === $message ? $sse->comment('keep-alive') : $sse->send($message, event: 'news');
+        }
+    }, headers: ['access-control-allow-origin' => '*']);
+});
 ```
-GET /me  X-User: ann  ->  hello ann
-GET /me  X-User: bob  ->  hello bob
-```
+
+It is an ordinary 200 response underneath: a CORS or logging middleware's `with*()` clones it and
+keeps the callback, so headers added on the way out (and the ones set in `headers:` above) reach the
+client with the head. `content-type`, `cache-control` and `x-accel-buffering` are swerve's own, and
+any value your response sets for those three is ignored. `Last-Event-ID` is on the request as a normal
+header, and also on `ServerSentEvents::lastEventId()`. A `HEAD` request gets the head and no body, and
+the callback never runs — there is nothing to stream to.
+
+A PSR-15 route can upgrade to a WebSocket the same way, with `Swerve\Psr15\WebSocketResponse::from()`:
+the handler it runs is swerve's own `WebSocket`, so swerve's realtime docs apply unchanged. Take
+anything you need from the request (the user, a session) before returning — the handler runs after
+the route, over the request's body, and does not see the request object itself.
+
+## What stays per request, what doesn't
+
+Each request runs in a `Scope` of its own (`Scope::getCurrent()`), shared by the coroutines it starts
+and freed when the request ends. Request attributes live there; so does anything you key by
+`Scope::getCurrent()` yourself when attributes don't fit. Everything else your `swerve.psr15.php`
+builds — the Slim app, a container you attach with `AppFactory::setContainer()`, compiled routes,
+static properties, globals — belongs to the worker, not the request, and is shared by every request
+running in it at once, including concurrently. A container entry that is safe to share (a template
+engine, a route cache) is fine to build once there; one that isn't (anything holding the current user,
+a query builder with state pending between calls) needs to be built per request or kept off the
+container entirely, in favor of a request attribute.
+
+`setlocale()` and `date_default_timezone_set()` are process state, outside the Scope, the same way: a
+framework that needs them request-scoped registers a `phasync::onScopeChange()` hook once at boot
+(see swerve's README) — not something an application built on Slim typically has to do itself, since
+neither Slim nor this adapter calls either.
 
 ## Dangerous under concurrency
 
-- **Request state belongs in the request's attributes**, as above. A property on a middleware or a service object that holds the user, the tenant or the locale is shared by every request in the worker: [Per-request state](/learn/per-request-state/). When it has to live outside the request, key it by `Scope::getCurrent()`.
-- **Shared services hold the last request.** Mezzio's `UrlHelper` holds the last route result; called without a route name it returns the URL of another request in flight. Check what any service you inject keeps between calls: [Service lifetimes](/learn/service-lifetimes/).
+- **Request state belongs in the request's attributes**, as above. A property on a middleware object
+  that holds the user, the tenant or the locale is shared by every request in the worker:
+  [Per-request state](/learn/per-request-state/).
+- **Shared services hold the last request.** Mezzio's `UrlHelper` holds the last route result; called
+  without a route name it can answer with another request's URL. Check what any service you inject
+  keeps between calls: [Service lifetimes](/learn/service-lifetimes/).
 - **Singletons that capture scoped state** are captive: [Captive dependencies](/learn/captive-dependencies/).
-- **Connections** are shared by every request in the worker: [Connections and pools](/learn/connections-and-pools/).
-- **PHP's session module, `$_SESSION` and `ob_*`** belong to the process. Use a PSR-15 session middleware that keeps the session in a request attribute.
-- **`exit` and `die()`** end the worker.
+- **A PDO or mysqli handle built once in `swerve.psr15.php` is one connection, shared by every request
+  the worker serves.** Without ext-phasync a query on it blocks the whole worker for its duration —
+  short queries cost little, long ones cost every request in flight. With ext-phasync, MySQL through
+  PDO or mysqli waits as a coroutine instead (PostgreSQL's libpq — `pdo_pgsql`, `pgsql` — still
+  blocks). Either way, don't hand the same connection to two requests that might both be mid-query at
+  once: [Connections and pools](/learn/connections-and-pools/).
+- **PHP's session module, `$_SESSION` and `ob_*`** belong to the process. Use a PSR-15 session
+  middleware that keeps the session in a request attribute, not these.
+- **`exit` and `die()`** end the worker, and every request it was serving.
 
 Run `phasync/doctor` over your code:
 
@@ -98,6 +174,18 @@ vendor/bin/phasync-doctor src
 ```
 
 <!-- TODO-verify: phasync/doctor is not published yet; the commands are from its README and were not run here -->
+
+## Debugging
+
+- **Changes don't show**: workers load the application once and don't watch files; run with
+  `--watch` while developing, or reload with `kill -HUP <master pid>`.
+- **`swerve.psr15.php not found`, or exit code 2 with "returned X; it must return a ..."**: the file
+  is missing, or didn't return a `RequestHandlerInterface` — the log line says what it returned.
+- **`Can't create a coroutine outside of a coroutine`**: `phasync::go()` ran outside swerve's event
+  loop — a script invoked on its own, not a request or `swerve.psr15.php` itself while it builds the
+  application.
+- **`-vv`** logs a debug line per request; **`kill -QUIT <worker pid>`** makes a stuck worker log what
+  it's serving and where.
 
 ## Read next
 
