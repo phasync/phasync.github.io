@@ -11,63 +11,107 @@ topic: frameworks
 role: guide
 ---
 
-> **Low concurrency.** A worker serves one Yii request at a time, as a PHP-FPM child does. A request that waits for a database or an API holds its worker, also with the phasync extension. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/).
-
-The adapter serializes requests with [[phasync\Util\Synchronized]]. Yii keeps a request's state in shared services of its container, and its session is PHP's native session, one per process: a container per request in flight would still share it.
+**Concurrency: serialized.** A worker runs one Yii request at a time ([[phasync\Util\Synchronized]]), as a PHP-FPM child does. Yii keeps a request's state in the container's own services — `CurrentRoute`, `CurrentUser`, the session — and a container per request in flight would still share PHP's native session, so the adapter takes a different route from Laravel's or Symfony's pooled applications: it locks. Yii 3 (`yiisoft/app`) only; Yii 2 is not covered.
 
 ## Install and run
 
 ```bash
-composer config minimum-stability beta
+composer config minimum-stability dev
 composer config prefer-stable true
-composer require phasync/swerve-yii
+composer config repositories.swerve-psr15 vcs https://github.com/phasync/swerve-psr15
+composer require 'phasync/swerve:dev-main as 0.1.0-beta7' phasync/swerve-yii
 ```
 
-<!-- TODO-verify: phasync/swerve-yii was not on Packagist on 2026-10-03; the lines are from the adapter's README -->
+```bash
+vendor/bin/swerve --adapter=yii --http=0.0.0.0:8080 --public=public
+```
+
+That's the setup: the `yii` adapter runs the skeleton's `src/bootstrap.php` (the autoloader and `.env`) and serves the application, with `APP_ENV` and `APP_DEBUG` read from the environment, as the skeleton already reads them. `public/index.php` is untouched, so the same application still answers under PHP-FPM.
+
+For a debug flag or environment that isn't `APP_ENV`/`APP_DEBUG`, write `swerve.php` instead and run `--adapter=swerve`:
 
 ```php
 <?php // swerve.php, next to composer.json
 
 require __DIR__ . '/src/bootstrap.php'; // yiisoft/app's: the autoloader and .env
 
-return new Swerve\Yii\Handler(__DIR__);
+return Swerve\Psr15\Bridge::wrap(new Swerve\Yii\Handler(__DIR__, debug: false, environment: 'prod'));
 ```
 
-```bash
-vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php
+## How it runs
+
+- **Once per worker:** `Swerve\Yii\Handler`'s constructor builds the configuration and the container with the skeleton's `bootstrap-web`, `events-web`, `di-web` and `params-web` groups — the same groups `yiisoft/yii-runner-roadrunner` uses — registers the container's `ErrorHandler`, runs the bootstrap group and starts the `Application`, dispatching `ApplicationStartup`.
+- **Per request:** `Application::handle()` runs the middleware stack; an exception that escapes it goes to `ErrorCatcher`. Then `AfterEmit` is dispatched — before Swerve sends the response, not after as under PHP-FPM — `StateResetter` runs the `reset` callbacks of the container's definitions (`CurrentRoute`, `RequestProvider`, `Session`, `CurrentUser`, `WebView`, the translator's locale, the URL generator's default arguments, ...), and `session_id('')` plus `$_SESSION = []` clear PHP's native session for the next request.
+- **One known gap:** `yiisoft/session`'s `Flash` remembers the last session id it saw and has no `reset`, so without a workaround the same visitor's next request would see an already-shown flash message again ([yiisoft/session#2](https://github.com/yiisoft/session/issues/2), open upstream since 2019). The adapter clears Flash's private session id itself after every request; this is a standing [tracked issue](https://github.com/phasync/swerve-yii/issues/1) until it's fixed upstream.
+
+## What a request-scoped service of your own needs
+
+Anything in your container that keeps a value across a request's lifetime needs a `reset` definition, the way `yiisoft/user`'s own setup does:
+
+```php
+// config/web/di/user.php
+use Yiisoft\User\CurrentUser;
+
+return [
+    CurrentUser::class => [
+        'withSession()' => [Reference::to(SessionInterface::class)],
+        'reset'         => function () {
+            $this->clear();
+        },
+    ],
+];
 ```
 
-<!-- TODO-verify: the Handler line and the bootstrap require are from the adapter's README; not run here -->
+Without one, the next request — on the same worker, which is guaranteed to be a *different* visitor's request given the lock — reads what the last request left. The adapter's test suite checks this directly: `tests/OneWorkerTest.php` fires eight requests at once at a single worker, each setting its own value in `CurrentRoute`, `RequestProvider`, the session, `Flash`, `CurrentUser`, the translator's locale, `WebView`'s title and the URL generator's default arguments, then reads them back after a wait — and repeats the round in the sessions the first round started, to catch anything the reset missed.
 
-## What the adapter changes
+## Sessions
 
-- **Once per worker:** the configuration and container are built, the `bootstrap-web` group runs and `Application::start()` dispatches `ApplicationStartup`, as in yiisoft/yii-runner-roadrunner.
-- **After each request:** `AfterEmit` is dispatched, `StateResetter` runs the `reset` callbacks of the container's definitions (`CurrentRoute`, `Session`, `CurrentUser` and others), and PHP's `session_id()` and `$_SESSION` are cleared.
-- **Sessions** are yiisoft/session through PHP's session module, with the save handler you configure.
-- **Streams and WebSockets** go on after the request's turn and do not hold the worker.
+`yiisoft/session` sits on PHP's native session module: one `$_SESSION` and one `session_status()` per worker process, not per request. The lock means only one request has a session open at a time, so this is safe as written, but it is why the adapter can't simply hand out a container per overlapping request the way the Laravel and Symfony adapters do — PHP's session would still leak between them. A visitor without a cookie gets a fresh session even right after one with a cookie was served by the same worker.
 
-## Concurrency
+## Dangerous under a worker that outlives the request
 
-One request at a time per worker. Swerve's other work (connections, static files, WebSockets, streamed bodies) goes on meanwhile. The adapter's [docs/concurrency.md](https://github.com/phasync/swerve-yii/blob/main/docs/concurrency.md) says why and what was tried.
+Requests don't overlap in Yii itself here, so what's dangerous is code that keeps running, or reads container state, after the lock releases:
 
-## Dangerous under concurrency
+- **A streamed body, an SSE producer or a WebSocket callback runs after the reset.** Read the user id, route arguments and session values *before* returning the response, and close over them — don't read `CurrentUser` or `CurrentRoute` from inside the callback, since by then the worker may be serving anyone:
 
-Requests do not overlap in Yii itself, so the danger is in what outlives the request:
+  ```php
+  use Swerve\Psr15\WebSocketResponse;
+  use Swerve\WebSocket;
+  use Yiisoft\User\CurrentUser;
 
-- **A service of your own that keeps request state** needs a `reset` callback in its container definition, as Yii's own services have. Without one the next request sees that state: [Service lifetimes](/learn/service-lifetimes/).
-- **A streamed body, an SSE producer or a WebSocket callback** runs after the reset. Take the user id, route arguments and session values before returning the response. Read inside it, those services show another request's state, another visitor's user included: [Long-lived connections](/learn/long-lived-connections/).
-- **The application's `ErrorHandler`** is registered for the whole worker, so a PHP warning becomes an `ErrorException` also in a coroutine that outlives its request.
-- **`AfterEmit`** is dispatched when the application returns the response, before Swerve sends it.
-- **`exit`, `die` and `dd()`** end the worker.
+  final readonly class NewsAction   // Route::get('/news')->action(NewsAction::class)
+  {
+      public function __invoke(ServerRequestInterface $request, CurrentUser $user): ResponseInterface
+      {
+          $userId = $user->getId();   // taken now, while this request still holds the lock
 
-Run `phasync/doctor` over your code:
+          return WebSocketResponse::from($request, static function (WebSocket $ws) use ($userId) {
+              foreach (Swerve::subscribe("user:$userId") as $message) {
+                  $ws->send($message);
+              }
+          });
+      }
+  }
+  ```
 
-```bash
-composer require --dev phasync/doctor
-vendor/bin/phasync-doctor src
-```
+  Server-Sent Events work the same way with `Swerve\Psr15\EventStreamResponse::stream()`: the callback also runs after the route returned and the reset ran.
+- **The application's `ErrorHandler` is registered once, for the whole worker's life.** A PHP warning becomes an `ErrorException` — a 500 page in an ordinary request, as under PHP-FPM — in any coroutine that outlives its request too, such as a stream's producer.
+- **`exit`, `die` and `dd()` end the worker**, and every request it was serving with it.
+- **On a shutdown or reload, Swerve stops a worker at once.** A request still waiting is answered `503` by Swerve, not `ErrorCatcher`'s page — `config/events-web.php` of the adapter listens for the `WorkerStoppingException` the `ErrorCatcher` middleware caught and throws it back on so Swerve can take over. Size `--workers` the way you'd size PHP-FPM's `pm.max_children`: a request that waits on a database or an API holds its worker, the lock included, even with ext-phasync loaded.
 
-<!-- TODO-verify: phasync/doctor is not published yet; the commands are from its README and were not run here -->
+## Config, params, events
+
+Nothing here is Swerve-specific: `yiisoft/config`'s merge order and `params.php` run once, at container build, the same as under any other runner. An event listener registered in `events-web.php` lives for the worker, not the request — a listener that accumulates into a property of itself (counting something, say) carries that count across every request the worker serves, which is usually not what a request-scoped listener should do.
+
+## Debugging
+
+`Swerve::log()` is a PSR logger; it and anything your own listeners write go to Swerve's log alongside its own request lines (method, path, status, duration). `yii-debug`'s panels aren't exercised by the adapter's test suite — treat a debug or profiler service the same as any other container service that accumulates request data: give it a `reset`, or expect it to mix requests. The isolation test in `tests/OneWorkerTest.php` is the pattern worth copying for your own services: set a distinct value per request, send several requests at once, read the value back, and run it both without and with ext-phasync.
+
+## Compatibility
+
+| Yii | PHP | ext-phasync |
+|---|---|---|
+| 3 (`yiisoft/app` 1.x) | 8.2 – 8.5 | optional; tested with and without |
 
 ## Read next
 
