@@ -189,11 +189,11 @@ To find candidates in your own code, run [phasync/doctor](https://github.com/pha
 <!-- doctor-report:begin -->
 ### What phasync/doctor reports on a fresh Symfony app
 
-symfony/skeleton v7.4.99 with phasync/swerve-symfony 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+symfony/skeleton v8.1.99 with phasync/swerve-symfony 0.1.2, scanned by phasync/doctor 0.1.1 on 2026-10-19.
 
 swerve-symfony runs requests concurrently, each on a kernel of its own from a pool (phasync\Util\Pool); kernel.reset services are reset between requests. Statics of your own are shared by the kernels of a worker. PHP's session module is one per process: use Swerve\Symfony\SessionStorageFactory.
 
-It reports nothing on this skeleton on its own code.
+It reports nothing on this skeleton's own code.
 
 See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
 <!-- doctor-report:end -->

@@ -111,7 +111,7 @@ Two routes would let the adapter (or your application) drop the lock for the sta
 <!-- doctor-report:begin -->
 ### What phasync/doctor reports on a fresh Yii app
 
-yiisoft/app 1.4.0 with phasync/swerve-yii 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+yiisoft/app 1.4.0 with phasync/swerve-yii 0.1.1, scanned by phasync/doctor 0.1.1 on 2026-10-19.
 
 swerve-yii runs one request at a time per worker, behind a phasync\Util\Synchronized lock: Yii keeps a request's state in shared container services (reset by StateResetter after each request) and the session is PHP's native one per process. A service of your own that keeps request state needs a `reset` callback in its definition. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
 
@@ -123,13 +123,6 @@ swerve-yii runs one request at a time per worker, behind a phasync\Util\Synchron
 | warning | process-setting | `c3.php: $_SERVER` | `c3.php:30` | Is this set to the same value for every request? |
 | warning | process-setting | `c3.php: ini_set()` | `c3.php:123` | Is this set to the same value for every request? |
 | warning | process-setting | `public/index.php: $_SERVER` | `public/index.php:37` | Is this set to the same value for every request? |
-| warning | process-setting | `App\Tests\Unit\EnvironmentTest::_after(): putenv()` | `tests/Unit/EnvironmentTest.php:32` | Is this set to the same value for every request? |
-| warning | process-setting | `App\Tests\Unit\EnvironmentTest::_after(): $_ENV` | `tests/Unit/EnvironmentTest.php:33` | Is this set to the same value for every request? |
-| warning | process-setting | `App\Tests\Unit\EnvironmentTest::testInvalidAppEnvThrows(): putenv()` | `tests/Unit/EnvironmentTest.php:66` | Is this set to the same value for every request? |
-| warning | process-setting | `App\Tests\Unit\EnvironmentTest::setEnv(): putenv()` | `tests/Unit/EnvironmentTest.php:163` | Is this set to the same value for every request? |
-| warning | process-setting | `App\Tests\Unit\EnvironmentTest::setEnv(): $_ENV` | `tests/Unit/EnvironmentTest.php:164` | Is this set to the same value for every request? |
-| warning | process-setting | `App\Tests\Unit\EnvironmentTest::unsetEnv(): putenv()` | `tests/Unit/EnvironmentTest.php:170` | Is this set to the same value for every request? |
-| warning | process-setting | `App\Tests\Unit\EnvironmentTest::unsetEnv(): $_ENV` | `tests/Unit/EnvironmentTest.php:171` | Is this set to the same value for every request? |
 | warning | response-output | `__c3_error(): header()` | `c3.php:52` | Is this part of the response? |
 | warning | response-output | `__c3_error(): setcookie()` | `c3.php:53` | Is this part of the response? |
 | info | process-setting | `c3.php: set_time_limit()` | `c3.php:356` | Is this set to the same value for every request? |

@@ -83,9 +83,7 @@ $frameworks = [
     'symfony' => [
         'title' => 'Symfony',
         'skeleton' => 'symfony/skeleton',
-        // symfony/skeleton's own extra.symfony.require locks every symfony/* package to the
-        // skeleton's version; swerve-symfony supports 6.4 and 7.4, not the newest major.
-        'create' => 'symfony/skeleton:7.4.*',
+        'create' => 'symfony/skeleton',
         'adapter' => 'phasync/swerve-symfony',
         'php' => 'php',
     ],

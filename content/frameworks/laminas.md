@@ -163,7 +163,7 @@ Two routes would let the adapter (or your application) drop the lock for the sta
 <!-- doctor-report:begin -->
 ### What phasync/doctor reports on a fresh Laminas app
 
-laminas/laminas-mvc-skeleton 2.4.0 with phasync/swerve-laminas 0.1.0, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+laminas/laminas-mvc-skeleton 2.4.0 with phasync/swerve-laminas 0.1.0, scanned by phasync/doctor 0.1.1 on 2026-10-19.
 
 swerve-laminas runs one request at a time per worker, behind a phasync\Util\Synchronized lock: $_SERVER, PHP's session and $_SESSION, laminas-session's default session manager and view-helper statics belong to the worker, not the request. Mezzio runs concurrently on swerve-psr15. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
 

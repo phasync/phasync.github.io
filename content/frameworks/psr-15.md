@@ -173,7 +173,7 @@ To find candidates in your own code, run [phasync/doctor](https://github.com/pha
 <!-- doctor-report:begin -->
 ### What phasync/doctor reports on a fresh PSR-15 app
 
-slim/slim-skeleton 4.5.0 with phasync/swerve-psr15 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+slim/slim-skeleton 4.5.0 with phasync/swerve-psr15 0.1.1, scanned by phasync/doctor 0.1.1 on 2026-10-19.
 
 swerve-psr15 runs PSR-15 requests concurrently in one worker: a middleware or handler keeping request state in a property, or a container definition handing out one shared instance (a PDO connection), is shared by overlapping requests.
 

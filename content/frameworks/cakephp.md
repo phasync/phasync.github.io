@@ -134,7 +134,7 @@ Two routes would let the adapter (or your application) drop the lock for the sta
 <!-- doctor-report:begin -->
 ### What phasync/doctor reports on a fresh CakePHP app
 
-cakephp/app 5.4.0 with phasync/swerve-cakephp 0.1.0, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+cakephp/app 5.4.0 with phasync/swerve-cakephp 0.1.0, scanned by phasync/doctor 0.1.1 on 2026-10-19.
 
 swerve-cakephp runs one request at a time per worker, behind a phasync\Util\Synchronized lock: Router's current request, Configure, the global event manager, the table registry, the locale, the time zone, the session and the output buffers are CakePHP's per-process state; the adapter restores them after boot for each request. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
 
@@ -146,7 +146,6 @@ swerve-cakephp runs one request at a time per worker, behind a phasync\Util\Sync
 | warning | process-setting | `config/bootstrap.php: ini_set()` | `config/bootstrap.php:122` | Is this set to the same value for every request? |
 | warning | process-setting | `webroot/index.php: $_SERVER` | `webroot/index.php:20` | Is this set to the same value for every request? |
 | info | scope-managed | `config/bootstrap.php: date_default_timezone_set()` | `config/bootstrap.php:111` |  |
-| info | session | `tests/bootstrap.php: session` | `tests/bootstrap.php:43` | Whose session does this read or write when requests share the worker? |
 
 See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
 <!-- doctor-report:end -->

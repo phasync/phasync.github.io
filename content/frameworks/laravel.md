@@ -101,7 +101,7 @@ To find candidates in your own code, run [phasync/doctor](https://github.com/pha
 <!-- doctor-report:begin -->
 ### What phasync/doctor reports on a fresh Laravel app
 
-laravel/laravel v13.11.0 with phasync/swerve-laravel 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+laravel/laravel v13.11.0 with phasync/swerve-laravel 0.1.1, scanned by phasync/doctor 0.1.1 on 2026-10-19.
 
 swerve-laravel runs requests concurrently, each in an application of its own from a pool (phasync\Util\Pool), reset by Octane's listeners; a lock is held only around echoing streamed responses. Laravel's own state is per application; statics and globals in your code are not reset. Views buffer output: a wait while a view renders (a lazily loaded relation, with ext-phasync) mixes the output of requests that overlap there.
 

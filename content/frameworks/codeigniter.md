@@ -144,7 +144,7 @@ Two routes would let the adapter (or your application) drop the lock for the sta
 <!-- doctor-report:begin -->
 ### What phasync/doctor reports on a fresh CodeIgniter app
 
-codeigniter4/appstarter v4.7.5 with phasync/swerve-codeigniter 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+codeigniter4/appstarter v4.7.5 with phasync/swerve-codeigniter 0.1.1, scanned by phasync/doctor 0.1.1 on 2026-10-19.
 
 swerve-codeigniter runs one request at a time per worker, behind a phasync\Util\Synchronized lock: CodeIgniter shares its services, config() and model() instances, the default locale, $_SESSION and one database connection per worker. Services in WorkerMode::$persistentServices live as long as the worker. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
 
