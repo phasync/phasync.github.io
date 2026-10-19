@@ -170,6 +170,23 @@ Slim, Mezzio and any other PSR-15 stack run requests concurrently in one worker,
 
 To find candidates in your own code, run [phasync/doctor](https://github.com/phasync/doctor) from the application root: `composer require --dev phasync/doctor`, then `vendor/bin/phasync-doctor`. It reads `composer.lock`, says which adapter you run and whether requests overlap, and reports each static, global, shared connection or process setting with the sites that write and read it.
 
+<!-- doctor-report:begin -->
+### What phasync/doctor reports on a fresh PSR-15 app
+
+slim/slim-skeleton 4.5.0 with phasync/swerve-psr15 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+
+swerve-psr15 runs PSR-15 requests concurrently in one worker: a middleware or handler keeping request state in a property, or a container definition handing out one shared instance (a PDO connection), is shared by overlapping requests.
+
+| Severity | Rule | Symbol | Location | Question |
+| --- | --- | --- | --- | --- |
+| warning | session | `App\Application\Middleware\SessionMiddleware::process(): session` | `src/Application/Middleware/SessionMiddleware.php:20` | Whose session does this read or write when requests share the worker? |
+| warning | output-buffering | `App\Application\ResponseEmitter\ResponseEmitter::emit(): ob_get_contents()` | `src/Application/ResponseEmitter/ResponseEmitter.php:32` | Can the request wait (a query, an HTTP call, a sleep) while this buffer is open? |
+| warning | output-buffering | `App\Application\ResponseEmitter\ResponseEmitter::emit(): ob_clean()` | `src/Application/ResponseEmitter/ResponseEmitter.php:33` | Can the request wait (a query, an HTTP call, a sleep) while this buffer is open? |
+| info | global-handler | `public/index.php: register_shutdown_function()` | `public/index.php:67` | Does this run for every request? |
+
+See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
+<!-- doctor-report:end -->
+
 ## Debugging
 
 - **Changes don't show**: workers load the application once and don't watch files; run with

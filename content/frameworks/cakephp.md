@@ -131,6 +131,26 @@ To find candidates in your own code, run [phasync/doctor](https://github.com/pha
 
 Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
 
+<!-- doctor-report:begin -->
+### What phasync/doctor reports on a fresh CakePHP app
+
+cakephp/app 5.4.0 with phasync/swerve-cakephp 0.1.0, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+
+swerve-cakephp runs one request at a time per worker, behind a phasync\Util\Synchronized lock: Router's current request, Configure, the global event manager, the table registry, the locale, the time zone, the session and the output buffers are CakePHP's per-process state; the adapter restores them after boot for each request. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
+
+| Severity | Rule | Symbol | Location | Question |
+| --- | --- | --- | --- | --- |
+| error | exit | `bin/cake.php: exit` | `bin/cake.php:10` | Can this run while the worker serves a request? |
+| error | exit | `config/bootstrap.php: exit` | `config/bootstrap.php:88` | Can this run while the worker serves a request? |
+| warning | process-setting | `config/bootstrap.php: mb_internal_encoding()` | `config/bootstrap.php:116` | Is this set to the same value for every request? |
+| warning | process-setting | `config/bootstrap.php: ini_set()` | `config/bootstrap.php:122` | Is this set to the same value for every request? |
+| warning | process-setting | `webroot/index.php: $_SERVER` | `webroot/index.php:20` | Is this set to the same value for every request? |
+| info | scope-managed | `config/bootstrap.php: date_default_timezone_set()` | `config/bootstrap.php:111` |  |
+| info | session | `tests/bootstrap.php: session` | `tests/bootstrap.php:43` | Whose session does this read or write when requests share the worker? |
+
+See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
+<!-- doctor-report:end -->
+
 ## Debugging
 
 - A worker's standard error is where uncaught warnings and the output of a wrongly-placed `echo` land; `headers_sent()` turns true for the rest of that worker's life after one (sessions still work after it — `Session` doesn't check it).

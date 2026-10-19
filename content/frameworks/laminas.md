@@ -160,6 +160,22 @@ To find candidates in your own code, run [phasync/doctor](https://github.com/pha
 
 Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
 
+<!-- doctor-report:begin -->
+### What phasync/doctor reports on a fresh Laminas app
+
+laminas/laminas-mvc-skeleton 2.4.0 with phasync/swerve-laminas 0.1.0, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+
+swerve-laminas runs one request at a time per worker, behind a phasync\Util\Synchronized lock: $_SERVER, PHP's session and $_SESSION, laminas-session's default session manager and view-helper statics belong to the worker, not the request. Mezzio runs concurrently on swerve-psr15. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
+
+| Severity | Rule | Symbol | Location | Question |
+| --- | --- | --- | --- | --- |
+| error | exit | `bin/clear-config-cache.php: exit` | `bin/clear-config-cache.php:15` | Can this run while the worker serves a request? |
+| warning | process-setting | `bin/clear-config-cache.php: chdir()` | `bin/clear-config-cache.php:7` | Is this set to the same value for every request? |
+| warning | process-setting | `public/index.php: chdir()` | `public/index.php:11` | Is this set to the same value for every request? |
+
+See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
+<!-- doctor-report:end -->
+
 ## Read next
 
 - [Why code breaks when requests overlap](/learn/why-code-breaks/) and [Per-request state](/learn/per-request-state/)

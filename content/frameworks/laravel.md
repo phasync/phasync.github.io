@@ -98,6 +98,20 @@ Requests overlap in a worker, each in an application of its own from the pool, s
 
 To find candidates in your own code, run [phasync/doctor](https://github.com/phasync/doctor) from the application root: `composer require --dev phasync/doctor`, then `vendor/bin/phasync-doctor`. It reads `composer.lock`, says which adapter you run and whether requests overlap, and reports each static, global, shared connection or process setting with the sites that write and read it.
 
+<!-- doctor-report:begin -->
+### What phasync/doctor reports on a fresh Laravel app
+
+laravel/laravel v13.11.0 with phasync/swerve-laravel 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+
+swerve-laravel runs requests concurrently, each in an application of its own from a pool (phasync\Util\Pool), reset by Octane's listeners; a lock is held only around echoing streamed responses. Laravel's own state is per application; statics and globals in your code are not reset. Views buffer output: a wait while a view renders (a lazily loaded relation, with ext-phasync) mixes the output of requests that overlap there.
+
+| Severity | Rule | Symbol | Location | Question |
+| --- | --- | --- | --- | --- |
+| warning | static-property | `Database\Factories\UserFactory::$password` | `database/factories/UserFactory.php:18` | Does this hold data specific to one request or private to a user? |
+
+See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
+<!-- doctor-report:end -->
+
 ## Debugging
 
 - `Log::debug()` and [[Swerve::log]] both land in Swerve's log next to its own request line (method, path, status, duration) — a better habit than `dd()`, which takes the worker down with it.

@@ -108,6 +108,40 @@ To find candidates in your own code, run [phasync/doctor](https://github.com/pha
 
 Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
 
+<!-- doctor-report:begin -->
+### What phasync/doctor reports on a fresh Yii app
+
+yiisoft/app 1.4.0 with phasync/swerve-yii 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+
+swerve-yii runs one request at a time per worker, behind a phasync\Util\Synchronized lock: Yii keeps a request's state in shared container services (reset by StateResetter after each request) and the session is PHP's native one per process. A service of your own that keeps request state needs a `reset` callback in its definition. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
+
+| Severity | Rule | Symbol | Location | Question |
+| --- | --- | --- | --- | --- |
+| error | exit | `__c3_exit(): exit` | `c3.php:332` | Can this run while the worker serves a request? |
+| warning | static-property | `App\Environment::$values` | `src/Environment.php:24` | Does this hold data specific to one request or private to a user? |
+| warning | process-setting | `.php-cs-fixer.php: ini_set()` | `.php-cs-fixer.php:9` | Is this set to the same value for every request? |
+| warning | process-setting | `c3.php: $_SERVER` | `c3.php:30` | Is this set to the same value for every request? |
+| warning | process-setting | `c3.php: ini_set()` | `c3.php:123` | Is this set to the same value for every request? |
+| warning | process-setting | `public/index.php: $_SERVER` | `public/index.php:37` | Is this set to the same value for every request? |
+| warning | process-setting | `App\Tests\Unit\EnvironmentTest::_after(): putenv()` | `tests/Unit/EnvironmentTest.php:32` | Is this set to the same value for every request? |
+| warning | process-setting | `App\Tests\Unit\EnvironmentTest::_after(): $_ENV` | `tests/Unit/EnvironmentTest.php:33` | Is this set to the same value for every request? |
+| warning | process-setting | `App\Tests\Unit\EnvironmentTest::testInvalidAppEnvThrows(): putenv()` | `tests/Unit/EnvironmentTest.php:66` | Is this set to the same value for every request? |
+| warning | process-setting | `App\Tests\Unit\EnvironmentTest::setEnv(): putenv()` | `tests/Unit/EnvironmentTest.php:163` | Is this set to the same value for every request? |
+| warning | process-setting | `App\Tests\Unit\EnvironmentTest::setEnv(): $_ENV` | `tests/Unit/EnvironmentTest.php:164` | Is this set to the same value for every request? |
+| warning | process-setting | `App\Tests\Unit\EnvironmentTest::unsetEnv(): putenv()` | `tests/Unit/EnvironmentTest.php:170` | Is this set to the same value for every request? |
+| warning | process-setting | `App\Tests\Unit\EnvironmentTest::unsetEnv(): $_ENV` | `tests/Unit/EnvironmentTest.php:171` | Is this set to the same value for every request? |
+| warning | response-output | `__c3_error(): header()` | `c3.php:52` | Is this part of the response? |
+| warning | response-output | `__c3_error(): setcookie()` | `c3.php:53` | Is this part of the response? |
+| info | process-setting | `c3.php: set_time_limit()` | `c3.php:356` | Is this set to the same value for every request? |
+| info | global-handler | `c3.php: register_shutdown_function()` | `c3.php:416` | Does this run for every request? |
+| info | blocking-call | `__c3_testcounter(): flock()` | `c3.php:236` | Is ext-phasync loaded in production? |
+| info | blocking-call | `__c3_factory(): flock()` | `c3.php:259` | Is ext-phasync loaded in production? |
+| info | blocking-call | `__c3_factory(): usleep()` | `c3.php:269` | Is ext-phasync loaded in production? |
+| info | blocking-call | `{closure} in c3.php: flock()` | `c3.php:447` | Is ext-phasync loaded in production? |
+
+See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
+<!-- doctor-report:end -->
+
 ## Debugging
 
 `Swerve::log()` is a PSR logger; it and anything your own listeners write go to Swerve's log alongside its own request lines (method, path, status, duration). `yii-debug`'s panels aren't exercised by the adapter's test suite — treat a debug or profiler service the same as any other container service that accumulates request data: give it a `reset`, or expect it to mix requests. The isolation test in `tests/OneWorkerTest.php` is the pattern worth copying for your own services: set a distinct value per request, send several requests at once, read the value back, and run it both without and with ext-phasync.

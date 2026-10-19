@@ -141,6 +141,31 @@ To find candidates in your own code, run [phasync/doctor](https://github.com/pha
 
 Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
 
+<!-- doctor-report:begin -->
+### What phasync/doctor reports on a fresh CodeIgniter app
+
+codeigniter4/appstarter v4.7.5 with phasync/swerve-codeigniter 0.1.1, scanned by phasync/doctor 0.1.0 on 2026-10-19.
+
+swerve-codeigniter runs one request at a time per worker, behind a phasync\Util\Synchronized lock: CodeIgniter shares its services, config() and model() instances, the default locale, $_SESSION and one database connection per worker. Services in WorkerMode::$persistentServices live as long as the worker. A request that waits (a query, an API call) holds its worker, also with ext-phasync: capacity scales with --workers, sized as PHP-FPM children. Statics, settings and services still outlive the request: what one request leaves behind, the next one sees.
+
+| Severity | Rule | Symbol | Location | Question |
+| --- | --- | --- | --- | --- |
+| error | exit | `public/index.php: exit` | `public/index.php:23` | Can this run while the worker serves a request? |
+| warning | process-setting | `app/Config/Boot/development.php: error_reporting()` | `app/Config/Boot/development.php:13` | Is this set to the same value for every request? |
+| warning | process-setting | `app/Config/Boot/development.php: ini_set()` | `app/Config/Boot/development.php:14` | Is this set to the same value for every request? |
+| warning | process-setting | `app/Config/Boot/production.php: error_reporting()` | `app/Config/Boot/production.php:12` | Is this set to the same value for every request? |
+| warning | process-setting | `app/Config/Boot/production.php: ini_set()` | `app/Config/Boot/production.php:15` | Is this set to the same value for every request? |
+| warning | process-setting | `app/Config/Boot/testing.php: error_reporting()` | `app/Config/Boot/testing.php:17` | Is this set to the same value for every request? |
+| warning | process-setting | `app/Config/Boot/testing.php: ini_set()` | `app/Config/Boot/testing.php:18` | Is this set to the same value for every request? |
+| warning | process-setting | `public/index.php: chdir()` | `public/index.php:37` | Is this set to the same value for every request? |
+| warning | response-output | `public/index.php: header()` | `public/index.php:20` | Is this part of the response? |
+| info | output-buffering | `{closure} in app/Config/Events.php: ob_get_level()` | `app/Config/Events.php:34` | Can the request wait (a query, an HTTP call, a sleep) while this buffer is open? |
+| info | output-buffering | `{closure} in app/Config/Events.php: ob_end_flush()` | `app/Config/Events.php:35` | Can the request wait (a query, an HTTP call, a sleep) while this buffer is open? |
+| info | output-buffering | `{closure} in app/Config/Events.php: ob_start()` | `app/Config/Events.php:38` | Can the request wait (a query, an HTTP call, a sleep) while this buffer is open? |
+
+See [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the fix for each finding.
+<!-- doctor-report:end -->
+
 ## Debugging
 
 The debug toolbar works, and resets per request, so it shows this request's queries and timers,
