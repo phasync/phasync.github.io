@@ -1,6 +1,6 @@
 ---
 title: "Symfony"
-description: "Run a Symfony application on Swerve: each in-flight request has a pooled kernel of its own."
+description: "Run a Symfony application on Swerve: one kernel per in-flight request, booted once and kept warm."
 status: draft
 order: 2
 see_also:
@@ -11,67 +11,187 @@ topic: frameworks
 role: guide
 ---
 
-**Concurrency: concurrent, through the phasync extension.** Each request borrows a kernel from a [[phasync\Util\Pool]] and a kernel serves one request at a time. Requests overlap while one waits in a coroutine, which for database queries, curl and `sleep()` means with the phasync extension loaded. Without it requests rarely overlap and the pool stays at one kernel.
+[swerve-symfony](https://github.com/phasync/swerve-symfony) runs an unmodified Symfony
+application on swerve. `public/index.php` stays Symfony Runtime's own front controller, so the
+same application still runs under PHP-FPM; swerve calls it once per worker through this
+package's entry point instead.
 
 ## Install and run
 
 ```bash
-composer config minimum-stability beta
+composer config minimum-stability dev    # phasync and swerve are on their development versions
 composer config prefer-stable true
 composer require phasync/swerve-symfony
 ```
 
-<!-- TODO-verify: phasync/swerve-symfony was not on Packagist on 2026-10-03; the lines are from the adapter's README -->
+```bash
+vendor/bin/swerve --http=0.0.0.0:8080 --public=public
+```
+
+No `swerve.php`: swerve finds this package's entry point from its own `composer.json`
+(`extra.swerve`). `public/index.php` is untouched.
+
+## Kernel lifecycle
+
+A worker boots one kernel at start, through `SymfonyRuntime` exactly as under PHP-FPM: `.env`
+files, `APP_ENV`, `APP_DEBUG`, `extra.runtime` in `composer.json`. A request borrows a kernel
+from a pool and calls `handle()`; when every existing kernel is busy, the pool boots another —
+its own container, built from the same compiled container class, so the extra boot is cheap
+(about 120 KiB in the adapter's test app). Idle kernels above the peak used in the last 30
+seconds are let go.
+
+Symfony resets the kernel's services before its next request — `services_resetter`, every
+`kernel.reset` service — the same mechanism Symfony's FrankenPHP and Swoole runners rely on.
+`kernel.terminate` runs once the response is sent, before the kernel goes back to the pool.
+Anything already tagged `kernel.reset` by a bundle keeps working with no change:
+
+- **Doctrine.** `doctrine-bundle`'s `Registry` service is tagged `kernel.reset`. On reset it
+  calls `clear()` on an open `EntityManager` (dropping the identity map) and rebuilds one that an
+  exception left closed. A closed EM from a failed transaction is never reused by the next
+  request on that kernel.
+- **The profiler and debug toolbar** (`profiler`, `debug.stopwatch`, `debug.log_processor`) are
+  tagged `kernel.reset` too, so they work per request in `APP_ENV=dev`, same as under PHP-FPM.
+- **Monolog is not.** `monolog-bundle` tags nothing `kernel.reset`. A `FingersCrossedHandler` or
+  other buffering handler keeps its buffer across requests on the same kernel unless you tag it
+  yourself; a plain handler (no buffering) has nothing to carry over.
+- **Your own stateful services** need `kernel.reset` (a `reset()` method, tagged, or
+  `ResetInterface`) exactly as under any other long-running Symfony runner.
+
+## Concurrency inside one worker
+
+Each kernel in the pool has its own container, so a request borrows its own `EntityManager`,
+its own DBAL connection, its own `RequestStack`, security token and session — not shared with
+whichever other requests are in flight on the same worker. A transaction one kernel holds is
+invisible to the others; it doesn't serialize them, it just keeps that one kernel (and its
+connection) busy for as long as it runs.
+
+What a worker's kernels do share is the process, not the container:
+
+- `\Locale::setDefault()` (which `Request::setLocale()` calls), `setlocale()`,
+  `date_default_timezone_set()` — change these in a request and every other request in the
+  worker sees the change. Pass the locale to formatters explicitly instead.
+- Static properties and globals in your own code.
+- PHP's output buffer stack (see Streaming below).
+
+## Sessions
+
+PHP's session module keeps one session per process, so Symfony's file-based session storage
+doesn't work here. `Swerve\Symfony\SessionStorageFactory` gives each request a session loaded
+and saved through a `\SessionHandlerInterface` of your choice, with no `session_start()`:
+
+```yaml
+# config/packages/framework.yaml
+framework:
+    session:
+        storage_factory_id: Swerve\Symfony\SessionStorageFactory
+        handler_id: '%env(DATABASE_URL)%'   # or redis://..., or a handler service's id
+```
+
+```yaml
+# config/services.yaml
+services:
+    Swerve\Symfony\SessionStorageFactory: ~
+```
+
+PHP's own handlers (files, the default) are refused with a clear exception: they need the
+session module. Data is `serialize()`d, not PHP's session format, so existing file sessions
+aren't read after the switch. With `PdoSessionHandler` on SQLite, set `lock_mode: 0`: its
+default lock holds a transaction for the whole request, and SQLite's file-level write lock then
+serializes every session write across every kernel and worker, not just the two requests
+sharing a session id.
+
+## File uploads and request bodies
+
+Form uploads are streamed straight to temporary files and handed to the controller as ordinary
+`UploadedFile` instances. A raw body — JSON, a `PUT` payload, anything `Request::getContent()`
+reads directly — is buffered in memory before the controller runs, capped by `--max-body`
+(8 MiB by default).
+
+## Streaming and Server-Sent Events
+
+A `StreamedResponse` (or Symfony 7.3's `EventStreamResponse`) streams as its callback echoes;
+`BinaryFileResponse` streams the file, with `Range` support. Both hold their kernel until they
+end, so each one in flight costs a kernel.
 
 ```php
-<?php // swerve.php, next to composer.json
-
-require __DIR__ . '/vendor/autoload.php';
-
-return new Swerve\Symfony\Handler(__DIR__);
+#[Route('/ticks')]
+public function ticks(): StreamedResponse
+{
+    return new StreamedResponse(static function () {
+        for ($n = 1; ; ++$n) {
+            echo "data: tick $n\n\n";
+            \flush();
+            phasync::sleep(1);   // other requests on this worker run meanwhile
+        }
+    }, 200, ['Content-Type' => 'text/event-stream', 'Cache-Control' => 'no-cache']);
+}
 ```
 
-```bash
-vendor/bin/swerve --http=0.0.0.0:8080 --public=public swerve.php
+Two things to know before relying on this:
+
+- **Echo from inside the callback itself, not from a coroutine it starts.** The adapter routes
+  output by the fiber running the callback; bytes echoed by a `phasync::go()` child fiber are
+  dropped, not sent ([phasync/swerve-symfony#4](https://github.com/phasync/swerve-symfony/issues/4), open).
+- **With ext-phasync's CPU preemption, two concurrent streamed responses can corrupt each
+  other's output.** The callback's output buffer sits on PHP's one process-wide `ob_*` stack;
+  preemption can interleave two callbacks' `ob_start()`/`ob_end_clean()` pairs out of order even
+  with no explicit wait in either one ([phasync/swerve-symfony#2](https://github.com/phasync/swerve-symfony/issues/2), open). Until this is fixed, avoid
+  pure-CPU loops between echoes in a route you expect to run concurrently with another
+  streamed response.
+
+A slow client doesn't slow the worker: what a `StreamedResponse` echoes faster than the client
+reads is kept in memory, so send large files with `BinaryFileResponse` instead, which is read as
+the client takes it.
+
+## WebSockets
+
+A controller returns `Swerve\Symfony\WebSocketResponse::from()`, an ordinary Symfony `Response`.
+The kernel goes back to the pool before the handler runs, so read the user and session first:
+
+```php
+#[Route('/chat')]
+public function chat(Request $request): Response
+{
+    $user = $this->getUser()?->getUserIdentifier();
+
+    return WebSocketResponse::from($request, static function (WebSocket $ws) use ($user) {
+        foreach ($ws as $message) {
+            $ws->send("$user: $message");
+        }
+    });
+}
 ```
 
-`public/index.php` stays as it is. `Handler` takes `kernels: 16`, the most kernels per worker, and `frontController:`.
+A `static` closure keeps the controller (and its container) out of the handler, which is right:
+by the time it runs, the kernel it came from is serving someone else.
 
-## What the adapter changes
+## Cache warmup, env vars, debug and memory
 
-- **One kernel per request in flight.** Symfony Runtime resolves the front controller as under PHP-FPM, and one kernel is booted. More are made when requests overlap, up to `kernels:`. They share the classes and the compiled container.
-- **Services are reset between requests** by Symfony's own `services_resetter` and every `kernel.reset` service, as in Symfony's FrankenPHP and Swoole runners. `kernel.terminate` runs once Swerve has the response.
-- **Sessions need the adapter's storage.** PHP's session module keeps one session per process, so you configure `Swerve\Symfony\SessionStorageFactory` with a handler of your choice (PDO, Redis, Memcached). PHP's own file handlers are refused.
-- **WebSockets and streams.** A controller returns `WebSocket::from()`, a PSR-7 response. A `StreamedResponse` is sent as its callback echoes and holds its kernel until it ends.
+`.env` files and `APP_ENV`/`APP_DEBUG` are read once per worker, at boot, through Symfony
+Runtime — changing them needs a reload, not just a new request. With `APP_ENV=prod` set, run
+`bin/console cache:warmup` before starting workers: the container class is compiled once and
+shared by every kernel in every worker, so warming it ahead of time avoids paying for it when
+the first worker starts. `APP_DEBUG=1` keeps the profiler and toolbar working per request (above); it
+also keeps each kernel's debug data (stopwatch, log processor) for longer, so dev workers use
+more memory per kernel than prod ones. `memory_limit` bounds the whole worker, not one request:
+budget for the kernels you expect in flight at once, not for one.
 
-## Concurrency
+## Before you deploy
 
-A kernel's `RequestStack`, security token, session and stateful services belong to its request alone, so Symfony's own services need no care. What the kernels of a worker share is the process:
+`exit()` and `dd()` end the whole worker, and every request it is currently serving — not just
+the one that called them. A plain controller's stray `echo` goes to swerve's log, not the
+response body; only `StreamedResponse`'s callback output reaches the client.
 
-- `\Locale::setDefault()` (which `Request::setLocale()` calls), `setlocale()`, `date_default_timezone_set()`.
-- Static properties of your own code.
-- PHP's output buffers.
+## Debugging
 
-`kernels: 1` serves one request at a time per worker. A slow request then holds up the other connections of its worker.
+Run one worker during development (`vendor/bin/swerve -w 1 -v --public=public`): request order
+and kernel identity become deterministic, which matters when a bug only shows up with requests
+overlapping. `vendor/bin/swerve --version` prints the ext-phasync version when `--ext` loaded it.
 
-## Dangerous under concurrency
-
-- **Process-wide settings.** Changing the locale or time zone in a request changes it for every request in the worker. Pass the locale to formatters explicitly.
-- **Output buffers.** A callback that does `ob_start()`, waits, then `ob_get_clean()` may catch another request's output. Do not wait inside your own output buffer.
-- **Open streams hold kernels.** Each open Server-Sent Events stream in a `StreamedResponse` takes one. Set `kernels:` above the streams a worker holds at once, or return a PSR-7 response with a `phasync\Psr\UnbufferedStream` body fed by a coroutine, which holds none.
-- **Code that outlives the controller** (a coroutine, a WebSocket callback) must not use the kernel's services: they serve the next request by then. Take the user and session data first.
-- **Services that keep request data** must implement `kernel.reset`, as they do under any long-running Symfony runtime.
-
-See [Service lifetimes](/learn/service-lifetimes/) for how singleton, scoped and ephemeral services map onto this.
-
-Run `phasync/doctor` over your code to find static properties, `ob_*` calls and process settings:
-
-```bash
-composer require --dev phasync/doctor
-vendor/bin/phasync-doctor src
-```
-
-<!-- TODO-verify: phasync/doctor is not published yet; the commands are from its README and were not run here -->
+`Handler::handle()` currently costs about twice what `$kernel->handle()` + `terminate()` cost on
+their own — profiled to the `phasync::go()` that runs `kernel.terminate` after the response
+([phasync/swerve-symfony#1](https://github.com/phasync/swerve-symfony/issues/1), open, root cause identified, fix pending). Not
+something your application code can work around; it affects every request by a fixed amount.
 
 ## Read next
 
