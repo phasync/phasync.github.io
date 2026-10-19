@@ -25,6 +25,10 @@ final class Markdown implements NodeRendererInterface
     /** @return array{0: array, 1: string} the front matter and the HTML */
     public static function file(string $source): array
     {
+        // Working notes never ship (CONTENT-GUIDE.md): a <!-- TODO ... --> comment is for
+        // `php build.php --todo`, which reads the source directly; strip it before conversion so
+        // it never reaches public/.
+        $source = \preg_replace('/<!--\s*TODO.*?-->/s', '', $source);
         $result = self::converter(true)->convert($source);
         $front  = $result instanceof RenderedContentWithFrontMatter ? $result->getFrontMatter() : [];
 
