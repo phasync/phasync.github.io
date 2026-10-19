@@ -137,6 +137,8 @@ over it.
 
 The adapter runs one request at a time, but the worker outlives every request: a static or a shared Service's property set by one request is still there for the next, and streamed, SSE and WebSocket responses run after the lock, overlapping with other requests. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
 
+To find candidates in your own code, run [phasync/doctor](https://github.com/phasync/doctor) from the application root: `composer require --dev phasync/doctor`, then `vendor/bin/phasync-doctor`. It reads `composer.lock`, says which adapter you run and whether requests overlap, and reports each static, global, shared connection or process setting with the sites that write and read it.
+
 Two routes would let the adapter (or your application) drop the lock for the state above. The simple one: save and restore that state in a `phasync::onScopeChange()` hook, which runs whenever the worker switches from one request to another. It is phasync's own API (an application relying on it runs on phasync only), it runs on every switch so it should swap only a few references, and it covers only the state you swap. The proper one: key the state on the request's `\Scope` (`Scope::getCurrent()`, the [Scope RFC](https://wiki.php.net/rfc/scope)), so nothing needs swapping. `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, the default time zone and `Locale::setDefault()` already follow the `Scope`; `$_SESSION` and `setlocale()` do not.
 
 ## Debugging

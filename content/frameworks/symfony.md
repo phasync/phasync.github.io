@@ -184,6 +184,8 @@ response body; only `StreamedResponse`'s callback output reaches the client.
 
 Requests overlap in a worker, each in a kernel of its own from the pool, so services are per request. Static properties, globals and process-wide settings are not: they are shared by every kernel in the worker. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
 
+To find candidates in your own code, run [phasync/doctor](https://github.com/phasync/doctor) from the application root: `composer require --dev phasync/doctor`, then `vendor/bin/phasync-doctor`. It reads `composer.lock`, says which adapter you run and whether requests overlap, and reports each static, global, shared connection or process setting with the sites that write and read it.
+
 ## Debugging
 
 Run one worker during development (`vendor/bin/swerve -w 1 -v --public=public`): request order

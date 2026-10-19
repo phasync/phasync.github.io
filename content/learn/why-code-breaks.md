@@ -50,6 +50,6 @@ Ann's request answers as Bob. Code between two waits runs without being interrup
 
 ## Finding it
 
-The checklist in [making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) goes through these patterns one by one, with a fix for each.
+The checklist in [making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) goes through these patterns one by one, with a fix for each. [phasync/doctor](https://github.com/phasync/doctor) finds them in a codebase: `composer require --dev phasync/doctor`, then `vendor/bin/phasync-doctor`.
 
 Previous: [Learn](/learn/) · Next: [Per-request state](/learn/per-request-state/)

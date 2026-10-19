@@ -96,6 +96,8 @@ Once requests overlap, Laravel's default SQLite session and cache writes start t
 
 Requests overlap in a worker, each in an application of its own from the pool, so container bindings are per request. What the pool does not separate is the process: static properties, globals and anything your code caches outside the container are shared by every application in the worker. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
 
+To find candidates in your own code, run [phasync/doctor](https://github.com/phasync/doctor) from the application root: `composer require --dev phasync/doctor`, then `vendor/bin/phasync-doctor`. It reads `composer.lock`, says which adapter you run and whether requests overlap, and reports each static, global, shared connection or process setting with the sites that write and read it.
+
 ## Debugging
 
 - `Log::debug()` and [[Swerve::log]] both land in Swerve's log next to its own request line (method, path, status, duration) — a better habit than `dd()`, which takes the worker down with it.

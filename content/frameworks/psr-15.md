@@ -168,6 +168,8 @@ Use `Locale::setDefault()` and `intl` formatters instead; neither Slim nor this 
 
 Slim, Mezzio and any other PSR-15 stack run requests concurrently in one worker, so your own code decides whether that is safe: middleware and handlers that keep request state in properties, and container definitions that hand every request the same instance (a `PDO`, a "current user" service), are what breaks. The framework running correctly on Swerve does not make your own code safe: see [Making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) for the checklist and a fix for each item.
 
+To find candidates in your own code, run [phasync/doctor](https://github.com/phasync/doctor) from the application root: `composer require --dev phasync/doctor`, then `vendor/bin/phasync-doctor`. It reads `composer.lock`, says which adapter you run and whether requests overlap, and reports each static, global, shared connection or process setting with the sites that write and read it.
+
 ## Debugging
 
 - **Changes don't show**: workers load the application once and don't watch files; run with

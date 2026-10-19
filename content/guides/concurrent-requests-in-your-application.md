@@ -14,6 +14,15 @@ role: guide
 
 The framework adapter pages describe what the framework itself keeps safe between overlapping requests. None of that covers code you wrote on top of it: a middleware with a property, a container definition that hands out the same instance to everyone, a cache you built as a static array. This page is the checklist for that code, with a fix for each item.
 
+[phasync/doctor](https://github.com/phasync/doctor) finds the candidates for you. It reads your code without running it and reports each one with the sites that write and read it, the question to answer about it and ready code for each fix:
+
+```
+composer require --dev phasync/doctor
+vendor/bin/phasync-doctor
+```
+
+State that is the same for every request is marked with a `@scope-safe <reason>` tag and no longer reported; findings in code you don't own go into a baseline file. `--format=json` gives the same report to a coding agent.
+
 ## State in a static, a global, or a shared service
 
 A "current user" or "current tenant" field set on a service the container hands out once, a static property, a `global`, a value cached into a class constant's sibling array the first time it's read — all of it is one copy for the worker, not one per request, the moment two requests can overlap in it.
