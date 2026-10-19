@@ -16,7 +16,7 @@ Blazing, lightning, revolutionary, powerful, seamless, effortless, supercharge, 
 ## Positioning: what the front pages say
 
 - Front-facing pages (landing, get started, frameworks, guides) never explain coroutines, fibers, blocking or streams. They say: **your code stays sequential**. You write ordinary PHP, and Swerve runs it. `sleep(10);` and then respond is a normal handler.
-- Plain `sleep()` waits without blocking a worker only with phasync-ext loaded. Say so in one sentence where `sleep()` is shown, and give `phasync::sleep()` for the case without the extension.
+- Plain `sleep()` waits without blocking a worker only with the phasync extension loaded. Say so in one sentence where `sleep()` is shown, and give `phasync::sleep()` for the case without the extension.
 - Coroutines, channels, wait groups, rate limiters, claims, `OrderedChannel` and the internals live under **Advanced**. A front page may show a line of code that uses them (the SSE example needs `phasync::go()`), but does not explain them.
 - Reference pages say what a function does. They link to Advanced from See also, not from the first paragraph.
 
