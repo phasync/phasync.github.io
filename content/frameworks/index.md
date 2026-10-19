@@ -6,7 +6,6 @@ status: draft
 
 An adapter is a one-line `swerve.php` that runs your framework on Swerve. Each page below has the same headings: how to install and start, what the adapter changes, whether requests overlap within a worker, and what breaks when they do.
 
-<!-- TODO-verify: the adapter packages (phasync/swerve-*) were not on Packagist on 2026-10-03; the install lines on each page follow the adapters' READMEs -->
 
 ## Concurrent and serialized adapters
 
@@ -37,4 +36,4 @@ If your application waits a lot and you need many requests in flight per worker,
 - `swerve.php` is loaded once per worker; the application is booted once, or pooled.
 - A blocking call (PDO, curl, `sleep()`) blocks the worker unless the phasync extension is loaded: [how Swerve runs](https://github.com/phasync/swerve/blob/main/docs/how-it-runs.md).
 - `exit`, `die()` and `dd()` end the worker and the requests it is serving.
-- Code that is not safe when requests overlap is found by `phasync/doctor`: [Learn](/learn/) explains the patterns it reports.
+- Your own code needs the same care as the framework: [making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/).

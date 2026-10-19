@@ -50,6 +50,6 @@ Ann's request answers as Bob. Code between two waits runs without being interrup
 
 ## Finding it
 
-`phasync/doctor` scans a codebase for the patterns that misbehave when requests overlap: static properties and variables, `global`, `ob_*`, `exit`, `ini_set` and similar, and calls that block. It reports `file:line` and does not change code. <!-- TODO-verify: phasync/doctor is not published yet; the install command is composer require --dev phasync/doctor (its README), and it was not run here -->
+The checklist in [making your application safe for concurrent requests](/guides/concurrent-requests-in-your-application/) goes through these patterns one by one, with a fix for each.
 
 Previous: [Learn](/learn/) · Next: [Per-request state](/learn/per-request-state/)

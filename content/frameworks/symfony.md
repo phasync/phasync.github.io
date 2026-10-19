@@ -19,8 +19,6 @@ package's entry point instead.
 ## Install and run
 
 ```bash
-composer config minimum-stability dev    # phasync and swerve are on their development versions
-composer config prefer-stable true
 composer require phasync/swerve-symfony
 ```
 

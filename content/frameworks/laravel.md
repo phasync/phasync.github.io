@@ -16,8 +16,6 @@ role: guide
 ## Install and run
 
 ```bash
-composer config minimum-stability dev
-composer config prefer-stable true
 composer require phasync/swerve-laravel
 ```
 

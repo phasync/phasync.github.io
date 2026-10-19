@@ -22,8 +22,6 @@ watch — the first thing to check when two requests answer each other's data.
 composer require phasync/swerve-psr15 slim/slim slim/psr7
 ```
 
-<!-- TODO-verify: phasync/swerve-psr15's tagged release and Packagist listing were not checked here; swerve itself tagged 0.1.0 today -->
-
 ```php
 <?php // swerve.psr15.php
 
@@ -165,15 +163,6 @@ Use `Locale::setDefault()` and `intl` formatters instead; neither Slim nor this 
 - **PHP's session module, `$_SESSION` and `ob_*`** belong to the process. Use a PSR-15 session
   middleware that keeps the session in a request attribute, not these.
 - **`exit` and `die()`** end the worker, and every request it was serving.
-
-Run `phasync/doctor` over your code:
-
-```bash
-composer require --dev phasync/doctor
-vendor/bin/phasync-doctor src
-```
-
-<!-- TODO-verify: phasync/doctor is not published yet; the commands are from its README and were not run here -->
 
 ## Your application
 

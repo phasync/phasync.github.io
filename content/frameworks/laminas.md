@@ -17,13 +17,8 @@ role: guide
 ## Install and run
 
 ```bash
-composer config minimum-stability dev
-composer config prefer-stable true
-composer config repositories.swerve-psr15 vcs https://github.com/phasync/swerve-psr15
 composer require phasync/swerve-laminas
 ```
-
-<!-- TODO-verify: phasync/swerve-laminas and phasync/swerve-psr15 were not on Packagist on 2026-10-19; minimum-stability dev and the vcs repository are from the adapter's README, which still pins phasync/swerve to dev-main rather than the 0.1.0 tag -->
 
 No `swerve.php` to write: the package's `composer.json` names `laminas` as its adapter, which provides the entry point.
 

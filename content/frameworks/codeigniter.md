@@ -19,13 +19,8 @@ this is the same contract with Swerve underneath it instead.
 ## Install and run
 
 ```bash
-composer config minimum-stability dev
-composer config prefer-stable true
-composer config repositories.swerve-psr15 vcs https://github.com/phasync/swerve-psr15
-composer require 'phasync/swerve:dev-main as 0.1.0-beta7' phasync/swerve-codeigniter
+composer require phasync/swerve-codeigniter
 ```
-
-<!-- TODO-verify: neither phasync/swerve-codeigniter nor phasync/swerve-psr15 was on Packagist on 2026-10-19; commands are the adapter's README, unchanged -->
 
 ```bash
 vendor/bin/swerve --adapter=codeigniter --http=0.0.0.0:8080 --public=public

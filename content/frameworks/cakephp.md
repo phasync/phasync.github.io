@@ -16,16 +16,8 @@ role: guide
 ## Install and run
 
 ```bash
-composer config minimum-stability dev
-composer config prefer-stable true
-composer config repositories.swerve-psr15 vcs https://github.com/phasync/swerve-psr15
-composer require 'phasync/swerve:dev-main as 0.1.0-beta7' phasync/swerve-cakephp
+composer require phasync/swerve-cakephp
 ```
-
-<!-- TODO-verify: swerve-cakephp's composer.json still pins phasync/swerve to dev-main (aliased
-     to 0.1.0-beta7) and pulls swerve-psr15 from its GitHub repository; neither package was on
-     Packagist on 2026-10-19, the day swerve 0.1.0 itself was tagged. The commands above are the
-     adapter's own README, unchanged. -->
 
 ```bash
 vendor/bin/swerve --adapter=cakephp --http=0.0.0.0:8080 --public=webroot
@@ -142,16 +134,6 @@ Two routes would let the adapter (or your application) drop the lock for the sta
 - A worker's standard error is where uncaught warnings and the output of a wrongly-placed `echo` land; `headers_sent()` turns true for the rest of that worker's life after one (sessions still work after it — `Session` doesn't check it).
 - A request stuck in a blocking call holds up every other request of that worker; `--watchdog` kills and replaces a worker whose loop doesn't turn for too long, and the log says where it was stuck.
 - `fetchTable()` returning stale entity state across requests almost always means code kept a `Table` or entity in a static property or a long-lived service instead of fetching it again — the per-request `FactoryLocator` clear only reaches Cake's own registry.
-
-Run `phasync/doctor` over your own code to find static properties, `ob_*` calls and process settings it doesn't already know about:
-
-```bash
-composer require --dev phasync/doctor
-vendor/bin/phasync-doctor src plugins
-```
-
-<!-- TODO-verify: phasync/doctor was not on Packagist on 2026-10-19; the commands are from its
-     own README (/home/frode/dev/phasync-doctor). -->
 
 ## Read next
 

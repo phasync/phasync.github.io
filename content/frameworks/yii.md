@@ -16,10 +16,7 @@ role: guide
 ## Install and run
 
 ```bash
-composer config minimum-stability dev
-composer config prefer-stable true
-composer config repositories.swerve-psr15 vcs https://github.com/phasync/swerve-psr15
-composer require 'phasync/swerve:dev-main as 0.1.0-beta7' phasync/swerve-yii
+composer require phasync/swerve-yii
 ```
 
 ```bash
