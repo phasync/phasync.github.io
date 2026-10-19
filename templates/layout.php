@@ -39,7 +39,7 @@ $pager = static fn ($x, $c, $l) => $x ? '<a class="' . $c . '" href="' . e($x['u
 </main>
 <footer class="footer"><div class="wrap"><div class="cols">
 <div><h2>Projects</h2><ul><?php foreach ($P as $k => $n): ?><li><a href="/<?= $k ?>/"><?= e($n) ?></a></li><?php endforeach ?></ul></div>
-<div><h2>Documentation</h2><ul><li><a href="<?= $r->startUrl($project) ?>">Get started</a></li><li><a href="/<?= $project ?>/manual/">Manual</a></li><li><a href="/<?= $project ?>/symbols/">Index</a></li><li><a href="/<?= $project ?>/changelog/">Changelog</a></li></ul></div>
+<div><h2>Documentation</h2><ul><li><a href="<?= $r->startUrl($project) ?>">Get started</a></li><li><a href="/<?= $project ?>/manual/">Manual</a></li><li><a href="/<?= $project ?>/symbols/">Index</a></li><li><a href="/<?= $project ?>/changelog/">Changelog</a></li><li><a href="/swerve/performance/">Performance</a></li></ul></div>
 <div><h2>Company</h2><ul><li>Ennerd AS, Norway</li><li><a href="https://github.com/phasync" class="ext">GitHub</a></li></ul></div>
 <div><h2>Legal</h2><ul><li><a href="/legal/privacy/">Privacy</a></li></ul></div>
 </div><div class="fine"><phasync-ribbon data-follow interactive="false"></phasync-ribbon><p>phasync, Swerve and the extension are MIT.</p></div></div></footer>

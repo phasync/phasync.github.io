@@ -43,3 +43,7 @@ The same split applies to a database client: a query through mysqli or PDO waits
 CPU-bound work blocks the worker whether or not the extension is loaded: a long loop, image processing, a large `json_decode()`. There is no coroutine to switch to while the CPU is busy; a loop that runs long can give other coroutines a turn now and then with `phasync::yield()`. A worker whose event loop is stuck for `--watchdog` seconds (30 by default) is killed and replaced, and the log says which request it was stuck in.
 
 Short blocking calls are not a problem: a 1 ms SQLite query without the extension delays the other requests of that worker by 1 ms. Count them when there are many in one request; move anything long, or anything that must not delay other requests, to a call phasync (or the extension) knows how to wait on, or to another worker.
+
+## How many connections this holds
+
+Without the extension, a worker holds at most 512 connections at once: half of PHP's `stream_select()` limit of 1,024 file descriptors, since your application opens files and connections of its own too. This caps SSE, WebSocket and long-polling connections, not ordinary short requests. See [Production](/guides/production/) for sizing workers around that limit, and [The phasync extension](/library/phasync-ext/) for what loading it changes.
