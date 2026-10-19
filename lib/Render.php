@@ -467,6 +467,8 @@ final class Render
         \file_put_contents($this->out . '/404.html', render('layout', ['project' => 'phasync', 'title' => 'Not found', 'desc' => 'No such page.', 'bodyHtml' => '<h1>Not found</h1><p class="lead">There is no such page. Try the <a href="/phasync/symbols/">symbol index</a> or the <a href="/phasync/manual/">manual</a>.</p>',
             'crumbs' => [], 'sub' => null, 'topic' => null, 'cur' => null, 'class' => null, 'prev' => null, 'next' => null, 'sidebar' => false, 'rail' => true, 'url' => '/404.html', 'h2' => [[], [], []], 'site' => $this->site, 'r' => $this]));
         \file_put_contents($this->out . '/search.json', \json_encode($this->search, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
+        // The bare domain root has no page of its own (only /phasync/ and /swerve/ do): send it to phasync's.
+        isset($this->written['/']) || $this->write('/', stub('phasync and Swerve', '/', '/phasync/', $this->site));
         $txt = '';
         \ksort($this->map);
         foreach ($this->map as $old => $new) {
