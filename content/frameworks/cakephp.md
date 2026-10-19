@@ -1,6 +1,6 @@
 ---
 title: "CakePHP"
-description: "Run a CakePHP 5 application on Swerve, one request at a time per worker."
+description: "Run a CakePHP 5 application on Swerve: booted once per worker, one request at a time, like PHP-FPM."
 status: draft
 order: 4
 see_also:
@@ -11,61 +11,141 @@ topic: frameworks
 role: guide
 ---
 
-> **Low concurrency.** A worker serves one CakePHP request at a time, as a PHP-FPM child does. A request that waits for a database or an API holds its worker, also with the phasync extension. Size `--workers` as you size `pm.max_children`. See [Frameworks](/frameworks/).
-
-The adapter serializes requests with [[phasync\Util\Synchronized]]. Cake keeps the current request, `Configure`, the locale, the global event manager and the table registry in static properties, and `$_SESSION` and the output buffers belong to the process: overlapping requests would see each other's.
+**Concurrency: serialized, one request at a time per worker.** `Swerve\CakePHP\Handler` takes [[phasync\Util\Synchronized]] around every request: a worker runs one Cake request to completion before starting the next, as a PHP-FPM child does. Size `--workers` as you size `pm.max_children`. Swerve's own work — accepting connections, serving static files, and anything already answered that's now a WebSocket or an SSE stream — goes on meanwhile. See [Frameworks](/frameworks/).
 
 ## Install and run
 
 ```bash
-composer config minimum-stability beta
+composer config minimum-stability dev
 composer config prefer-stable true
-composer require phasync/swerve-cakephp
+composer config repositories.swerve-psr15 vcs https://github.com/phasync/swerve-psr15
+composer require 'phasync/swerve:dev-main as 0.1.0-beta7' phasync/swerve-cakephp
 ```
 
-<!-- TODO-verify: phasync/swerve-cakephp was not on Packagist on 2026-10-03; the lines are from the adapter's README -->
+<!-- TODO-verify: swerve-cakephp's composer.json still pins phasync/swerve to dev-main (aliased
+     to 0.1.0-beta7) and pulls swerve-psr15 from its GitHub repository; neither package was on
+     Packagist on 2026-10-19, the day swerve 0.1.0 itself was tagged. The commands above are the
+     adapter's own README, unchanged. -->
+
+```bash
+vendor/bin/swerve --adapter=cakephp --http=0.0.0.0:8080 --public=webroot
+```
+
+`--adapter=cakephp` serves `App\Application` with no `swerve.php`: `webroot/index.php` keeps running the same application under PHP-FPM. For another application class, or other settings, write `swerve.php` and run with `--adapter=swerve` instead:
 
 ```php
 <?php // swerve.php, next to composer.json
 
-require __DIR__ . '/vendor/autoload.php';
-
-return new Swerve\CakePHP\Handler(__DIR__);
+return Swerve\Psr15\Bridge::wrap(new Swerve\CakePHP\Handler(__DIR__, application: My\Application::class));
 ```
 
-```bash
-vendor/bin/swerve --http=0.0.0.0:8080 --public=webroot swerve.php
+Set `APP_FULL_BASE_URL`, `SECURITY_SALT` and `DEBUG=false`, as for PHP-FPM: with debug off, the skeleton's `HostHeaderMiddleware` refuses every request while `App.fullBaseUrl` is empty.
+
+## What boots once, and what runs per request
+
+`Handler`'s constructor does what `Cake\Http\Server` does, once: it calls `$app->bootstrap()` and `pluginBootstrap()`, connects the routes with a route builder, and configures the session. It then snapshots `Configure::read()`, the event manager's listeners, the locale, the time zone and `Router`'s request context, and keeps a closure that restores them.
+
+Each request, under the lock:
+
+- The snapshot is restored first — `Configure`, `Router::$_request`/`$_requestContext`/`$_fullBaseUrl`, the global `EventManager::instance()`'s listeners, `FactoryLocator::get('Table')->clear()` (so `fetchTable()` returns fresh `Table` instances, not another request's with its entity state), DebugKit's panel registry, the locale, the time zone, and the application's container and controller factory — as a fresh PHP-FPM process would have them.
+- A `RoutingMiddleware` that skips `loadRoutes()` stands in for Cake's, in the middleware queue `Handler` builds the way `Cake\Http\Server::run()` does (so `Server.buildMiddleware`, DebugKit's middleware and your own still run). Routes connected or depended on during a request don't apply until a restart or `--watch` picks up a reload.
+- `RequestFactory::fromPsr()` builds a `Cake\Http\ServerRequest` from Swerve's PSR-7 request — headers, cookies, query, body and uploaded files — the way `ServerRequestFactory::fromGlobals()` would from superglobals. There are no superglobals to read: `$_GET`, `$_POST`, `$_FILES` play no part.
+- `ConnectionManager`'s connections, and your `Cache` and `Log` engines, are not part of the reset. They are built once at boot and reused by every request, like a persistent connection under PHP-FPM's `pdo_pconnect`, except they're genuinely shared with the next request on the same worker. An uncommitted transaction left open by an exception stays open into the next request that uses that connection: wrap writes in `$connection->transactional()` rather than manual `begin()`/`commit()`, so an exception rolls back before the lock is released.
+
+## The session
+
+`Swerve\CakePHP\Session` extends Cake's own, using PHP's session module and your configured engine, not the fake `'cli'` session Cake's `Session` falls back to when `PHP_SAPI` isn't `'cgi'`/`'fpm-fcgi'`. The session id comes from the request's cookie (PHP's own cookie lookup would read the worker's `$_COOKIE`, which belongs to no particular request); `begin()` takes it at the start of a request, `finish()` writes and closes it, clears `$_SESSION`, and returns the `Set-Cookie` and no-cache headers `header()` would otherwise have sent. `renew()` (Cake's `getSession()->renew()`, used at login) gives a new id without a `header()` call.
+
+Every read reaches `started()` first, which checks the session against the `Scope` of the request that opened it:
+
+```php
+public function started(): bool
+{
+    if (null === $this->scope || \Scope::getCurrent() !== $this->scope) {
+        throw new \LogicException('The session belongs to its request, which is over: ...');
+    }
+    return parent::started();
+}
 ```
 
-The public directory is `webroot`. Set `APP_FULL_BASE_URL` and `SECURITY_SALT`, and `DEBUG=false`, as for PHP-FPM.
+A coroutine that outlives the request — a WebSocket callback, a `phasync::go()` closure started from the action — throws `LogicException` if it reads `$this->request->getSession()`. Take what you need before starting it:
 
-## What the adapter changes
+```php
+$user = $this->Authentication->getIdentity();
+$room = $this->request->getSession()->read('room');
 
-- **Once per worker:** the application is bootstrapped with its plugins, its routes are connected and the session is configured, as `Cake\Http\Server` does.
-- **After each request:** `Configure`, the router's current request, the global event manager, the application's container, the table registry, DebugKit's panels, the locale and the time zone go back to what they were after boot.
-- **Sessions** use PHP's session module and Cake's configured engine. The session id comes from the request's cookie and is forgotten after the request.
-- **Cake sees the CLI.** `PHP_SAPI` is `cli`, so the skeleton's `config/bootstrap.php` logs to `logs/cli-*.log`, and plugins marked `onlyCli` are loaded.
+return CakeResponse::from(WebSocketResponse::from($this->request, function (WebSocket $ws) use ($user, $room) {
+    // $user and $room are this connection's, fixed at the time the request answered
+}));
+```
 
-## Concurrency
+Since only one request runs at a time per worker, `$_SESSION` being process-wide isn't a race here the way it would be in a concurrent adapter — it's `begin()`/`finish()` forgetting the session between requests that keeps one visitor's session from leaking into the next.
 
-One Cake request at a time per worker. Swerve's other work (connections, static files, WebSockets and streams after their response) goes on meanwhile. See the adapter's [docs/concurrency.md](https://github.com/phasync/swerve-cakephp/blob/main/docs/concurrency.md).
+## Uploads, streamed responses and WebSockets
+
+Uploaded files arrive as Cake's own `UploadedFile` objects (`$this->request->getData('file')`, with `getClientFilename()`, `getSize()`, `getStream()`), built by `RequestFactory` from Swerve's request the same way `ServerRequestFactory::fromGlobals()` builds them from `$_FILES`.
+
+Cake's streamed responses (`CallbackStream`, `JsonStreamResponse`) still hold the worker: PHP's output buffers belong to the process, so `Handler` runs the callback under an `ob_start()` handler and the same `Synchronized` lock, feeding what it echoes to the client as it comes — no other Cake request runs until the stream ends.
+
+```php
+public function stream(): Response
+{
+    return $this->response->withType('text/plain')->withBody(new CallbackStream(function () {
+        echo "first\n";
+        $this->wait(0.5);   // the worker's other Cake requests wait too
+        echo "last\n";
+    }));
+}
+```
+
+For Server-Sent Events and other long-lived streams, fill a `phasync\Psr\UnbufferedStream` from a coroutine instead. It holds no lock, so the worker serves other requests while it's open:
+
+```php
+public function events(): Response
+{
+    $stream = new UnbufferedStream(1, 10);
+    phasync::go(function () use ($stream) {
+        for ($i = 1; $i <= 3; $i++) {
+            $stream->append("data: event $i\n\n");
+            phasync::sleep(0.2);
+        }
+        $stream->end();
+    });
+
+    return $this->response->withType('text/event-stream')->withBody($stream);
+}
+```
+
+Don't use the router, the session or the ORM's connection inside that coroutine: by the time it runs, the worker may already be serving another request. WebSockets work the same way: a controller action returns `CakeResponse::from(WebSocketResponse::from($this->request, function (WebSocket $ws) { ... }))`, and the callback runs in its own coroutine after the action returns, beside the worker's later requests. `Swerve::publish()`/`Swerve::subscribe()` give it server push from any route in any worker. Inside the callback, `Router::getRequest()` and `Router::url()` describe whichever request the worker serves then — maybe someone else's — and the session throws, as above.
 
 ## Dangerous under concurrency
 
-- **Routes are connected once per worker.** Routes connected during a request do not apply. `--watch` and a reload pick up changed routes.
-- **Static state of your own** (static properties, singletons) lives as long as the worker. `Configure::write()` during a request is undone after it.
-- **Streams that echo hold the worker.** A `CallbackStream` whose callback echoes (Cake's streamed responses) runs while no other Cake request does, since PHP's output buffers belong to the process. For long streams fill a `phasync\Psr\UnbufferedStream` from a coroutine instead, and do not use Cake's router, session or ORM connection in that coroutine.
-- **The session belongs to the request.** A coroutine that outlives it, such as a WebSocket callback, gets a `LogicException` if it reads the session. Take the identity in the action: [Long-lived connections](/learn/long-lived-connections/).
-- **`exit` and `dd()`** end the worker.
+- **Routes connect once per worker.** Connect them in `routes.php`, not conditionally from a request; a reload (`--watch` or `SIGHUP`) picks up changes.
+- **Static state of your own** — static properties, singletons — lives as long as the worker. `Configure::write()` during a request is undone by the next request's reset, same as everything Cake itself keeps static.
+- **`Server.terminate` listeners run after the response is handed to Swerve**, through the same lock, in turn with the worker's requests, session closed.
+- **`exit` and `dd()` end the worker**, and every request it's holding.
+- **A stop ends requests in flight.** On shutdown or reload, Swerve stops a worker at once: a request still waiting is answered `503` (Cake neither logs it nor renders an error page); clients retry.
+- **Cake sees the CLI.** `PHP_SAPI` is `'cli'`, so the skeleton's `config/bootstrap.php` logs to `logs/cli-debug.log`/`logs/cli-error.log` instead of the usual files, plugins marked `onlyCli` (Bake, Migrations) load, and with debug on, PHP warnings and notices go to the worker's standard error, not the page.
 
-Run `phasync/doctor` over your code:
+## DebugKit
+
+DebugKit's plugin builds one panel registry at boot; `Handler`'s reset calls `registry()->reset()` on it before each request, so the toolbar reflects that request alone, and `/debug-kit/toolbar/<id>` keeps working. It costs nothing extra to leave DebugKit loaded between requests — it isn't rebuilt — but it still does its usual per-request work (profiling the request, the SQL log), so treat `DEBUG=true` workers the way you'd treat a debug PHP-FPM pool: fine for staging, not for a worker also carrying production traffic.
+
+## Debugging
+
+- A worker's standard error is where uncaught warnings and the output of a wrongly-placed `echo` land; `headers_sent()` turns true for the rest of that worker's life after one (sessions still work after it — `Session` doesn't check it).
+- A request stuck in a blocking call holds up every other request of that worker; `--watchdog` kills and replaces a worker whose loop doesn't turn for too long, and the log says where it was stuck.
+- `fetchTable()` returning stale entity state across requests almost always means code kept a `Table` or entity in a static property or a long-lived service instead of fetching it again — the per-request `FactoryLocator` clear only reaches Cake's own registry.
+
+Run `phasync/doctor` over your own code to find static properties, `ob_*` calls and process settings it doesn't already know about:
 
 ```bash
 composer require --dev phasync/doctor
 vendor/bin/phasync-doctor src plugins
 ```
 
-<!-- TODO-verify: phasync/doctor is not published yet; the commands are from its README and were not run here -->
+<!-- TODO-verify: phasync/doctor was not on Packagist on 2026-10-19; the commands are from its
+     own README (/home/frode/dev/phasync-doctor). -->
 
 ## Read next
 
