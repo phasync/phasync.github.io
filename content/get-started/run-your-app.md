@@ -67,7 +67,7 @@ vendor/bin/swerve -w 4                    # 4 workers, instead of one per CPU co
 - `-w, --workers=<n>` sets the number of worker processes; `auto` (the default) is one per CPU
   core. Each worker holds its own copy of the application in memory.
 
-`vendor/bin/swerve --help` lists every option; [the dev server](/get-started/dev-server/) covers
+`vendor/bin/swerve --help` lists every option; [the dev server](/swerve/get-started/dev-server/) covers
 `--watch`, for development.
 
-Next: [Deploy](/get-started/deploy/).
+Next: [Deploy](/swerve/get-started/deploy/).

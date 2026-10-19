@@ -277,6 +277,9 @@ final class Model
         $demote = static fn (string $html) => \preg_replace_callback('~<(/?)h([1-5])>~', static fn ($m) => "<{$m[1]}h" . ($m[2] + 1) . '>', $html);
         if (null !== $md) {
             $out['html'] = \preg_replace('~^<h1[^>]*>.*?</h1>~s', '', Markdown::html($md));
+            // A relative link to another root doc of the package repo (UPGRADING.md, say) means this site's own page for it.
+            $slugs = ['UPGRADING' => 'upgrading', 'CHANGELOG' => '', 'CONTRIBUTING' => 'process', 'SECURITY' => 'process'];
+            $out['html'] = \preg_replace_callback('~href="(UPGRADING|CHANGELOG|CONTRIBUTING|SECURITY)\.md"~', static fn ($m) => 'href="/' . $project . '/changelog/' . $slugs[$m[1]] . '/"', $out['html']);
             $version = null;
             $section = '';
             $breaking = []; // version => [markdown bullet...]

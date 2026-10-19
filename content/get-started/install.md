@@ -30,7 +30,7 @@ vendor/bin/swerve --version
 
 This prints swerve's own version, the PHP it is running on, and the versions of phasync and the
 phasync extension, with "not loaded" for the extension when it isn't — expected here, since the
-extension is optional and the next three pages run without it. [Deploy](/get-started/deploy/)
+extension is optional and the next three pages run without it. [Deploy](/swerve/get-started/deploy/)
 covers loading it for production.
 
 ## The phasync extension
@@ -47,4 +47,4 @@ pie install phasync/ext-phasync
 checkout's platform, and installing build tooling to compile from source was out of scope for
 this check) -->
 
-Next: [Run your application](/get-started/run-your-app/).
+Next: [Run your application](/swerve/get-started/run-your-app/).
