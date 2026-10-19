@@ -21,40 +21,36 @@ The browser's `EventSource` reads a `text/event-stream` response and reconnects 
 ```php
 <?php // swerve.php
 
-use phasync\Psr\Response;
-use phasync\Psr\UnbufferedStream;
-use phasync\TimeoutException;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+use phasync\IOException;
+use Swerve\ClientRequest;
+use Swerve\RequestHandler;
+use Swerve\SubscriberLagException;
 use Swerve\Swerve;
 
-return new class implements RequestHandlerInterface {
-    public function handle(ServerRequestInterface $request): ResponseInterface
-    {
-        if ('POST' === $request->getMethod()) {
-            Swerve::publish('chat', (string) $request->getBody());
-
-            return new Response(204);
+return new RequestHandler(static function (ClientRequest $request) {
+    if ('POST' === $request->getMethod()) {
+        $body = '';
+        while ('' !== ($piece = $request->read())) {
+            $body .= $piece;
         }
+        Swerve::publish('chat', $body);
+        $request->sendResponseHeaders(204);
 
-        $subscription = Swerve::subscribe('chat', heartbeat: 15);
-        $out = new UnbufferedStream(1, 60);
-        phasync::go(static function () use ($subscription, $out) {
-            try {
-                foreach ($subscription as $message) {
-                    $out->append(null === $message ? ": keep-alive\n\n" : "data: $message\n\n");
-                }
-            } catch (TimeoutException) {
-                // the client left
-            } finally {
-                $out->end();
-            }
-        });
-
-        return new Response(200, ['Content-Type' => 'text/event-stream', 'Cache-Control' => 'no-cache'], $out);
+        return;
     }
-};
+
+    $subscription = Swerve::subscribe('chat', heartbeat: 15);
+    $request->sendResponseHeaders(200, ['content-type' => 'text/event-stream', 'cache-control' => 'no-cache']);
+    try {
+        foreach ($subscription as $message) {
+            $request->write(null === $message ? ": keep-alive\n\n" : "data: $message\n\n");
+        }
+    } catch (IOException) {
+        // the client left
+    } catch (SubscriberLagException) {
+        // too far behind; the browser's EventSource reconnects
+    }
+});
 ```
 
 ```js
@@ -74,16 +70,28 @@ fetch('/', {method: 'POST', body: 'hello'});
 `WebSocket::from()` answers the upgrade and runs the callback once the connection is open. Messages from the browser are events; what goes back is plain sequential code in the callback. The connection closes when the callback returns (1000) or throws (1011, logged).
 
 ```php
-use Swerve\Http\WebSocket;
+<?php // swerve.php
 
-return WebSocket::from($request, static function (WebSocket $ws) {
-    $ws->onMessage->listen(static function (string $data, bool $binary) {
-        Swerve::publish('chat', $data);                // validate it first, see examples/websocket-chat
+use Swerve\ClientRequest;
+use Swerve\RequestHandler;
+use Swerve\SubscriberLagException;
+use Swerve\Swerve;
+use Swerve\WebSocket;
+
+return new RequestHandler(static function (ClientRequest $request) {
+    WebSocket::from($request, static function (WebSocket $ws) {
+        $ws->onMessage->listen(static function (string $data, bool $binary) {
+            Swerve::publish('chat', $data);                // validate it first, see examples/websocket-chat
+        });
+
+        try {
+            foreach (Swerve::subscribe('chat') as $message) {   // ends when the browser leaves
+                $ws->send($message);
+            }
+        } catch (SubscriberLagException) {
+            $ws->end(1008); // too far behind; the browser reconnects
+        }
     });
-
-    foreach (Swerve::subscribe('chat') as $message) {  // ends when the browser leaves
-        $ws->send($message);
-    }
 });
 ```
 
