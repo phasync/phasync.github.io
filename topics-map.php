@@ -47,7 +47,6 @@ return [
     'UnbufferedStream' => 'streams-and-files',
     'StringStream' => 'streams-and-files',
     'StringBuffer' => 'streams-and-files',
-    'StreamFactory' => 'streams-and-files',
     'MultipartStream' => 'streams-and-files',
     'MultipartStreamInterface' => 'streams-and-files',
     'UploadedFile' => 'streams-and-files',

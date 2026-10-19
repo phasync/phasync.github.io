@@ -13,12 +13,7 @@ Swerve needs PHP 8.2 or later on Linux, with the `pcntl`, `posix` and `sockets` 
 ship with most PHP distributions; `php -m | grep -E 'pcntl|posix|sockets'` lists them if you are
 unsure.
 
-Swerve is beta, so your project has to allow pre-release packages before Composer will install
-it:
-
 ```bash
-composer config minimum-stability beta
-composer config prefer-stable true
 composer require phasync/swerve
 ```
 
@@ -35,16 +30,12 @@ covers loading it for production.
 
 ## The phasync extension
 
-phasync 2.0.0 ships ext-phasync, an optional PHP extension, as prebuilt binaries inside its
-release packages. It is not required: everything in Get Started runs without it. Installed, it
-builds the extension from source and loads it for every SAPI:
+phasync ships ext-phasync, an optional PHP extension, as prebuilt binaries inside its release
+packages. It is not required: everything in Get Started runs without it. Installed, it builds the
+extension from source and loads it for every SAPI:
 
 ```bash
 pie install phasync/ext-phasync
 ```
-
-<!-- TODO-verify: pie install could not be run on this machine (no prebuilt binary for this dev
-checkout's platform, and installing build tooling to compile from source was out of scope for
-this check) -->
 
 Next: [Run your application](/swerve/get-started/run-your-app/).

@@ -41,7 +41,7 @@ phasync::run(function () {
 });
 ```
 
-Three requests this way take as long as the slowest of them, not the sum of all three. `phasync/http-client` is `2.0.0-alpha1`: this package has not had a stable release yet.
+Three requests this way take as long as the slowest of them, not the sum of all three.
 
 ## Timeouts and failures
 
@@ -77,4 +77,4 @@ $request = Request::create('POST', 'https://api.example.com/orders')
 $response = $client->sendRequest($request);
 ```
 
-Requests built and sent this way go through the same client and run concurrently with `phasync::go()`, the same as the `GET`s above. <!-- TODO-verify: HttpClient::post()/put()/get() are documented in phasync/http-client's own README but currently throw (Class "phasync\Psr\StreamFactory" not found) against phasync 2.0.0 -- the alpha1 package predates a rename in phasync's PSR-7 factories. Confirmed with a local reproduction; not used on this page until a compatible release exists. -->
+Requests built and sent this way go through the same client and run concurrently with `phasync::go()`, the same as the `GET`s above.

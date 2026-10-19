@@ -16,7 +16,7 @@ vendor/bin/swerve --http=0.0.0.0:8080 --public=public --ext --max-memory=512M
 
 ## Connections per worker
 
-Without [the phasync extension](/library/phasync-ext/), a worker holds at most 512 connections at once: half of PHP's `stream_select()` limit of 1024 file descriptors, since the application opens files and connections of its own too. For many idle or long-lived connections (SSE, long polling, upgraded ones), run more workers than cores — `--workers` at four times the core count is a starting point. With the extension loaded, the limit is the open-file limit less 64 instead (`ulimit -n`; `LimitNOFILE` under systemd), to leave room for the files and connections the application opens on its own.
+Without [the phasync extension](/library/ext-phasync/), a worker holds at most 512 connections at once: half of PHP's `stream_select()` limit of 1024 file descriptors, since the application opens files and connections of its own too. For many idle or long-lived connections (SSE, long polling, upgraded ones), run more workers than cores — `--workers` at four times the core count is a starting point. With the extension loaded, the limit is the open-file limit less 64 instead (`ulimit -n`; `LimitNOFILE` under systemd), to leave room for the files and connections the application opens on its own.
 
 At the limit, a worker closes connections that are sitting idle to make room for new ones; one still being served, or an upgraded one, is never closed to make room.
 
@@ -38,4 +38,4 @@ Swerve logs a line per request (`GET /path 200 1.2ms`) unless started with `--no
 
 swerve overrides the settings a shared-hosting `php.ini` makes for a short-lived process — `memory_limit`, `max_execution_time`, `open_basedir`, the opcache validation and preload settings among them — with one restart at start, since it runs as a long-lived process instead. An explicit `-d` on the command line still wins; the full table, with why each setting changes, is in `docs/production.md` of the Swerve repository.
 
-Next: load [the phasync extension](/library/phasync-ext/) before measuring anything — connection limits and the cost of waiting both change with it.
+Next: load [the phasync extension](/library/ext-phasync/) before measuring anything — connection limits and the cost of waiting both change with it.

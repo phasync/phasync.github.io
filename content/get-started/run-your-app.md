@@ -24,7 +24,7 @@ return new Swerve\RequestHandler(function (Swerve\ClientRequest $request) {
 
 ```
 > vendor/bin/swerve
-2026-10-19 15:48:53.19   swerve dev-main serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
+2026-10-19 15:48:53.19   swerve 0.1.0 serving ./swerve.php on http://127.0.0.1:8080 with 8 workers
 2026-10-19 15:48:54.04 4 GET /?name=Frode 200 0.3ms
 ```
 

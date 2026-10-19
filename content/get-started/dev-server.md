@@ -7,11 +7,11 @@ order: 4
 
 ```
 > vendor/bin/swerve --watch
-2026-10-19 15:49:17.85   swerve dev-main serving ./swerve.php on http://127.0.0.1:8080 with 1 worker, reloading when PHP files change
+2026-10-19 15:49:17.85   swerve 0.1.0 serving ./swerve.php on http://127.0.0.1:8080 with 1 worker, reloading when PHP files change
 2026-10-19 15:49:18.69 0 GET / 200 0.2ms
 2026-10-19 15:49:19.86   Change detected in /srv/app/swerve.php; reloading
 2026-10-19 15:49:19.86   Reload requested (changed: /srv/app/swerve.php): stopping 1 workers, then restarting swerve
-2026-10-19 15:49:20.19   swerve dev-main serving ./swerve.php on http://127.0.0.1:8080 with 1 worker, reloading when PHP files change
+2026-10-19 15:49:20.19   swerve 0.1.0 serving ./swerve.php on http://127.0.0.1:8080 with 1 worker, reloading when PHP files change
 2026-10-19 15:49:20.19   Reload complete in 0.33 s
 2026-10-19 15:49:21.02 0 GET / 200 0.2ms
 ```

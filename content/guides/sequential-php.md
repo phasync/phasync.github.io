@@ -24,7 +24,7 @@ return new RequestHandler(function (ClientRequest $request) {
 });
 ```
 
-Every connection runs in its own coroutine, and a worker runs many of them at once: while this handler waits, the worker serves everyone else, then comes back to it. That `sleep(10)` waits this way — without blocking the worker — only with [the phasync extension](/library/phasync-ext/) loaded; the rest of this page says what to do about that.
+Every connection runs in its own coroutine, and a worker runs many of them at once: while this handler waits, the worker serves everyone else, then comes back to it. That `sleep(10)` waits this way — without blocking the worker — only with [the phasync extension](/library/ext-phasync/) loaded; the rest of this page says what to do about that.
 
 ## What lets other requests run
 
@@ -46,4 +46,4 @@ Short blocking calls are not a problem: a 1 ms SQLite query without the extensio
 
 ## How many connections this holds
 
-Without the extension, a worker holds at most 512 connections at once: half of PHP's `stream_select()` limit of 1,024 file descriptors, since your application opens files and connections of its own too. This caps SSE, WebSocket and long-polling connections, not ordinary short requests. See [Production](/guides/production/) for sizing workers around that limit, and [The phasync extension](/library/phasync-ext/) for what loading it changes.
+Without the extension, a worker holds at most 512 connections at once: half of PHP's `stream_select()` limit of 1,024 file descriptors, since your application opens files and connections of its own too. This caps SSE, WebSocket and long-polling connections, not ordinary short requests. See [Production](/guides/production/) for sizing workers around that limit, and [The phasync extension](/library/ext-phasync/) for what loading it changes.

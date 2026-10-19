@@ -11,11 +11,9 @@
     },
     "require-dev": {
         "phasync/phasync": "^2.0",
-        "phasync/swerve": "dev-main",
-        "phasync/http-client": "^2.0.0-alpha1"
+        "phasync/swerve": "^0.1",
+        "phasync/http-client": "^2.0"
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "config": {
         "preferred-install": {
             "phasync/*": "source",

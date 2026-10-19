@@ -49,7 +49,7 @@ sleep(0.5);
 phasync::sleep(0.5);
 ```
 
-With the extension, most of that list (sockets and TLS, MySQL through PDO or mysqli, curl, files, DNS, `sleep()` itself) suspends the coroutine instead of the process, so plain `sleep()` becomes safe to call directly; see [The phasync extension](/library/phasync-ext/) for the full list and what stays blocking regardless (CPU-bound code, and clients with their own network code such as phpredis). A short blocking call is not fatal: it delays the other coroutines of that worker by its own duration, and that is additive, not per request. Fifty 1 ms queries in one request cost every other coroutine in the worker 50 ms.
+With the extension, most of that list (sockets and TLS, MySQL through PDO or mysqli, curl, files, DNS, `sleep()` itself) suspends the coroutine instead of the process, so plain `sleep()` becomes safe to call directly; see [The phasync extension](/library/ext-phasync/) for the full list and what stays blocking regardless (CPU-bound code, and clients with their own network code such as phpredis). A short blocking call is not fatal: it delays the other coroutines of that worker by its own duration, and that is additive, not per request. Fifty 1 ms queries in one request cost every other coroutine in the worker 50 ms.
 
 ## Letting others run in a tight loop
 

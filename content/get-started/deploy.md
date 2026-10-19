@@ -39,7 +39,7 @@ directly to a running master and saw this in its log:
 
 ```
 2026-10-19 15:52:11.08   Reload requested (SIGHUP): stopping 2 workers, then restarting swerve
-2026-10-19 15:52:11.44   swerve dev-main serving ./swerve.php on http://127.0.0.1:18742 with 2 workers
+2026-10-19 15:52:11.44   swerve 0.1.0 serving ./swerve.php on http://127.0.0.1:18742 with 2 workers
 2026-10-19 15:52:11.44   Reload complete in 0.36 s
 ```
 
@@ -62,7 +62,7 @@ inside the container, and both the application route and a static file under `pu
 
 ```
 > docker run -p 8080:8080 myapp
-2026-10-19 15:51:22.59    swerve dev-main serving ./swerve.php on http://0.0.0.0:8080 with 56 workers
+2026-10-19 15:51:22.59    swerve 0.1.0 serving ./swerve.php on http://0.0.0.0:8080 with 56 workers
 2026-10-19 15:51:24.48 21 GET / 200 0.4ms
 2026-10-19 15:51:24.50 38 GET /hello.txt 200 0.9ms
 ```

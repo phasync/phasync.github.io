@@ -1,5 +1,5 @@
 ---
-title: phasync and Swerve
-description: Run your PHP application on Swerve, a PHP application server built on phasync coroutines.
+title: phasync
+description: Concurrent PHP on Fibers, with go() and await(), timeouts and cancellation. No promises.
 status: stable
 ---

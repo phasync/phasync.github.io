@@ -59,7 +59,7 @@ final class Render
             if (isset($this->map[$url]) || '/' === $url || $pg['symbol']) {
                 continue;
             }
-            $this->map[$url] = 'section' === $pg['kind'] && '/performance/' !== $url ? ('/get-started/' === $url ? '/swerve/get-started/' : '/swerve/manual/') : '/swerve' . $url;
+            $this->map[$url] = 'section' === $pg['kind'] ? ('/get-started/' === $url ? '/swerve/get-started/' : '/swerve/manual/') : '/swerve' . $url;
         }
     }
 
@@ -86,6 +86,41 @@ final class Render
         $pk ??= \array_column(\json_decode((string) @\file_get_contents(__DIR__ . '/../vendor/composer/installed.json'), true)['packages'] ?? [], 'version', 'name');
 
         return \preg_replace('~^v~', '', $pk["phasync/$p"] ?? '');
+    }
+
+    /** The three cards (phasync, the extension, Swerve) and the fiber-interop paragraph, phasync's landing page only. */
+    private function phasyncHome(): string
+    {
+        $v = fn (string $p) => ($x = $this->version($p)) ? ' <span class="badge">v' . e($x) . '</span>' : '';
+
+        return '<h2 id="three-ways">phasync, the extension, and Swerve</h2><div class="pricing">'
+            . '<div class="plan"><h3>phasync' . $v('phasync') . '</h3>'
+            . '<p class="for">The coroutine library. <code>go()</code> and <code>await()</code> on PHP\'s own Fibers, with timeouts and cancellation. No promises.</p>'
+            . '<ul><li>One <code>phasync::run()</code> call is a complete program</li><li>Runs under PHP-FPM, the CLI, or Swerve</li></ul>'
+            . '<p><code>composer require phasync/phasync</code></p></div>'
+            . '<div class="plan featured"><h3>ext-phasync <span class="badge">v2.0.0</span></h3>'
+            . '<p class="for">The optional extension. PDO, mysqli, curl, file I/O and <code>sleep()</code> become cooperative inside a coroutine instead of blocking the worker &mdash; no rewrite.</p>'
+            . '<ul><li>Epoll instead of <code>stream_select()</code></li><li>Bundles the <code>Scope</code> class, the per-request identity that request-scoped state is keyed on</li></ul>'
+            . '<p><a href="/library/ext-phasync/">The phasync extension &rarr;</a></p></div>'
+            . '<div class="plan"><h3>Swerve' . $v('swerve') . '</h3>'
+            . '<p class="for">The application server. Long requests, Server-Sent Events and WebSocket, in the framework you already use.</p>'
+            . '<ul><li>Boots your app once, serves many requests per worker</li><li>Adapters for Laravel, Symfony, Yii and more</li></ul>'
+            . '<p><a href="/swerve/">Swerve &rarr;</a></p></div>'
+            . '</div>'
+            . '<p>Start with phasync alone inside an application you already run under PHP-FPM, to overlap one function\'s own API calls or queries. Reach for Swerve when you want every request handled concurrently, not only that one function.</p>'
+            . '<h2 id="fiber-interop">phasync and fiber-interop</h2>'
+            . '<p><a href="https://github.com/fiber-interop">fiber-interop</a> is a shared concurrency API (<code>fiber\\go()</code>, <code>fiber\\await()</code> and the rest) that runs unchanged on phasync, Revolt, AMPHP, ReactPHP, Swoole or TrueAsync, picked by installing one adapter package. The <a href="https://github.com/fiber-interop/phasync">fiber-interop/phasync</a> adapter runs it on phasync\'s event loop. fiber-interop\'s own <a href="https://fiber-interop.github.io/#adapter">adapter guide</a> names phasync as the one to start with if you have no event loop of your own yet, calling it &quot;a complete runtime with nothing else to configure&quot;. A library written against <code>fiber-interop/api</code> runs on phasync without depending on it directly.</p>';
+    }
+
+    /** Why Swerve exists, for its own landing page: the problem it solves, not just the one-line example. */
+    private function swerveHome(): string
+    {
+        return '<h2 id="why-swerve">Why Swerve</h2><ul>'
+            . '<li><b>Connections that stay open.</b> Server-Sent Events, WebSocket and long polling from an ordinary request handler, and publish/subscribe between workers &mdash; no separate Node or Go service.</li>'
+            . '<li><b>Boot once, serve forever.</b> The framework, routes and connection pools build once per worker, which then serves thousands of requests and connections.</li>'
+            . '<li><b>Isolated requests.</b> Each request runs in a <code>Scope</code> of its own, so request-scoped state stays separate even with thousands in flight.</li>'
+            . '<li><b>Frameworks, not a rewrite.</b> One adapter per framework runs your existing application; some serve requests concurrently within a worker, some one at a time. <a href="/swerve/manual/frameworks/">Which adapters overlap requests</a>.</li>'
+            . '</ul>';
     }
 
     /** The first page of the Get started path: what the sub-navigation links to. */
@@ -274,9 +309,31 @@ final class Render
             $base = [[$N, "/$p/"]];
             $manual = $proj['manual'];
             [$lead, $code] = $this->readme($p);
+            // phasync's README opens with a teaser that calls an undefined fetch($id): not runnable, so the
+            // landing page uses the README's second, self-contained example instead (verified to run as shown).
+            'phasync' === $p && $code = <<<'PHP'
+                use phasync\Services\CurlAwaiter;
+
+                function fetch(string $url): string
+                {
+                    $ch = curl_init($url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                    // Inside a coroutine this waits without blocking the others; outside, it just runs
+                    return CurlAwaiter::await($ch);
+                }
+
+                $pages = phasync::run(function () {
+                    $a = phasync::go(fn () => fetch('https://www.php.net/'));
+                    $b = phasync::go(fn () => fetch('https://getcomposer.org/'));
+
+                    return [phasync::await($a), phasync::await($b)];
+                });
+                PHP;
             $this->page("/$p/", ['project' => $p, 'title' => $N, 'desc' => \trim(\strip_tags($lead)), 'crumbs' => [], 'sub' => null, 'sidebar' => false,
                 'body' => "<h1>$N</h1>" . \preg_replace('~^<p>~', '<p class="lead">', $lead) . ('' !== $code ? \trim(Markdown::code($code, 'php')) : '')
-                    . "<p><a class=\"btn btn-primary\" href=\"/$p/get-started/\">Get started</a> <a class=\"btn btn-secondary\" href=\"/$p/manual/\">Read the manual</a></p>"]);
+                    . "<p><a class=\"btn btn-primary\" href=\"/$p/get-started/\">Get started</a> <a class=\"btn btn-secondary\" href=\"/$p/manual/\">Read the manual</a></p>"
+                    . ('phasync' === $p ? $this->phasyncHome() : $this->swerveHome())]);
             $this->count('landing');
             $gs = $proj['getStarted'];
             $this->page("/$p/get-started/", ['project' => $p, 'title' => 'Get started', 'desc' => 'From install to a running application.', 'crumbs' => [...$base, ['Get started', null]], 'sub' => 'get-started',
@@ -468,7 +525,7 @@ final class Render
             'crumbs' => [], 'sub' => null, 'topic' => null, 'cur' => null, 'class' => null, 'prev' => null, 'next' => null, 'sidebar' => false, 'rail' => true, 'url' => '/404.html', 'h2' => [[], [], []], 'site' => $this->site, 'r' => $this]));
         \file_put_contents($this->out . '/search.json', \json_encode($this->search, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
         // The bare domain root has no page of its own (only /phasync/ and /swerve/ do): send it to phasync's.
-        isset($this->written['/']) || $this->write('/', stub('phasync and Swerve', '/', '/phasync/', $this->site));
+        isset($this->written['/']) || $this->write('/', stub($this->pages['/']['title'] ?? 'phasync', '/', '/phasync/', $this->site));
         $txt = '';
         \ksort($this->map);
         foreach ($this->map as $old => $new) {
