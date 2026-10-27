@@ -41,14 +41,14 @@ Once `main` ends, the loop runs what's left in its ready queue: a plain FIFO. `x
 
 ## Waiting on streams: the poller
 
-`readable()`, `writable()` and `stream()` suspend the calling coroutine, and hand the wait to whatever implements `phasync\PollerInterface` for this loop. The loop calls the poller's `poll()` when it has nothing else to run, and `poll()` resumes whichever waiters became ready. Without the phasync extension, that's `phasync\StreamSelectPoller`, built on `stream_select()`, with the same ceiling `stream_select()` has: it cannot wait on a file descriptor numbered 1024 (`FD_SETSIZE`) or higher. With the extension loaded, the loop uses its epoll-based poller instead, which has no such ceiling — see [The phasync extension](/library/ext-phasync/) for what that changes in practice. One coroutine at a time may wait to read a given stream, and one to write; a second one waiting in a direction that's already taken gets `LogicException` immediately, not a wait that would silently steal data meant for the first.
+`readable()`, `writable()` and `stream()` suspend the calling coroutine, and hand the wait to whatever implements `phasync\PollerInterface` for this loop. The loop calls the poller's `poll()` when it has nothing else to run, and `poll()` resumes whichever waiters became ready. Without the phasync extension, that's `phasync\StreamSelectPoller`, built on `stream_select()`, with the same ceiling `stream_select()` has: it cannot wait on a file descriptor numbered 1024 (`FD_SETSIZE`) or higher. With the extension loaded, the loop's poller waits through the extension (`phasync\ext\Suspension`), which has no such ceiling — see [The phasync extension](/library/ext-phasync/) for what that changes in practice. One coroutine at a time may wait to read a given stream, and one to write; a second one waiting in a direction that's already taken gets `LogicException` immediately, not a wait that would silently steal data meant for the first.
 
 ```php
 use phasync\PollerInterface;
 
 phasync::run(function () {
     $poller = phasync::getLoop()->getPoller();
-    echo 'implements PollerInterface: ', var_export($poller instanceof PollerInterface || $poller instanceof phasync\ext\Poller, true), "\n";
+    echo 'implements PollerInterface: ', var_export($poller instanceof PollerInterface, true), "\n";
 
     [$a, $b] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
     stream_set_blocking($a, false);
